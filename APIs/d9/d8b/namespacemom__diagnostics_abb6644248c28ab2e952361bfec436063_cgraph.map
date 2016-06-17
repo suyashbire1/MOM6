@@ -1,0 +1,20 @@
+<map id="mom_diagnostics::calculate_diagnostic_fields" name="mom_diagnostics::calculate_diagnostic_fields">
+<area shape="rect" id="node2" href="$d9/d8b/namespacemom__diagnostics.html#ad69737c75e3f4a36546c8437fb39b099" title="mom_diagnostics::calculate\l_derivs" alt="" coords="204,5,355,47"/>
+<area shape="rect" id="node3" href="$d9/d8b/namespacemom__diagnostics.html#abfa7f679d840df58e06fa831af32c090" title="mom_diagnostics::calculate\l_energy_diagnostics" alt="" coords="204,71,355,112"/>
+<area shape="rect" id="node4" href="$d9/d8b/namespacemom__diagnostics.html#a0b6f33e7b575b5f685f781030b301876" title="mom_diagnostics::calculate\l_vertical_integrals" alt="" coords="204,136,355,177"/>
+<area shape="rect" id="node6" href="$d0/de6/namespacemom__error__handler.html#a460cfb79a06c29fc249952c2a3710d67" title="mom_error_handler::\lmom_error" alt="" coords="609,299,733,340"/>
+<area shape="rect" id="node11" href="$d9/d8b/namespacemom__diagnostics.html#ab43b50cd32dfe693c6ce575c279988fb" title="mom_diagnostics::find\l_weights" alt="" coords="216,253,343,295"/>
+<area shape="rect" id="node12" href="$d9/d8a/namespacemom__spatial__means.html#aa49abab62973a263d6f5a1c776f62a11" title="mom_spatial_means::\lglobal_area_mean" alt="" coords="216,319,343,360"/>
+<area shape="rect" id="node13" href="$d9/d8a/namespacemom__spatial__means.html#a6555c562d34246f8f4fb089f9c049bde" title="mom_spatial_means::\lglobal_layer_mean" alt="" coords="216,384,343,425"/>
+<area shape="rect" id="node14" href="$d9/d8a/namespacemom__spatial__means.html#ad01660bdcc6a67641afba8c2045f090f" title="mom_spatial_means::\lglobal_volume_mean" alt="" coords="216,449,343,491"/>
+<area shape="rect" id="node15" href="$dd/d33/namespacemom__wave__speed.html#a90775d734022991a9b49d5ee25210051" title="mom_wave_speed::wave\l_speed" alt="" coords="208,515,351,556"/>
+<area shape="rect" id="node5" href="$d1/d01/namespacemom__eos.html#a1def0e6b257a12105457a50c92da2487" title="This subroutine calculates analytical and nearly&#45;analytical integrals of pressure anomalies across la..." alt="" coords="403,147,545,174"/>
+<area shape="rect" id="node8" href="$d1/d01/namespacemom__eos.html#a9a8d9a5df8f211fbb4c22dcccc2f7916" title="mom_eos::int_density\l_dz_generic" alt="" coords="609,75,734,116"/>
+<area shape="rect" id="node9" href="$d5/de6/namespacemom__eos__linear.html#aba00b479ec037448437b55295f0a6c01" title="mom_eos_linear::int\l_density_dz_linear" alt="" coords="612,140,731,181"/>
+<area shape="rect" id="node10" href="$de/d76/namespacemom__eos__wright.html#adde51def9a4b771d7165d4d187e5dea8" title="mom_eos_wright::int\l_density_dz_wright" alt="" coords="611,205,732,247"/>
+<area shape="rect" id="node7" href="$d0/de6/namespacemom__error__handler.html#ad5f00a53059c72fe2332d1436c80ca71" title="mom_error_handler::\lis_root_pe" alt="" coords="797,299,921,340"/>
+<area shape="rect" id="node16" href="$d1/d01/namespacemom__eos.html#a204529f8434a0322314e6ce2a9762436" title="Calls the appropriate subroutine to calculate density derivatives for 1&#45;D array inputs. " alt="" coords="416,485,532,527"/>
+<area shape="rect" id="node17" href="$d5/de6/namespacemom__eos__linear.html#a73d8a625582247379092adf1aeeb55e0" title="mom_eos_linear::calculate\l_density_derivs_linear" alt="" coords="597,420,745,461"/>
+<area shape="rect" id="node18" href="$dd/d6b/namespacemom__eos__unesco.html#af8666837abadea54c016bf59838f96cc" title="mom_eos_unesco::calculate\l_density_derivs_unesco" alt="" coords="593,485,749,527"/>
+<area shape="rect" id="node19" href="$de/d76/namespacemom__eos__wright.html#ad7748e85ddacb33ad90ec3a9017e6e72" title="mom_eos_wright::calculate\l_density_derivs_wright" alt="" coords="596,551,747,592"/>
+</map>

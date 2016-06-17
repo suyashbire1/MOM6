@@ -1,0 +1,4 @@
+<map id="mom_vert_friction::vertvisc_limit_vel" name="mom_vert_friction::vertvisc_limit_vel">
+<area shape="rect" id="node2" href="$db/dd4/namespacemom__dynamics__legacy__split.html#ae34fe0561f87dc05c2fad64bf6d5a1ee" title="mom_dynamics_legacy\l_split::step_mom_dyn\l_legacy_split" alt="" coords="167,5,299,61"/>
+<area shape="rect" id="node3" href="$d9/dcb/namespacemom__vert__friction.html#afcb3ca5d907b32d50101f90e93d0b160" title="Perform a fully implicit vertical diffusion of momentum. Stress top and bottom boundary conditions ar..." alt="" coords="176,85,289,126"/>
+</map>

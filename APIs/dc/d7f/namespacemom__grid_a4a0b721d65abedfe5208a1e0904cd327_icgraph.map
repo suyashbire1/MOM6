@@ -1,0 +1,8 @@
+<map id="mom_grid::allocate_metrics" name="mom_grid::allocate_metrics">
+<area shape="rect" id="node2" href="$dc/d7f/namespacemom__grid.html#a457baf772f460da97155d6ffdd54c848" title="MOM_grid_init initializes the ocean grid array sizes and grid memory. " alt="" coords="165,56,308,83"/>
+<area shape="rect" id="node3" href="$d6/d48/MOM__sum__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="386,5,461,32"/>
+<area shape="rect" id="node4" href="$da/d01/namespacemom.html#afebdc0103ad9cbe0ed4a54e522dc4104" title="This subroutine initializes MOM. " alt="" coords="364,56,483,83"/>
+<area shape="rect" id="node6" href="$df/da2/namespacemom__ice__shelf.html#ae315e8464ef8a20062e3bccb61886755" title="mom_ice_shelf::initialize\l_ice_shelf" alt="" coords="356,107,491,149"/>
+<area shape="rect" id="node5" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="539,60,613,87"/>
+<area shape="rect" id="node7" href="$d5/d6d/ice__shelf__driver_8F90.html#aec5bef92f0dad343f545cd8d62e378d8" title="shelf_main" alt="" coords="539,115,613,141"/>
+</map>

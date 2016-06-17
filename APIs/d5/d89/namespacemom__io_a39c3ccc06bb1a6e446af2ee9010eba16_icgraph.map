@@ -1,0 +1,25 @@
+<map id="mom_io::var_desc" name="mom_io::var_desc">
+<area shape="rect" id="node2" href="$d8/df3/namespacemom__diabatic__driver.html#afa0b30bd6f0e080bcacbd6dcb15ff990" title="This routine initializes the diabatic driver module. " alt="" coords="185,5,306,47"/>
+<area shape="rect" id="node3" href="$da/d01/namespacemom.html#a0dd32ae97ee7dd3cbb8e14e4cf11f191" title="This subroutine finishes initializing MOM and writes out the initial conditions. " alt="" coords="163,71,328,98"/>
+<area shape="rect" id="node6" href="$da/d01/namespacemom.html#afebdc0103ad9cbe0ed4a54e522dc4104" title="This subroutine initializes MOM. " alt="" coords="583,390,701,417"/>
+<area shape="rect" id="node7" href="$df/d46/namespacemom__meke.html#a1900316331157e48f1a6029bac63fbd0" title="Allocates memory and register restart fields for the MOM_MEKE module. " alt="" coords="387,183,524,224"/>
+<area shape="rect" id="node8" href="$d4/de7/namespacemom__mixed__layer__restrat.html#aea597553dfa98cc7c972784f476ad3fc" title="Allocate and regsiter fields in the mixedlayer restratification structure for restarts. " alt="" coords="376,257,535,313"/>
+<area shape="rect" id="node9" href="$d8/dc2/namespaceadvection__test__tracer.html#a6cc3e00a5d5cb9e31339c784eb966c91" title="advection_test_tracer\l::register_advection\l_test_tracer" alt="" coords="183,275,307,331"/>
+<area shape="rect" id="node10" href="$d5/d7c/namespacemom__barotropic.html#a28fa2e7600a471735c3b827ac08ed94b" title="mom_barotropic::register\l_barotropic_restarts" alt="" coords="174,355,317,396"/>
+<area shape="rect" id="node11" href="$d1/dc3/namespacemom__dynamics__split__rk2.html#a9f889b82fd5ed29a854da99d3c929366" title="This subroutine sets up any auxiliary restart variables that are specific to the unsplit time steppin..." alt="" coords="392,377,519,433"/>
+<area shape="rect" id="node12" href="$dd/dd1/namespacemom__controlled__forcing.html#a8bfffde62f6a555439eba94884a1fc2e" title="This subroutine is used to allocate and register any fields in this module that should be written to ..." alt="" coords="177,471,313,527"/>
+<area shape="rect" id="node13" href="$da/d01/namespacemom.html#a86a5617dd90efc4f487373d485f670f0" title="Initialize diagnostics for the variance decay of temp/salt across regridding/remapping. " alt="" coords="396,500,515,541"/>
+<area shape="rect" id="node14" href="$d2/d4c/namespacedome__tracer.html#a2a6918ef09b8674c6ad56f80dfc370ff" title="dome_tracer::register\l_dome_tracer" alt="" coords="183,603,308,644"/>
+<area shape="rect" id="node15" href="$de/def/namespaceregional__dyes.html#af9da6e5dbe58dedce4ede6f0533fe702" title="regional_dyes::register\l_dye_tracer" alt="" coords="180,668,311,709"/>
+<area shape="rect" id="node16" href="$d6/dcd/namespaceideal__age__example.html#a58d550a02148b87b1d1ce979fcaf6c00" title="ideal_age_example::\lregister_ideal_age_tracer" alt="" coords="173,733,317,775"/>
+<area shape="rect" id="node17" href="$d6/dd2/namespacemom__ocmip2__cfc.html#ac04494ce35222c8583a7ee7589e1cf13" title="mom_ocmip2_cfc::register\l_ocmip2_cfc" alt="" coords="172,799,319,840"/>
+<area shape="rect" id="node18" href="$de/d98/namespaceoil__tracer.html#ae9bef348e3fea3af157e841a0c9f6aeb" title="oil_tracer::register\l_oil_tracer" alt="" coords="191,864,299,905"/>
+<area shape="rect" id="node19" href="$db/dd4/namespacemom__dynamics__legacy__split.html#a6bbc5bdfa5c9906b19339c12dc971551" title="mom_dynamics_legacy\l_split::register_restarts\l_dyn_legacy_split" alt="" coords="179,929,311,985"/>
+<area shape="rect" id="node20" href="$da/d01/namespacemom.html#aab33a9c6ab1106414d95ecdd17da5a06" title="Set the fields that are needed for bitwise identical restarting the time stepping scheme..." alt="" coords="389,783,522,810"/>
+<area shape="rect" id="node21" href="$d6/d5d/namespacemom__set__visc.html#ae2d9d9f74c1e9aec56257cfad372b0fd" title="mom_set_visc::set_visc\l_register_restarts" alt="" coords="389,943,521,984"/>
+<area shape="rect" id="node22" href="$df/db5/namespaceuser__tracer__example.html#a71efc349b3fbeb6f4cb2155de1f8bbe5" title="user_tracer_example\l::user_register_tracer\l_example" alt="" coords="183,1110,308,1166"/>
+<area shape="rect" id="node23" href="$de/d88/namespacemom__coord__initialization.html#a45fb62504679264febbaa0617332ecc1" title="mom_coord_initialization\l::write_vertgrid_file" alt="" coords="176,1189,315,1231"/>
+<area shape="rect" id="node4" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="749,142,824,169"/>
+<area shape="rect" id="node5" href="$d5/dd4/namespaceocean__model__mod.html#ac9dc1795fc4799d6682f462857b42d62" title="ocean_model_mod::update\l_ocean_model" alt="" coords="379,60,531,101"/>
+<area shape="rect" id="node24" href="$de/d88/namespacemom__coord__initialization.html#a6e2f4c11bc99476ea9c64a9aceac3b81" title="MOM_initialize_coord sets up time&#45;invariant quantities related to MOM6&#39;s vertical coordinate..." alt="" coords="386,1099,525,1140"/>
+</map>

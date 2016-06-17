@@ -1,0 +1,4 @@
+<map id="mom_ale::dz_function1" name="mom_ale::dz_function1">
+<area shape="rect" id="node2" href="$d7/d73/namespacemom__ale.html#acb67ef912ee001b72fa9ed5d6c79cabe" title="Initialize regridding module. " alt="" coords="185,5,339,32"/>
+<area shape="rect" id="node3" href="$d7/d73/namespacemom__ale.html#a58d4b7c32f779beec0086caeb802d492" title="This routine is typically called (from initialize_MOM in file MOM.F90) before the main time integrati..." alt="" coords="387,5,492,32"/>
+</map>

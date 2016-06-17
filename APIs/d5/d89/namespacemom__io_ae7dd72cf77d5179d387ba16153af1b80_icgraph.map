@@ -1,0 +1,27 @@
+<map id="mom_io::slasher" name="mom_io::slasher">
+<area shape="rect" id="node2" href="$d7/d73/namespacemom__ale.html#acb67ef912ee001b72fa9ed5d6c79cabe" title="Initialize regridding module. " alt="" coords="169,5,323,32"/>
+<area shape="rect" id="node4" href="$d9/d06/namespacemom__diag__mediator.html#a82b75cdeb5fecf15d809f97ae302b11e" title="mom_diag_mediator::\ldiag_mediator_init" alt="" coords="183,57,309,98"/>
+<area shape="rect" id="node5" href="$de/d5f/namespacemom__geothermal.html#a0abbb7953860e3357bbd3d35f46fd851" title="mom_geothermal::geothermal_init" alt="" coords="153,123,339,149"/>
+<area shape="rect" id="node7" href="$d9/d5a/namespacemom__ice__shelf__initialize.html#aeecfae4afdadf83fcaf1cc582bdaeed7" title="mom_ice_shelf_initialize\l::initialize_ice_thickness\l_from_file" alt="" coords="179,173,313,229"/>
+<area shape="rect" id="node12" href="$d0/d77/namespacemom__int__tide__input.html#a29a707637da633ccee155b53557b5f17" title="mom_int_tide_input\l::int_tide_input_init" alt="" coords="189,253,303,294"/>
+<area shape="rect" id="node13" href="$d6/df9/namespacemeso__surface__forcing.html#a4abcd61c512afc5f57bc846bad619e78" title="meso_surface_forcing\l::meso_surface_forcing_init" alt="" coords="170,318,322,359"/>
+<area shape="rect" id="node14" href="$d0/dbf/namespacemom__diag__to__z.html#a3c7cfe08d47c201f7695307f63e8aa61" title="mom_diag_to_z::mom\l_diag_to_z_init" alt="" coords="182,383,310,425"/>
+<area shape="rect" id="node15" href="$d8/dc2/namespaceadvection__test__tracer.html#a6cc3e00a5d5cb9e31339c784eb966c91" title="advection_test_tracer\l::register_advection\l_test_tracer" alt="" coords="184,448,308,504"/>
+<area shape="rect" id="node16" href="$d2/d4c/namespacedome__tracer.html#a2a6918ef09b8674c6ad56f80dfc370ff" title="dome_tracer::register\l_dome_tracer" alt="" coords="183,527,309,569"/>
+<area shape="rect" id="node17" href="$d6/dcd/namespaceideal__age__example.html#a58d550a02148b87b1d1ce979fcaf6c00" title="ideal_age_example::\lregister_ideal_age_tracer" alt="" coords="174,593,318,634"/>
+<area shape="rect" id="node18" href="$d6/dd2/namespacemom__ocmip2__cfc.html#ac04494ce35222c8583a7ee7589e1cf13" title="mom_ocmip2_cfc::register\l_ocmip2_cfc" alt="" coords="173,658,319,699"/>
+<area shape="rect" id="node19" href="$de/d98/namespaceoil__tracer.html#ae9bef348e3fea3af157e841a0c9f6aeb" title="oil_tracer::register\l_oil_tracer" alt="" coords="192,723,300,765"/>
+<area shape="rect" id="node20" href="$d9/d06/namespacemom__diag__mediator.html#a4d8d23e602166167b393e19453ded5bf" title="Sets up diagnostics axes. " alt="" coords="393,779,519,821"/>
+<area shape="rect" id="node22" href="$de/d88/namespacemom__coord__initialization.html#a8db4253bf3b8ce75334db0c010ba570a" title="mom_coord_initialization\l::set_coord_from_file" alt="" coords="177,841,315,882"/>
+<area shape="rect" id="node24" href="$de/d88/namespacemom__coord__initialization.html#a47eea61df5d0ea7f91d52dd17e6532e0" title="mom_coord_initialization\l::set_coord_from_ts_profile" alt="" coords="170,906,322,947"/>
+<area shape="rect" id="node25" href="$dc/ded/namespacemom__surface__forcing.html#ad01961191fdfc928f233901e285f4beb" title="mom_surface_forcing\l::surface_forcing_init" alt="" coords="183,971,309,1013"/>
+<area shape="rect" id="node26" href="$df/db5/namespaceuser__tracer__example.html#a71efc349b3fbeb6f4cb2155de1f8bbe5" title="user_tracer_example\l::user_register_tracer\l_example" alt="" coords="183,1036,309,1092"/>
+<area shape="rect" id="node3" href="$d7/d73/namespacemom__ale.html#a58d4b7c32f779beec0086caeb802d492" title="This routine is typically called (from initialize_MOM in file MOM.F90) before the main time integrati..." alt="" coords="403,5,509,32"/>
+<area shape="rect" id="node6" href="$d8/df3/namespacemom__diabatic__driver.html#afa0b30bd6f0e080bcacbd6dcb15ff990" title="This routine initializes the diabatic driver module. " alt="" coords="395,115,517,157"/>
+<area shape="rect" id="node8" href="$d9/d5a/namespacemom__ice__shelf__initialize.html#ab040ec0f7f05b8b398ef9ae1cce704f9" title="mom_ice_shelf_initialize\l::initialize_ice_thickness" alt="" coords="389,449,523,490"/>
+<area shape="rect" id="node9" href="$df/da2/namespacemom__ice__shelf.html#ae315e8464ef8a20062e3bccb61886755" title="mom_ice_shelf::initialize\l_ice_shelf" alt="" coords="573,585,708,626"/>
+<area shape="rect" id="node10" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="756,715,831,741"/>
+<area shape="rect" id="node11" href="$d5/d6d/ice__shelf__driver_8F90.html#aec5bef92f0dad343f545cd8d62e378d8" title="shelf_main" alt="" coords="757,592,830,619"/>
+<area shape="rect" id="node21" href="$da/d01/namespacemom.html#afebdc0103ad9cbe0ed4a54e522dc4104" title="This subroutine initializes MOM. " alt="" coords="581,787,700,813"/>
+<area shape="rect" id="node23" href="$de/d88/namespacemom__coord__initialization.html#a6e2f4c11bc99476ea9c64a9aceac3b81" title="MOM_initialize_coord sets up time&#45;invariant quantities related to MOM6&#39;s vertical coordinate..." alt="" coords="387,845,525,886"/>
+</map>

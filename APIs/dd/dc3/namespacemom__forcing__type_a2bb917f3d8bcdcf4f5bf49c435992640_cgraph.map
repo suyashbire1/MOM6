@@ -1,0 +1,10 @@
+<map id="mom_forcing_type::calculatebuoyancyflux1d" name="mom_forcing_type::calculatebuoyancyflux1d">
+<area shape="rect" id="node2" href="$d1/d01/namespacemom__eos.html#a204529f8434a0322314e6ce2a9762436" title="Calls the appropriate subroutine to calculate density derivatives for 1&#45;D array inputs. " alt="" coords="319,136,435,177"/>
+<area shape="rect" id="node8" href="$dd/dc3/namespacemom__forcing__type.html#ab67e7c2e99099bcf22d12885f349e1e4" title="This subroutine extracts fluxes from the surface fluxes type. It works on a j&#45;row for optimization pu..." alt="" coords="284,205,471,231"/>
+<area shape="rect" id="node9" href="$d8/daf/namespacemom__shortwave__abs.html#a8a1184c3f836d0900dfd5fa587cfb879" title="mom_shortwave_abs::\lsumswoverbands" alt="" coords="312,256,443,297"/>
+<area shape="rect" id="node3" href="$d5/de6/namespacemom__eos__linear.html#a73d8a625582247379092adf1aeeb55e0" title="mom_eos_linear::calculate\l_density_derivs_linear" alt="" coords="523,5,671,47"/>
+<area shape="rect" id="node4" href="$dd/d6b/namespacemom__eos__unesco.html#af8666837abadea54c016bf59838f96cc" title="mom_eos_unesco::calculate\l_density_derivs_unesco" alt="" coords="519,71,675,112"/>
+<area shape="rect" id="node5" href="$de/d76/namespacemom__eos__wright.html#ad7748e85ddacb33ad90ec3a9017e6e72" title="mom_eos_wright::calculate\l_density_derivs_wright" alt="" coords="521,136,672,177"/>
+<area shape="rect" id="node6" href="$d0/de6/namespacemom__error__handler.html#a460cfb79a06c29fc249952c2a3710d67" title="mom_error_handler::\lmom_error" alt="" coords="535,201,659,243"/>
+<area shape="rect" id="node7" href="$d0/de6/namespacemom__error__handler.html#ad5f00a53059c72fe2332d1436c80ca71" title="mom_error_handler::\lis_root_pe" alt="" coords="723,201,847,243"/>
+</map>

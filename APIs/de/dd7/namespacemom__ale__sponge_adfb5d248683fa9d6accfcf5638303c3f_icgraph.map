@@ -1,0 +1,6 @@
+<map id="mom_ale_sponge::set_up_ale_sponge_field" name="mom_ale_sponge::set_up_ale_sponge_field">
+<area shape="rect" id="node2" href="$da/d77/namespacedome2d__initialization.html#ab0df2b602fe1c83baa66ba03cc2c6dd4" title="Set up sponges in 2d DOME configuration. " alt="" coords="180,5,335,47"/>
+<area shape="rect" id="node3" href="$d6/d62/namespacemom__state__initialization.html#af4e854627c6572332ba3fd895f169321" title="mom_state_initialization\l::mom_initialize_state" alt="" coords="383,5,517,47"/>
+<area shape="rect" id="node4" href="$da/d01/namespacemom.html#afebdc0103ad9cbe0ed4a54e522dc4104" title="This subroutine initializes MOM. " alt="" coords="565,13,684,39"/>
+<area shape="rect" id="node5" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="732,13,807,39"/>
+</map>

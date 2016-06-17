@@ -1,0 +1,5 @@
+<map id="mom_ale::ale_writecoordinatefile" name="mom_ale::ale_writecoordinatefile">
+<area shape="rect" id="node2" href="$d5/d89/namespacemom__io.html#a1e3b3bd31aa3df3bff64db04c1e9f512" title="Routine creates a new NetCDF file. It also sets up structures that describe this file and variables t..." alt="" coords="232,13,347,39"/>
+<area shape="rect" id="node3" href="$d0/de6/namespacemom__error__handler.html#a460cfb79a06c29fc249952c2a3710d67" title="mom_error_handler::\lmom_error" alt="" coords="395,5,519,47"/>
+<area shape="rect" id="node4" href="$d0/de6/namespacemom__error__handler.html#ad5f00a53059c72fe2332d1436c80ca71" title="mom_error_handler::\lis_root_pe" alt="" coords="567,5,691,47"/>
+</map>

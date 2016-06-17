@@ -1,0 +1,8 @@
+<map id="mom_grid_initialize::set_grid_metrics" name="mom_grid_initialize::set_grid_metrics">
+<area shape="rect" id="node2" href="$df/da2/namespacemom__ice__shelf.html#ae315e8464ef8a20062e3bccb61886755" title="mom_ice_shelf::initialize\l_ice_shelf" alt="" coords="165,34,300,75"/>
+<area shape="rect" id="node5" href="$d3/da8/namespacemom__fixed__initialization.html#adce0d050de4be34a2dc4fa39b49b8c27" title="MOM_initialize_fixed sets up time&#45;invariant quantities related to MOM6&#39;s horizontal grid..." alt="" coords="166,99,299,141"/>
+<area shape="rect" id="node7" href="$d6/d48/MOM__sum__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="195,165,270,192"/>
+<area shape="rect" id="node3" href="$d5/d6d/ice__shelf__driver_8F90.html#aec5bef92f0dad343f545cd8d62e378d8" title="shelf_main" alt="" coords="371,5,444,32"/>
+<area shape="rect" id="node4" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="515,81,589,108"/>
+<area shape="rect" id="node6" href="$da/d01/namespacemom.html#afebdc0103ad9cbe0ed4a54e522dc4104" title="This subroutine initializes MOM. " alt="" coords="348,107,467,133"/>
+</map>

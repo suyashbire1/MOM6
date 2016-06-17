@@ -1,0 +1,5 @@
+<map id="mom_shortwave_abs::sumswoverbands" name="mom_shortwave_abs::sumswoverbands">
+<area shape="rect" id="node2" href="$dd/dc3/namespacemom__forcing__type.html#a2bb917f3d8bcdcf4f5bf49c435992640" title="This routine calculates surface buoyancy flux by adding up the heat, FW &amp; salt fluxes. These are actual fluxes, with units of stuff per time. Setting dt=1 in the call to extractFluxes routine allows us to get &quot;stuf per time&quot; rather than the time integrated fluxes needed in other routines that call extractFluxes. " alt="" coords="184,13,415,39"/>
+<area shape="rect" id="node3" href="$dd/dc3/namespacemom__forcing__type.html#ada776515b52ca3fa34901572cfef5858" title="Calculates surface buoyancy flux by adding up the heat, FW and salt fluxes, for 2d arrays..." alt="" coords="463,13,693,39"/>
+<area shape="rect" id="node4" href="$d8/df3/namespacemom__diabatic__driver.html#a61e57d3902367aa46aa3c2d949ee900f" title="This subroutine imposes the diapycnal mass fluxes and the accompanying diapycnal advection of momentu..." alt="" coords="741,5,863,47"/>
+</map>

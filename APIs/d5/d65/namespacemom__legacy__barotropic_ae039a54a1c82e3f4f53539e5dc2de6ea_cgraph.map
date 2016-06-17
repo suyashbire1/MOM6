@@ -1,0 +1,19 @@
+<map id="mom_legacy_barotropic::legacy_btstep" name="mom_legacy_barotropic::legacy_btstep">
+<area shape="rect" id="node2" href="$d5/d65/namespacemom__legacy__barotropic.html#a11b9afeb7e6e0775d8958639488a4456" title="mom_legacy_barotropic\l::apply_eta_obcs" alt="" coords="192,5,328,47"/>
+<area shape="rect" id="node3" href="$d5/d65/namespacemom__legacy__barotropic.html#a272a849d7cde70c0da337ad5ebdc0f62" title="mom_legacy_barotropic\l::apply_velocity_obcs" alt="" coords="192,123,328,164"/>
+<area shape="rect" id="node4" href="$d5/d65/namespacemom__legacy__barotropic.html#a6089379e215508c9dd32d0b3819dbbe7" title="mom_legacy_barotropic\l::find_uhbt" alt="" coords="379,77,515,119"/>
+<area shape="rect" id="node5" href="$d5/d65/namespacemom__legacy__barotropic.html#a381d788c4648d9b4aa94a12319623030" title="mom_legacy_barotropic\l::find_vhbt" alt="" coords="379,168,515,209"/>
+<area shape="rect" id="node6" href="$d5/d65/namespacemom__legacy__barotropic.html#aa06249abf57a70498ab07eee534e5e52" title="mom_legacy_barotropic\l::bt_cont_to_face_areas" alt="" coords="191,240,329,281"/>
+<area shape="rect" id="node7" href="$d5/d65/namespacemom__legacy__barotropic.html#ae08f338ae6066f7eb91ce45e9a0218b4" title="mom_legacy_barotropic\l::destroy_bt_obc" alt="" coords="192,305,328,347"/>
+<area shape="rect" id="node8" href="$d9/d06/namespacemom__diag__mediator.html#a91244f765f2964dfb11f8787f65042f1" title="mom_diag_mediator::\lenable_averaging" alt="" coords="197,371,323,412"/>
+<area shape="rect" id="node9" href="$d5/d65/namespacemom__legacy__barotropic.html#ab334a4e8ef23ec6d784b24b6336d22f7" title="mom_legacy_barotropic\l::find_face_areas" alt="" coords="192,436,328,477"/>
+<area shape="rect" id="node10" href="$d0/de6/namespacemom__error__handler.html#ad5f00a53059c72fe2332d1436c80ca71" title="mom_error_handler::\lis_root_pe" alt="" coords="385,553,509,595"/>
+<area shape="rect" id="node11" href="$d0/de6/namespacemom__error__handler.html#a460cfb79a06c29fc249952c2a3710d67" title="mom_error_handler::\lmom_error" alt="" coords="198,553,322,595"/>
+<area shape="rect" id="node12" href="$d0/de6/namespacemom__error__handler.html#a1c462df7b61f1296407b4af51dfeceab" title="mom_error_handler::\lmom_mesg" alt="" coords="198,619,322,660"/>
+<area shape="rect" id="node13" href="$d5/d65/namespacemom__legacy__barotropic.html#a6e0524c05da903129f241c22f666d058" title="mom_legacy_barotropic\l::set_local_bt_cont_types" alt="" coords="189,684,331,725"/>
+<area shape="rect" id="node14" href="$d5/d65/namespacemom__legacy__barotropic.html#ac501c7f590b7b9f0cedb48da7d14c0aa" title="mom_legacy_barotropic\l::swap" alt="" coords="379,731,515,772"/>
+<area shape="rect" id="node15" href="$d5/d65/namespacemom__legacy__barotropic.html#a4ec7ded997089119e526b3c0542d21bb" title="mom_legacy_barotropic\l::set_up_bt_obc" alt="" coords="192,852,328,893"/>
+<area shape="rect" id="node16" href="$d5/d65/namespacemom__legacy__barotropic.html#ad9add945a282d75804293003405f794d" title="mom_legacy_barotropic\l::uhbt_to_ubt" alt="" coords="379,805,515,847"/>
+<area shape="rect" id="node17" href="$d5/d65/namespacemom__legacy__barotropic.html#aa500b44df0ce8db775bed7840dfb436c" title="mom_legacy_barotropic\l::vhbt_to_vbt" alt="" coords="379,889,515,931"/>
+<area shape="rect" id="node18" href="$d5/daa/namespacemom__tidal__forcing.html#a0a1564c68489a35802c626a07f4629d7" title="mom_tidal_forcing::\ltidal_forcing_sensitivity" alt="" coords="195,969,325,1011"/>
+</map>

@@ -1,0 +1,31 @@
+<map id="mom_string_functions::uppercase" name="mom_string_functions::uppercase">
+<area shape="rect" id="node2" href="$dd/da4/namespacemom__continuity.html#aa08c4a80c95080ec4649e366f5bd3ae8" title="mom_continuity::continuity_init" alt="" coords="203,139,368,166"/>
+<area shape="rect" id="node7" href="$d3/db5/namespaceregrid__consts.html#a06ccba5b7b038bed853606a315df306a" title="Parse a string parameter specifying the coordinate mode and return the appropriate enumerated integer..." alt="" coords="201,310,370,337"/>
+<area shape="rect" id="node9" href="$d8/dd2/namespacemom__coriolisadv.html#ad3ce07f23ce7b484a5a9e0c0abe8b1cd" title="mom_coriolisadv::coriolisadv_init" alt="" coords="198,190,373,217"/>
+<area shape="rect" id="node10" href="$d1/d01/namespacemom__eos.html#a6686ef94d0db1f1dcfb4284ebfc2be88" title="Initializes EOS_type by allocating and reading parameters. " alt="" coords="1311,365,1421,391"/>
+<area shape="rect" id="node15" href="$d7/d1b/namespacemom__regridding.html#a44ba264b71ed6239e0016708a0f58fe9" title="Initialization of regridding. " alt="" coords="214,631,357,672"/>
+<area shape="rect" id="node16" href="$d5/dd4/namespaceocean__model__mod.html#aced9c77abd80a4a509c7cc317af707a7" title="ocean_model_mod::ocean\l_model_init" alt="" coords="211,696,359,737"/>
+<area shape="rect" id="node17" href="$d3/da8/namespacemom__fixed__initialization.html#a1b7e4bffb91cabfdf9967d5f966109fe" title="mom_fixed_initialization\l::read_face_length_list" alt="" coords="219,463,352,504"/>
+<area shape="rect" id="node18" href="$d3/da8/namespacemom__fixed__initialization.html#a5be628e8c7e0c984541895a15989b92d" title="mom_fixed_initialization\l::reset_face_lengths_list" alt="" coords="455,412,591,453"/>
+<area shape="rect" id="node20" href="$d6/d75/namespacemom__remapping.html#a41a89ac62578250500b7a450d5fdfae7" title="Changes the method of reconstruction Use this routine to parse a string parameter specifying the reco..." alt="" coords="180,529,391,555"/>
+<area shape="rect" id="node28" href="$dc/ded/namespacemom__surface__forcing.html#a20f66a7798d7d28348dac1d2c690ce99" title="mom_surface_forcing\l::wind_forcing_const" alt="" coords="223,761,348,803"/>
+<area shape="rect" id="node29" href="$dc/ded/namespacemom__surface__forcing.html#a3c2efab8f262459aa7de2c592d1a3b1e" title="mom_surface_forcing\l::wind_forcing_from_file" alt="" coords="456,576,591,617"/>
+<area shape="rect" id="node3" href="$db/dd4/namespacemom__dynamics__legacy__split.html#aef55fe2e12672940edbd2dc5d7e72fd7" title="mom_dynamics_legacy\l_split::initialize_dyn\l_legacy_split" alt="" coords="457,150,589,206"/>
+<area shape="rect" id="node4" href="$d1/dc3/namespacemom__dynamics__split__rk2.html#a3bae09afc9136333ab281704dc9d9415" title="This subroutine initializes all of the variables that are used by this dynamic core, including diagnostics and the cpu clocks. " alt="" coords="463,230,583,286"/>
+<area shape="rect" id="node5" href="$d7/d44/namespacemom__dynamics__unsplit.html#ac557a7a55605cba7a17074f6375107f6" title="mom_dynamics_unsplit\l::initialize_dyn_unsplit" alt="" coords="457,5,589,47"/>
+<area shape="rect" id="node6" href="$d7/da4/namespacemom__dynamics__unsplit__rk2.html#a7be251effa3bf4a236ea3feda6fc6d91" title="mom_dynamics_unsplit\l_rk2::initialize_dyn\l_unsplit_rk2" alt="" coords="457,70,589,126"/>
+<area shape="rect" id="node8" href="$d3/db5/namespaceregrid__consts.html#abb7bad7b33524d0373426750c48cb1c6" title="Returns a string with the coordinate units associated with the string defining the coordinate mode..." alt="" coords="439,310,608,337"/>
+<area shape="rect" id="node11" href="$df/da2/namespacemom__ice__shelf.html#ae315e8464ef8a20062e3bccb61886755" title="mom_ice_shelf::initialize\l_ice_shelf" alt="" coords="1481,371,1616,412"/>
+<area shape="rect" id="node14" href="$da/d01/namespacemom.html#afebdc0103ad9cbe0ed4a54e522dc4104" title="This subroutine initializes MOM. " alt="" coords="1489,462,1608,489"/>
+<area shape="rect" id="node12" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="1664,462,1739,489"/>
+<area shape="rect" id="node13" href="$d5/d6d/ice__shelf__driver_8F90.html#aec5bef92f0dad343f545cd8d62e378d8" title="shelf_main" alt="" coords="1665,378,1738,405"/>
+<area shape="rect" id="node19" href="$d3/da8/namespacemom__fixed__initialization.html#adce0d050de4be34a2dc4fa39b49b8c27" title="MOM_initialize_fixed sets up time&#45;invariant quantities related to MOM6&#39;s horizontal grid..." alt="" coords="662,412,795,453"/>
+<area shape="rect" id="node21" href="$d6/d75/namespacemom__remapping.html#a9e811f89c505a4416ea0eec315769801" title="Set parameters within remapping object. " alt="" coords="443,511,603,552"/>
+<area shape="rect" id="node22" href="$d6/d75/namespacemom__remapping.html#a6847e0c44ccb54fb72587677f90d95b6" title="Constructor for remapping control structure. " alt="" coords="656,511,801,552"/>
+<area shape="rect" id="node23" href="$de/dd7/namespacemom__ale__sponge.html#a135d5ca4d0dff789bc6db5ac789b4142" title="This subroutine determines the number of points which are within. " alt="" coords="874,467,1023,508"/>
+<area shape="rect" id="node26" href="$d6/d75/namespacemom__remapping.html#aad5ec4e3f91e936e34113503d05deeeb" title="Runs unit tests on remapping functions. Should only be called from a single/root thread Returns True ..." alt="" coords="849,533,1048,559"/>
+<area shape="rect" id="node24" href="$da/d77/namespacedome2d__initialization.html#ab0df2b602fe1c83baa66ba03cc2c6dd4" title="Set up sponges in 2d DOME configuration. " alt="" coords="1096,467,1251,508"/>
+<area shape="rect" id="node25" href="$d6/d62/namespacemom__state__initialization.html#af4e854627c6572332ba3fd895f169321" title="mom_state_initialization\l::mom_initialize_state" alt="" coords="1299,467,1433,508"/>
+<area shape="rect" id="node27" href="$da/d01/namespacemom.html#a6cfc2cd88d60f051fe90e68c2f16b46b" title="This s/r calls unit tests for other modules. These are NOT normally invoked and so we provide the mod..." alt="" coords="1128,533,1219,559"/>
+<area shape="rect" id="node30" href="$dc/ded/namespacemom__surface__forcing.html#ad4eeb543c0b616e42ddb7c0a37f03bf0" title="mom_surface_forcing\l::set_forcing" alt="" coords="666,576,791,617"/>
+</map>

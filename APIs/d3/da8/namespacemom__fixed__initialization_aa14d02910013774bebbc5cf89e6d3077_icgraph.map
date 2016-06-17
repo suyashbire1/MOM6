@@ -1,0 +1,8 @@
+<map id="mom_fixed_initialization::set_rotation_planetary" name="mom_fixed_initialization::set_rotation_planetary">
+<area shape="rect" id="node2" href="$d3/da8/namespacemom__fixed__initialization.html#a9442ac755a7c5ffe0415e0b021e8acbd" title="mom_fixed_initialization\l::mom_initialize_rotation" alt="" coords="188,67,324,109"/>
+<area shape="rect" id="node3" href="$df/da2/namespacemom__ice__shelf.html#ae315e8464ef8a20062e3bccb61886755" title="mom_ice_shelf::initialize\l_ice_shelf" alt="" coords="372,34,507,75"/>
+<area shape="rect" id="node6" href="$d3/da8/namespacemom__fixed__initialization.html#adce0d050de4be34a2dc4fa39b49b8c27" title="MOM_initialize_fixed sets up time&#45;invariant quantities related to MOM6&#39;s horizontal grid..." alt="" coords="373,99,506,141"/>
+<area shape="rect" id="node4" href="$d5/d6d/ice__shelf__driver_8F90.html#aec5bef92f0dad343f545cd8d62e378d8" title="shelf_main" alt="" coords="577,5,651,32"/>
+<area shape="rect" id="node5" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="721,81,796,108"/>
+<area shape="rect" id="node7" href="$da/d01/namespacemom.html#afebdc0103ad9cbe0ed4a54e522dc4104" title="This subroutine initializes MOM. " alt="" coords="555,107,673,133"/>
+</map>

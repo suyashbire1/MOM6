@@ -1,0 +1,9 @@
+<map id="mom_domains::get_domain_extent" name="mom_domains::get_domain_extent">
+<area shape="rect" id="node2" href="$d4/d1d/namespacemom__hor__index.html#a8e3912351dbf2be2659f3561de341f49" title="hor_index_init sets various index values in a hor_index_type. " alt="" coords="208,19,329,61"/>
+<area shape="rect" id="node3" href="$dc/d7f/namespacemom__grid.html#a457baf772f460da97155d6ffdd54c848" title="MOM_grid_init initializes the ocean grid array sizes and grid memory. " alt="" coords="377,56,520,83"/>
+<area shape="rect" id="node4" href="$d6/d48/MOM__sum__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="598,5,673,32"/>
+<area shape="rect" id="node5" href="$da/d01/namespacemom.html#afebdc0103ad9cbe0ed4a54e522dc4104" title="This subroutine initializes MOM. " alt="" coords="576,56,695,83"/>
+<area shape="rect" id="node7" href="$df/da2/namespacemom__ice__shelf.html#ae315e8464ef8a20062e3bccb61886755" title="mom_ice_shelf::initialize\l_ice_shelf" alt="" coords="568,107,703,149"/>
+<area shape="rect" id="node6" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="751,60,825,87"/>
+<area shape="rect" id="node8" href="$d5/d6d/ice__shelf__driver_8F90.html#aec5bef92f0dad343f545cd8d62e378d8" title="shelf_main" alt="" coords="751,115,825,141"/>
+</map>

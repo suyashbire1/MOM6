@@ -1,0 +1,4 @@
+<map id="mom_surface_forcing::wind_forcing_zero" name="mom_surface_forcing::wind_forcing_zero">
+<area shape="rect" id="node2" href="$dd/dc3/namespacemom__forcing__type.html#a765fdabc0bc35293aba97b957d579919" title="Conditionally allocate fields within the forcing type. " alt="" coords="179,5,331,47"/>
+<area shape="rect" id="node3" href="$d5/ded/MOM__forcing__type_8F90.html#aede7c3d8c91ec3e8a8a3b68824a5e9e8" title="myalloc" alt="" coords="379,13,436,39"/>
+</map>

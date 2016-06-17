@@ -1,0 +1,10 @@
+<map id="mom_grid_initialize::extrapolate_metric" name="mom_grid_initialize::extrapolate_metric">
+<area shape="rect" id="node2" href="$d5/daa/namespacemom__grid__initialize.html#a59e71c4235b01cf3ad4fb6252ef74248" title="mom_grid_initialize\l::set_grid_metrics_from\l_mosaic" alt="" coords="169,49,304,105"/>
+<area shape="rect" id="node3" href="$d5/daa/namespacemom__grid__initialize.html#a235a9712823e2f78e4958e8d681b6ba4" title="set_grid_metrics is used to set the primary values in the model&#39;s horizontal grid. The bathymetry, land&#45;sea mask and any restricted channel widths are not know yet, so these are set later. " alt="" coords="352,57,464,98"/>
+<area shape="rect" id="node4" href="$d6/d48/MOM__sum__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="542,5,617,32"/>
+<area shape="rect" id="node5" href="$df/da2/namespacemom__ice__shelf.html#ae315e8464ef8a20062e3bccb61886755" title="mom_ice_shelf::initialize\l_ice_shelf" alt="" coords="512,57,647,98"/>
+<area shape="rect" id="node8" href="$d3/da8/namespacemom__fixed__initialization.html#adce0d050de4be34a2dc4fa39b49b8c27" title="MOM_initialize_fixed sets up time&#45;invariant quantities related to MOM6&#39;s horizontal grid..." alt="" coords="513,122,646,163"/>
+<area shape="rect" id="node6" href="$d5/d6d/ice__shelf__driver_8F90.html#aec5bef92f0dad343f545cd8d62e378d8" title="shelf_main" alt="" coords="717,28,791,55"/>
+<area shape="rect" id="node7" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="861,104,936,131"/>
+<area shape="rect" id="node9" href="$da/d01/namespacemom.html#afebdc0103ad9cbe0ed4a54e522dc4104" title="This subroutine initializes MOM. " alt="" coords="695,129,813,156"/>
+</map>

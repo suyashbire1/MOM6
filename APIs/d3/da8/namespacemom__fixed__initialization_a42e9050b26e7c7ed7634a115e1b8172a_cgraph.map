@@ -1,0 +1,5 @@
+<map id="mom_fixed_initialization::set_rotation_beta_plane" name="mom_fixed_initialization::set_rotation_beta_plane">
+<area shape="rect" id="node2" href="$d0/de6/namespacemom__error__handler.html#a9cda07a87815f0e5594066162b4345c3" title="Writes a message about entering a subroutine if call tree reporting is active. " alt="" coords="196,5,320,47"/>
+<area shape="rect" id="node4" href="$d0/de6/namespacemom__error__handler.html#a88ea67781e2ed9b73ab7eac8ea5e8578" title="Writes a message about leaving a subroutine if call tree reporting is active. " alt="" coords="196,71,320,112"/>
+<area shape="rect" id="node3" href="$d0/de6/namespacemom__error__handler.html#ad5f00a53059c72fe2332d1436c80ca71" title="mom_error_handler::\lis_root_pe" alt="" coords="368,39,492,80"/>
+</map>

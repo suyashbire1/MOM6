@@ -1,0 +1,12 @@
+<map id="mom_internal_tides::propagate" name="mom_internal_tides::propagate">
+<area shape="rect" id="node2" href="$d6/d34/namespacemom__internal__tides.html#a66c9354cfdcde3d06a2ebe8775572d23" title="mom_internal_tides\l::propagate_corner_spread" alt="" coords="168,71,321,112"/>
+<area shape="rect" id="node3" href="$d6/d34/namespacemom__internal__tides.html#a487e6cad7cea4c5095f198c236628d6d" title="mom_internal_tides\l::propagate_x" alt="" coords="187,136,302,177"/>
+<area shape="rect" id="node9" href="$d6/d34/namespacemom__internal__tides.html#a5f63667c6d87b8ae6d51076ea2942aca" title="mom_internal_tides\l::propagate_y" alt="" coords="187,201,302,243"/>
+<area shape="rect" id="node4" href="$d6/d34/namespacemom__internal__tides.html#afa863318cc960c0be08672731ce6f225" title="mom_internal_tides\l::ppm_reconstruction_x" alt="" coords="369,5,503,47"/>
+<area shape="rect" id="node6" href="$d6/d34/namespacemom__internal__tides.html#a11b6fedbef7fd03428f8dfc404252792" title="mom_internal_tides\l::zonal_flux_en" alt="" coords="379,71,493,112"/>
+<area shape="rect" id="node7" href="$d6/d34/namespacemom__internal__tides.html#a6c622bfe3863b8fcea98c78104477491" title="mom_internal_tides\l::reflect" alt="" coords="379,136,493,177"/>
+<area shape="rect" id="node8" href="$d6/d34/namespacemom__internal__tides.html#a0a20d26531e245a26385d1c056b6a5b6" title="mom_internal_tides\l::teleport" alt="" coords="379,201,493,243"/>
+<area shape="rect" id="node5" href="$d6/d34/namespacemom__internal__tides.html#a16dd5b071e0fc87eb04c32f602c08aa5" title="mom_internal_tides\l::ppm_limit_pos" alt="" coords="551,136,665,177"/>
+<area shape="rect" id="node10" href="$d6/d34/namespacemom__internal__tides.html#a6c3dc6d74dfd6e5b13d5f710899be278" title="mom_internal_tides\l::ppm_reconstruction_y" alt="" coords="369,267,503,308"/>
+<area shape="rect" id="node11" href="$d6/d34/namespacemom__internal__tides.html#a08d375b914ce03bed1b317c9b7371f77" title="mom_internal_tides\l::merid_flux_en" alt="" coords="379,332,493,373"/>
+</map>

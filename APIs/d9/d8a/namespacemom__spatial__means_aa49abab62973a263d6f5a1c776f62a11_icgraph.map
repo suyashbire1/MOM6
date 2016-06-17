@@ -1,0 +1,7 @@
+<map id="mom_spatial_means::global_area_mean" name="mom_spatial_means::global_area_mean">
+<area shape="rect" id="node2" href="$d9/d8b/namespacemom__diagnostics.html#abb6644248c28ab2e952361bfec436063" title="mom_diagnostics::calculate\l_diagnostic_fields" alt="" coords="180,5,331,47"/>
+<area shape="rect" id="node3" href="$dd/dc3/namespacemom__forcing__type.html#aa685fdcd5863af264335aa60b5b4c210" title="Offer buoyancy forcing fields for diagnostics for those fields registered as part of register_forcing..." alt="" coords="181,123,329,164"/>
+<area shape="rect" id="node6" href="$da/d01/namespacemom.html#a4c8332b095c6d295084089aa6b3b678a" title="This subroutine orchestrates the time stepping of MOM. The adiabatic dynamics are stepped by calls to..." alt="" coords="204,71,307,98"/>
+<area shape="rect" id="node4" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="417,71,492,98"/>
+<area shape="rect" id="node5" href="$d5/dd4/namespaceocean__model__mod.html#ac9dc1795fc4799d6682f462857b42d62" title="ocean_model_mod::update\l_ocean_model" alt="" coords="379,123,531,164"/>
+</map>

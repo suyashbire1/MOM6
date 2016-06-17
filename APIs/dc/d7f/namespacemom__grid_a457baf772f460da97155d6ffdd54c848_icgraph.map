@@ -1,0 +1,7 @@
+<map id="mom_grid::mom_grid_init" name="mom_grid::mom_grid_init">
+<area shape="rect" id="node2" href="$df/da2/namespacemom__ice__shelf.html#ae315e8464ef8a20062e3bccb61886755" title="mom_ice_shelf::initialize\l_ice_shelf" alt="" coords="196,5,331,47"/>
+<area shape="rect" id="node5" href="$da/d01/namespacemom.html#afebdc0103ad9cbe0ed4a54e522dc4104" title="This subroutine initializes MOM. " alt="" coords="204,71,323,98"/>
+<area shape="rect" id="node6" href="$d6/d48/MOM__sum__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="226,122,301,149"/>
+<area shape="rect" id="node3" href="$d5/d6d/ice__shelf__driver_8F90.html#aec5bef92f0dad343f545cd8d62e378d8" title="shelf_main" alt="" coords="379,13,453,39"/>
+<area shape="rect" id="node4" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="379,67,453,94"/>
+</map>

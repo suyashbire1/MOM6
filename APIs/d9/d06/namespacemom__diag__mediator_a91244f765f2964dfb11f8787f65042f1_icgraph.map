@@ -1,0 +1,8 @@
+<map id="mom_diag_mediator::enable_averaging" name="mom_diag_mediator::enable_averaging">
+<area shape="rect" id="node2" href="$d5/d7c/namespacemom__barotropic.html#a98cdf3c559146cc9485fcb9daa4cdbca" title="mom_barotropic::btstep" alt="" coords="181,5,315,32"/>
+<area shape="rect" id="node3" href="$d5/d65/namespacemom__legacy__barotropic.html#ae039a54a1c82e3f4f53539e5dc2de6ea" title="mom_legacy_barotropic\l::legacy_btstep" alt="" coords="180,57,316,98"/>
+<area shape="rect" id="node4" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="364,152,439,179"/>
+<area shape="rect" id="node5" href="$df/da2/namespacemom__ice__shelf.html#a3b0e0cc9f36c5197236cc05867b780df" title="mom_ice_shelf::shelf\l_calc_flux" alt="" coords="187,174,309,215"/>
+<area shape="rect" id="node6" href="$d5/d6d/ice__shelf__driver_8F90.html#aec5bef92f0dad343f545cd8d62e378d8" title="shelf_main" alt="" coords="365,269,438,296"/>
+<area shape="rect" id="node7" href="$df/da2/namespacemom__ice__shelf.html#ac084bdc5be4e708e3263488e9574a3c9" title="mom_ice_shelf::solo\l_time_step" alt="" coords="189,291,307,333"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="mom_coord_initialization::set_coord_from_file" name="mom_coord_initialization::set_coord_from_file">
+<area shape="rect" id="node2" href="$d0/de6/namespacemom__error__handler.html#a9cda07a87815f0e5594066162b4345c3" title="Writes a message about entering a subroutine if call tree reporting is active. " alt="" coords="364,5,488,47"/>
+<area shape="rect" id="node4" href="$d0/de6/namespacemom__error__handler.html#a88ea67781e2ed9b73ab7eac8ea5e8578" title="Writes a message about leaving a subroutine if call tree reporting is active. " alt="" coords="192,64,316,105"/>
+<area shape="rect" id="node5" href="$d5/d89/namespacemom__io.html#ae7dd72cf77d5179d387ba16153af1b80" title="Returns a directory name that is terminated with a &quot;/&quot; or &quot;./&quot; if the argument is an empty string..." alt="" coords="204,130,304,157"/>
+<area shape="rect" id="node3" href="$d0/de6/namespacemom__error__handler.html#ad5f00a53059c72fe2332d1436c80ca71" title="mom_error_handler::\lis_root_pe" alt="" coords="536,64,660,105"/>
+<area shape="rect" id="node6" href="$d0/de6/namespacemom__error__handler.html#a460cfb79a06c29fc249952c2a3710d67" title="mom_error_handler::\lmom_error" alt="" coords="364,123,488,164"/>
+</map>

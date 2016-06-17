@@ -1,0 +1,8 @@
+<map id="cvmix_kpp::cvmix_get_kpp_real" name="cvmix_kpp::cvmix_get_kpp_real">
+<area shape="rect" id="node2" href="$d1/d6c/namespacecvmix__kpp.html#a2f7bca20e57714a3170eca2fca5ca183" title="cvmix_kpp::compute\l_phi_inv" alt="" coords="198,62,317,103"/>
+<area shape="rect" id="node3" href="$d1/d6c/namespacecvmix__kpp.html#a8cc6ab3545bb014ededd63d848d3e904" title="cvmix_kpp::cvmix_kpp\l_compute_turbulent_scales\l_1d_obl" alt="" coords="385,5,537,61"/>
+<area shape="rect" id="node4" href="$d1/d6c/namespacecvmix__kpp.html#aa1355c1307f6d8ee79cf2b3f1842f6bb" title="cvmix_kpp::cvmix_kpp\l_compute_turbulent_scales\l_1d_sigma" alt="" coords="385,104,537,160"/>
+<area shape="rect" id="node5" href="$d1/d6c/namespacecvmix__kpp.html#a0f784d641b5384ed1f4c07fc119926bd" title="cvmix_kpp::cvmix_kpp\l_compute_obl_depth_low" alt="" coords="185,179,329,221"/>
+<area shape="rect" id="node6" href="$d1/d6c/namespacecvmix__kpp.html#aeaf00d8745bdd55c5a5779f9b4b9151d" title="cvmix_kpp::cvmix_kpp\l_compute_unresolved_shear" alt="" coords="177,245,337,286"/>
+<area shape="rect" id="node7" href="$d1/d6c/namespacecvmix__kpp.html#a86e5d9125812c741e58fbe227eba6aa8" title="cvmix_kpp::cvmix_kpp\l_compute_bulk_richardson" alt="" coords="386,245,537,286"/>
+</map>

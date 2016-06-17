@@ -1,0 +1,25 @@
+var structmom__variables_1_1ocean__obc__type =
+[
+    [ "apply_obc_u", "d4/d55/structmom__variables_1_1ocean__obc__type.html#a9adf9e5caa9e77f7c19d250060927a70", null ],
+    [ "apply_obc_u_flather_east", "d4/d55/structmom__variables_1_1ocean__obc__type.html#aa274b39b61c3b2925580f9653ef3c472", null ],
+    [ "apply_obc_u_flather_west", "d4/d55/structmom__variables_1_1ocean__obc__type.html#abd96ce949f750130d726efdb0b93d2a4", null ],
+    [ "apply_obc_v", "d4/d55/structmom__variables_1_1ocean__obc__type.html#ab523402663034bfc34b9292936a0b703", null ],
+    [ "apply_obc_v_flather_north", "d4/d55/structmom__variables_1_1ocean__obc__type.html#a0db946700573f15d8e9cf82e9770fbe8", null ],
+    [ "apply_obc_v_flather_south", "d4/d55/structmom__variables_1_1ocean__obc__type.html#a7982cf57ae6984fff4958228b3b9bd96", null ],
+    [ "eta_outer_u", "d4/d55/structmom__variables_1_1ocean__obc__type.html#acc9d42ec7ed3c414bfb113ecb4391cc4", null ],
+    [ "eta_outer_v", "d4/d55/structmom__variables_1_1ocean__obc__type.html#aa884cfac4a3d5445b483201f07f9234a", null ],
+    [ "obc_kind_u", "d4/d55/structmom__variables_1_1ocean__obc__type.html#a51116d37273b938e75256681064d991a", null ],
+    [ "obc_kind_v", "d4/d55/structmom__variables_1_1ocean__obc__type.html#af4a12003a5632a61129d122e2794632c", null ],
+    [ "obc_mask_u", "d4/d55/structmom__variables_1_1ocean__obc__type.html#a4bf12e926e836a55b8333d0d9a2fa7e0", null ],
+    [ "obc_mask_v", "d4/d55/structmom__variables_1_1ocean__obc__type.html#a2dd6e6898fb54377be66ff06eb85c9e5", null ],
+    [ "rx_old_h", "d4/d55/structmom__variables_1_1ocean__obc__type.html#a30d3fce7cbf629d4ac65b585f91725ca", null ],
+    [ "rx_old_u", "d4/d55/structmom__variables_1_1ocean__obc__type.html#af573da8ec07afa64881333f37c2ff6a6", null ],
+    [ "ry_old_h", "d4/d55/structmom__variables_1_1ocean__obc__type.html#a44692d98a0f17bff27c1662634913f32", null ],
+    [ "ry_old_v", "d4/d55/structmom__variables_1_1ocean__obc__type.html#a4cba487d6bed160aa066e1472a53c1ea", null ],
+    [ "u", "d4/d55/structmom__variables_1_1ocean__obc__type.html#ad985eaece5ae4db2c7ed9bedc68cda86", null ],
+    [ "ubt_outer", "d4/d55/structmom__variables_1_1ocean__obc__type.html#ab33ad1075a2fd4e8d77784151628ff01", null ],
+    [ "uh", "d4/d55/structmom__variables_1_1ocean__obc__type.html#a0c3eed8d2757411c6d5ffdc7f0f82d2b", null ],
+    [ "v", "d4/d55/structmom__variables_1_1ocean__obc__type.html#a3a75e3120efffe23d72e7ef0d1b945f4", null ],
+    [ "vbt_outer", "d4/d55/structmom__variables_1_1ocean__obc__type.html#a056fdac13aec1b36e544b0f7f4855203", null ],
+    [ "vh", "d4/d55/structmom__variables_1_1ocean__obc__type.html#af15e7b0172624611bc2fa743a4499548", null ]
+];

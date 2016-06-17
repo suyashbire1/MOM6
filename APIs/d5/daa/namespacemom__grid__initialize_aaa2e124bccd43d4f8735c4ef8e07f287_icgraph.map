@@ -1,0 +1,9 @@
+<map id="mom_grid_initialize::grid_metrics_chksum" name="mom_grid_initialize::grid_metrics_chksum">
+<area shape="rect" id="node2" href="$d5/daa/namespacemom__grid__initialize.html#a235a9712823e2f78e4958e8d681b6ba4" title="set_grid_metrics is used to set the primary values in the model&#39;s horizontal grid. The bathymetry, land&#45;sea mask and any restricted channel widths are not know yet, so these are set later. " alt="" coords="181,57,293,98"/>
+<area shape="rect" id="node3" href="$d6/d48/MOM__sum__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="371,5,446,32"/>
+<area shape="rect" id="node4" href="$df/da2/namespacemom__ice__shelf.html#ae315e8464ef8a20062e3bccb61886755" title="mom_ice_shelf::initialize\l_ice_shelf" alt="" coords="341,57,476,98"/>
+<area shape="rect" id="node7" href="$d3/da8/namespacemom__fixed__initialization.html#adce0d050de4be34a2dc4fa39b49b8c27" title="MOM_initialize_fixed sets up time&#45;invariant quantities related to MOM6&#39;s horizontal grid..." alt="" coords="342,122,475,163"/>
+<area shape="rect" id="node5" href="$d5/d6d/ice__shelf__driver_8F90.html#aec5bef92f0dad343f545cd8d62e378d8" title="shelf_main" alt="" coords="547,28,620,55"/>
+<area shape="rect" id="node6" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="691,104,765,131"/>
+<area shape="rect" id="node8" href="$da/d01/namespacemom.html#afebdc0103ad9cbe0ed4a54e522dc4104" title="This subroutine initializes MOM. " alt="" coords="524,129,643,156"/>
+</map>

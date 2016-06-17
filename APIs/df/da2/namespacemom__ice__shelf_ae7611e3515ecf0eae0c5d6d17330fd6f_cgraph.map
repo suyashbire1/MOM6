@@ -1,0 +1,21 @@
+<map id="mom_ice_shelf::initialize_diagnostic_fields" name="mom_ice_shelf::initialize_diagnostic_fields">
+<area shape="rect" id="node2" href="$df/da2/namespacemom__ice__shelf.html#a5d64b696412c0bfd8ded2e2eacaa917c" title="mom_ice_shelf::ice\l_shelf_solve_outer" alt="" coords="188,417,300,459"/>
+<area shape="rect" id="node3" href="$df/da2/namespacemom__ice__shelf.html#a5d534895698ad80a68be9a1b992c4d0b" title="mom_ice_shelf::apply\l_boundary_values_bilinear" alt="" coords="547,257,696,299"/>
+<area shape="rect" id="node4" href="$df/da2/namespacemom__ice__shelf.html#a9f77faf4c64078c8bce0546bb024f34e" title="mom_ice_shelf::bilinear\l_shape_functions" alt="" coords="757,160,890,201"/>
+<area shape="rect" id="node7" href="$df/da2/namespacemom__ice__shelf.html#a6d1174213d77aef09d2eaae2fd138edd" title="mom_ice_shelf::apply\l_boundary_values_triangle" alt="" coords="546,61,697,103"/>
+<area shape="rect" id="node8" href="$df/da2/namespacemom__ice__shelf.html#a4714299e786f7e62fa2c82916dac2316" title="mom_ice_shelf::bilinear\l_shape_functions_subgrid" alt="" coords="349,417,496,459"/>
+<area shape="rect" id="node9" href="$df/da2/namespacemom__ice__shelf.html#a9ccd473e87beaec693c8d90e7d68ed8f" title="mom_ice_shelf::calc\l_shelf_driving_stress" alt="" coords="362,483,483,524"/>
+<area shape="rect" id="node10" href="$df/da2/namespacemom__ice__shelf.html#a55464f46b7f452abe25f8dde166cee51" title="mom_ice_shelf::savearray2" alt="" coords="545,519,697,546"/>
+<area shape="rect" id="node11" href="$df/da2/namespacemom__ice__shelf.html#ac7bf50703bb671dbde1016061a04e3c9" title="mom_ice_shelf::calc\l_shelf_visc_bilinear" alt="" coords="364,600,481,641"/>
+<area shape="rect" id="node12" href="$df/da2/namespacemom__ice__shelf.html#a69286817781f164a0af096b050e3ccc4" title="mom_ice_shelf::calc\l_shelf_visc_triangular" alt="" coords="361,665,485,707"/>
+<area shape="rect" id="node13" href="$df/da2/namespacemom__ice__shelf.html#a08bef308dd58f20b81330c5706f71e1f" title="mom_ice_shelf::cg_action\l_bilinear" alt="" coords="549,323,693,364"/>
+<area shape="rect" id="node14" href="$df/da2/namespacemom__ice__shelf.html#a0ad3713e3c3ee71d987d6cd82c45181e" title="mom_ice_shelf::cg_action\l_triangular" alt="" coords="549,388,693,429"/>
+<area shape="rect" id="node15" href="$df/da2/namespacemom__ice__shelf.html#a95d21b019a635ad3a8ef060d765362e1" title="mom_ice_shelf::ice\l_shelf_solve_inner" alt="" coords="367,199,479,240"/>
+<area shape="rect" id="node19" href="$df/da2/namespacemom__ice__shelf.html#a8fc399c376152f2d639b506ff8a7ee24" title="mom_ice_shelf::interpolate\l_h_to_b" alt="" coords="348,731,497,772"/>
+<area shape="rect" id="node20" href="$d0/de6/namespacemom__error__handler.html#ad5f00a53059c72fe2332d1436c80ca71" title="mom_error_handler::\lis_root_pe" alt="" coords="361,796,485,837"/>
+<area shape="rect" id="node6" href="$df/da2/namespacemom__ice__shelf.html#a925d19b978b5368c3b0d5cae3b542bfe" title="mom_ice_shelf::cg_action\l_subgrid_basal_bilinear" alt="" coords="751,291,895,332"/>
+<area shape="rect" id="node5" href="$df/da2/namespacemom__ice__shelf.html#a43bcb4adfaabc54cd57ad8d96b71c224" title="mom_ice_shelf::quad_area" alt="" coords="949,167,1100,194"/>
+<area shape="rect" id="node16" href="$df/da2/namespacemom__ice__shelf.html#a0fa0e5e0225816e5e5e87994371f11f1" title="mom_ice_shelf::matrix\l_diagonal_bilinear" alt="" coords="557,127,685,168"/>
+<area shape="rect" id="node18" href="$df/da2/namespacemom__ice__shelf.html#abc77d7c18a2919c9308c39aa26f916bf" title="mom_ice_shelf::matrix\l_diagonal_triangle" alt="" coords="557,192,685,233"/>
+<area shape="rect" id="node17" href="$df/da2/namespacemom__ice__shelf.html#af109d5577049ff4ded3b07d5ab25a771" title="mom_ice_shelf::cg_diagonal\l_subgrid_basal_bilinear" alt="" coords="745,95,901,136"/>
+</map>

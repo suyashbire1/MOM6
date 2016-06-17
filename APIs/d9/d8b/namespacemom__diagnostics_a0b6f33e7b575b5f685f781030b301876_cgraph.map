@@ -1,0 +1,8 @@
+<map id="mom_diagnostics::calculate_vertical_integrals" name="mom_diagnostics::calculate_vertical_integrals">
+<area shape="rect" id="node2" href="$d1/d01/namespacemom__eos.html#a1def0e6b257a12105457a50c92da2487" title="This subroutine calculates analytical and nearly&#45;analytical integrals of pressure anomalies across la..." alt="" coords="204,111,347,138"/>
+<area shape="rect" id="node3" href="$d0/de6/namespacemom__error__handler.html#a460cfb79a06c29fc249952c2a3710d67" title="mom_error_handler::\lmom_error" alt="" coords="395,5,519,47"/>
+<area shape="rect" id="node5" href="$d1/d01/namespacemom__eos.html#a9a8d9a5df8f211fbb4c22dcccc2f7916" title="mom_eos::int_density\l_dz_generic" alt="" coords="395,71,520,112"/>
+<area shape="rect" id="node6" href="$d5/de6/namespacemom__eos__linear.html#aba00b479ec037448437b55295f0a6c01" title="mom_eos_linear::int\l_density_dz_linear" alt="" coords="398,136,517,177"/>
+<area shape="rect" id="node7" href="$de/d76/namespacemom__eos__wright.html#adde51def9a4b771d7165d4d187e5dea8" title="mom_eos_wright::int\l_density_dz_wright" alt="" coords="397,201,518,243"/>
+<area shape="rect" id="node4" href="$d0/de6/namespacemom__error__handler.html#ad5f00a53059c72fe2332d1436c80ca71" title="mom_error_handler::\lis_root_pe" alt="" coords="568,5,692,47"/>
+</map>

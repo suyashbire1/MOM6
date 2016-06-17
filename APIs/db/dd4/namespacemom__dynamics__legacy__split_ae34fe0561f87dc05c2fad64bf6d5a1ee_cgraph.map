@@ -1,0 +1,26 @@
+<map id="mom_dynamics_legacy_split::step_mom_dyn_legacy_split" name="mom_dynamics_legacy_split::step_mom_dyn_legacy_split">
+<area shape="rect" id="node2" href="$dd/da4/namespacemom__continuity.html#a483dba08c6a9574d7fe814cadccd870e" title="mom_continuity::continuity" alt="" coords="403,304,549,331"/>
+<area shape="rect" id="node5" href="$d8/dd2/namespacemom__coriolisadv.html#a9786f517bb9ccf6a38e04481c2be0476" title="mom_coriolisadv::coradcalc" alt="" coords="194,56,346,83"/>
+<area shape="rect" id="node7" href="$d9/d06/namespacemom__diag__mediator.html#a67a9077037d7bf86f7415ca1ad672295" title="Build/update target vertical grids for diagnostic remapping. " alt="" coords="198,205,342,246"/>
+<area shape="rect" id="node11" href="$df/d8e/namespacemom__hor__visc.html#a9f553282bddb798335a3c7aa8f49bd76" title="mom_hor_visc::horizontal\l_viscosity" alt="" coords="199,373,341,414"/>
+<area shape="rect" id="node12" href="$d5/d65/namespacemom__legacy__barotropic.html#aaa2063f7d7fbe940bc5bd80117befaed" title="mom_legacy_barotropic\l::legacy_set_dtbt" alt="" coords="202,558,338,599"/>
+<area shape="rect" id="node15" href="$d5/dd7/namespacemom__checksum__packages.html#aa747a7aaa0315492d180b4514f5c70e0" title="mom_checksum_packages\l::mom_accel_chksum" alt="" coords="195,623,345,665"/>
+<area shape="rect" id="node16" href="$d6/d5c/namespacemom__pressureforce.html#a9f010455182eeaa61c9f01caff250bf8" title="mom_pressureforce::\lpressureforce" alt="" coords="208,689,332,730"/>
+<area shape="rect" id="node17" href="$d6/d5d/namespacemom__set__visc.html#a9e73d0338646bb91d14b78e86f6e3886" title="mom_set_visc::set_viscous_bbl" alt="" coords="185,456,355,483"/>
+<area shape="rect" id="node24" href="$d6/d5d/namespacemom__set__visc.html#afa97c345f1c4caaaf53b039d0b3fc9d8" title="mom_set_visc::set_viscous_ml" alt="" coords="187,507,353,533"/>
+<area shape="rect" id="node25" href="$d9/dcb/namespacemom__vert__friction.html#a82bae17e9c3b1a5f1eedb6c1d14c5998" title="Velocity components which exceed a threshold for physically reasonable values are truncated..." alt="" coords="213,754,327,795"/>
+<area shape="rect" id="node3" href="$d0/de6/namespacemom__error__handler.html#a460cfb79a06c29fc249952c2a3710d67" title="mom_error_handler::\lmom_error" alt="" coords="613,347,737,389"/>
+<area shape="rect" id="node4" href="$d0/de6/namespacemom__error__handler.html#ad5f00a53059c72fe2332d1436c80ca71" title="mom_error_handler::\lis_root_pe" alt="" coords="801,347,925,389"/>
+<area shape="rect" id="node6" href="$d8/dd2/namespacemom__coriolisadv.html#a539ddafe0e8150e98f69753bb84dd074" title="mom_coriolisadv::gradke" alt="" coords="406,5,546,32"/>
+<area shape="rect" id="node8" href="$d9/d06/namespacemom__diag__mediator.html#a6e11afe7a97bf8e3333d33b0aebd6f6e" title="mom_diag_mediator::\lassert" alt="" coords="413,238,539,279"/>
+<area shape="rect" id="node9" href="$d7/d1b/namespacemom__regridding.html#a1fe77f09d8e5ea5eae1a0cff087d5464" title="Builds a z* coordinate with a minimum thickness. " alt="" coords="412,107,540,149"/>
+<area shape="rect" id="node10" href="$d7/d1b/namespacemom__regridding.html#ac384596d1d07e413bbed37c71e0571e0" title="This subroutine can be used to set many of the parameters for MOM_regridding. " alt="" coords="416,173,536,214"/>
+<area shape="rect" id="node13" href="$d5/d65/namespacemom__legacy__barotropic.html#aa06249abf57a70498ab07eee534e5e52" title="mom_legacy_barotropic\l::bt_cont_to_face_areas" alt="" coords="407,674,545,715"/>
+<area shape="rect" id="node14" href="$d5/d65/namespacemom__legacy__barotropic.html#ab334a4e8ef23ec6d784b24b6336d22f7" title="mom_legacy_barotropic\l::find_face_areas" alt="" coords="408,739,544,781"/>
+<area shape="rect" id="node18" href="$d6/d5d/namespacemom__set__visc.html#a992756b5043feccdafd9580774373375" title="mom_set_visc::set_v_at_u" alt="" coords="403,507,549,533"/>
+<area shape="rect" id="node19" href="$d6/d5d/namespacemom__set__visc.html#a08eb74fc6d027dd5ac6701f90e009370" title="mom_set_visc::set_u_at_v" alt="" coords="403,456,549,483"/>
+<area shape="rect" id="node20" href="$d1/d01/namespacemom__eos.html#a204529f8434a0322314e6ce2a9762436" title="Calls the appropriate subroutine to calculate density derivatives for 1&#45;D array inputs. " alt="" coords="418,609,534,650"/>
+<area shape="rect" id="node21" href="$d5/de6/namespacemom__eos__linear.html#a73d8a625582247379092adf1aeeb55e0" title="mom_eos_linear::calculate\l_density_derivs_linear" alt="" coords="601,543,749,585"/>
+<area shape="rect" id="node22" href="$dd/d6b/namespacemom__eos__unesco.html#af8666837abadea54c016bf59838f96cc" title="mom_eos_unesco::calculate\l_density_derivs_unesco" alt="" coords="597,609,753,650"/>
+<area shape="rect" id="node23" href="$de/d76/namespacemom__eos__wright.html#ad7748e85ddacb33ad90ec3a9017e6e72" title="mom_eos_wright::calculate\l_density_derivs_wright" alt="" coords="600,674,751,715"/>
+</map>

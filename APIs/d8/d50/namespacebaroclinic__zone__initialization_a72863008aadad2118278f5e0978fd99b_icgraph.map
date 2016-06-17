@@ -1,0 +1,6 @@
+<map id="baroclinic_zone_initialization::bcz_params" name="baroclinic_zone_initialization::bcz_params">
+<area shape="rect" id="node2" href="$d8/d50/namespacebaroclinic__zone__initialization.html#a2f99c7b0ea7981ef7b2c342fbc8c00c1" title="Initialization of temperature and salinity with the baroclinic zone initial conditions. " alt="" coords="208,5,393,61"/>
+<area shape="rect" id="node3" href="$d6/d62/namespacemom__state__initialization.html#af4e854627c6572332ba3fd895f169321" title="mom_state_initialization\l::mom_initialize_state" alt="" coords="441,13,576,54"/>
+<area shape="rect" id="node4" href="$da/d01/namespacemom.html#afebdc0103ad9cbe0ed4a54e522dc4104" title="This subroutine initializes MOM. " alt="" coords="624,20,743,47"/>
+<area shape="rect" id="node5" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="791,20,865,47"/>
+</map>

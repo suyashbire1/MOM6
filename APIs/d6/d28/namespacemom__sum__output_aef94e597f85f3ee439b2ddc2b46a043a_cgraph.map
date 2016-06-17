@@ -1,0 +1,17 @@
+<map id="mom_sum_output::write_energy" name="mom_sum_output::write_energy">
+<area shape="rect" id="node2" href="$d1/d99/namespacemom__tracer__flow__control.html#afd8526344e928c8c9505c921bf37447f" title="mom_tracer_flow_control\l::call_tracer_stocks" alt="" coords="191,161,333,202"/>
+<area shape="rect" id="node3" href="$d0/de6/namespacemom__error__handler.html#a460cfb79a06c29fc249952c2a3710d67" title="mom_error_handler::\lmom_error" alt="" coords="967,329,1091,370"/>
+<area shape="rect" id="node4" href="$d0/de6/namespacemom__error__handler.html#ad5f00a53059c72fe2332d1436c80ca71" title="mom_error_handler::\lis_root_pe" alt="" coords="1139,455,1263,497"/>
+<area shape="rect" id="node12" href="$d7/d0a/namespacemom__coms.html#a4aaf51b372bcaf7b46939145577eff92" title="mom_coms::efp_to_real" alt="" coords="193,488,331,515"/>
+<area shape="rect" id="node15" href="$d7/d0a/namespacemom__coms.html#ac8f1b5be23b128cd8bb956ebda917edb" title="mom_coms::real_to_efp" alt="" coords="584,387,721,413"/>
+<area shape="rect" id="node5" href="$d1/d99/namespacemom__tracer__flow__control.html#ad43ea30fa52fcb930db39037f5d7e6b9" title="mom_tracer_flow_control\l::store_stocks" alt="" coords="581,70,724,111"/>
+<area shape="rect" id="node6" href="$d6/dcd/namespaceideal__age__example.html#a2300d82e30802a3127f4a63277d37776" title="ideal_age_example::\lideal_age_stock" alt="" coords="397,219,517,261"/>
+<area shape="rect" id="node9" href="$de/def/namespaceregional__dyes.html#a0641ff9c663bcfacdd597a79f63d15e0" title="regional_dyes::dye\l_stock" alt="" coords="402,102,513,143"/>
+<area shape="rect" id="node10" href="$de/d98/namespaceoil__tracer.html#ac8964b16549dba8fc850e4af15af8029" title="oil_tracer::oil_stock" alt="" coords="401,168,513,195"/>
+<area shape="rect" id="node11" href="$d6/dd2/namespacemom__ocmip2__cfc.html#ac3c9967ff09b37934eb5ef51535e7ee3" title="mom_ocmip2_cfc::ocmip2\l_cfc_stock" alt="" coords="385,37,530,78"/>
+<area shape="rect" id="node7" href="$d5/d89/namespacemom__io.html#a23e82d1d89d9bb1c9bdf802ce80d4508" title="This routine queries vardesc. " alt="" coords="585,227,721,253"/>
+<area shape="rect" id="node8" href="$d5/d89/namespacemom__io.html#ac4bc408e8b38dbd669842753f26ebf88" title="Copies a string. " alt="" coords="772,231,919,257"/>
+<area shape="rect" id="node13" href="$d7/d0a/namespacemom__coms.html#a24ac5b7cc37b1498f23b61eea03fb8c3" title="mom_coms::ints_to_real" alt="" coords="388,539,527,565"/>
+<area shape="rect" id="node14" href="$d7/d0a/namespacemom__coms.html#ab8feff19e782af36bb7ccccd5ba9eddc" title="mom_coms::regularize_ints" alt="" coords="381,488,533,515"/>
+<area shape="rect" id="node16" href="$d7/d0a/namespacemom__coms.html#a0cc261620495abf3313937726883b95e" title="mom_coms::real_to_ints" alt="" coords="776,387,915,413"/>
+</map>

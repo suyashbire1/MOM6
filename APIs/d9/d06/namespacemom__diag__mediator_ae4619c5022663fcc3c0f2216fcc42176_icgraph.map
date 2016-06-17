@@ -1,0 +1,8 @@
+<map id="mom_diag_mediator::register_static_field" name="mom_diag_mediator::register_static_field">
+<area shape="rect" id="node2" href="$df/d1a/namespacemom__obsolete__diagnostics.html#a137ff7cb882b715d0ccf915fef52386c" title="Fakes a register of a diagnostic to find out if an obsolete parameter appears in the diag_table..." alt="" coords="197,8,348,49"/>
+<area shape="rect" id="node6" href="$de/d5f/namespacemom__geothermal.html#a0abbb7953860e3357bbd3d35f46fd851" title="mom_geothermal::geothermal_init" alt="" coords="180,75,365,102"/>
+<area shape="rect" id="node3" href="$df/d1a/namespacemom__obsolete__diagnostics.html#ad5e890c09abd2c650beb9ac36bbb49b4" title="Scan through the diag_table searching for obsolete parameters and issue informational messages and op..." alt="" coords="413,5,581,47"/>
+<area shape="rect" id="node4" href="$da/d01/namespacemom.html#afebdc0103ad9cbe0ed4a54e522dc4104" title="This subroutine initializes MOM. " alt="" coords="629,13,748,39"/>
+<area shape="rect" id="node5" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="796,13,871,39"/>
+<area shape="rect" id="node7" href="$d8/df3/namespacemom__diabatic__driver.html#afa0b30bd6f0e080bcacbd6dcb15ff990" title="This routine initializes the diabatic driver module. " alt="" coords="437,71,558,112"/>
+</map>

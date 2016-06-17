@@ -1,0 +1,11 @@
+<map id="mom_tracer_flow_control::call_tracer_stocks" name="mom_tracer_flow_control::call_tracer_stocks">
+<area shape="rect" id="node2" href="$de/def/namespaceregional__dyes.html#a0641ff9c663bcfacdd597a79f63d15e0" title="regional_dyes::dye\l_stock" alt="" coords="213,5,324,47"/>
+<area shape="rect" id="node3" href="$d6/dcd/namespaceideal__age__example.html#a2300d82e30802a3127f4a63277d37776" title="ideal_age_example::\lideal_age_stock" alt="" coords="209,71,329,112"/>
+<area shape="rect" id="node6" href="$d0/de6/namespacemom__error__handler.html#a460cfb79a06c29fc249952c2a3710d67" title="mom_error_handler::\lmom_error" alt="" coords="775,195,899,236"/>
+<area shape="rect" id="node8" href="$d6/dd2/namespacemom__ocmip2__cfc.html#ac3c9967ff09b37934eb5ef51535e7ee3" title="mom_ocmip2_cfc::ocmip2\l_cfc_stock" alt="" coords="196,136,341,177"/>
+<area shape="rect" id="node9" href="$de/d98/namespaceoil__tracer.html#ac8964b16549dba8fc850e4af15af8029" title="oil_tracer::oil_stock" alt="" coords="213,253,325,279"/>
+<area shape="rect" id="node10" href="$d1/d99/namespacemom__tracer__flow__control.html#ad43ea30fa52fcb930db39037f5d7e6b9" title="mom_tracer_flow_control\l::store_stocks" alt="" coords="389,275,532,316"/>
+<area shape="rect" id="node4" href="$d5/d89/namespacemom__io.html#a23e82d1d89d9bb1c9bdf802ce80d4508" title="This routine queries vardesc. " alt="" coords="393,143,529,170"/>
+<area shape="rect" id="node5" href="$d5/d89/namespacemom__io.html#ac4bc408e8b38dbd669842753f26ebf88" title="Copies a string. " alt="" coords="580,147,727,174"/>
+<area shape="rect" id="node7" href="$d0/de6/namespacemom__error__handler.html#ad5f00a53059c72fe2332d1436c80ca71" title="mom_error_handler::\lis_root_pe" alt="" coords="947,195,1071,236"/>
+</map>

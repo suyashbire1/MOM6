@@ -1,0 +1,5 @@
+<map id="mom_vert_friction::vertvisc_coef" name="mom_vert_friction::vertvisc_coef">
+<area shape="rect" id="node2" href="$d9/dcb/namespacemom__vert__friction.html#a7d6a94a701085b308b349335cf3e5b06" title="Calculate the &#39;coupling coefficient&#39; (a[k]) at the interfaces. If BOTTOMDRAGLAW is defined..." alt="" coords="172,5,285,47"/>
+<area shape="rect" id="node3" href="$d0/de6/namespacemom__error__handler.html#a460cfb79a06c29fc249952c2a3710d67" title="mom_error_handler::\lmom_error" alt="" coords="167,71,291,112"/>
+<area shape="rect" id="node4" href="$d0/de6/namespacemom__error__handler.html#ad5f00a53059c72fe2332d1436c80ca71" title="mom_error_handler::\lis_root_pe" alt="" coords="339,71,463,112"/>
+</map>

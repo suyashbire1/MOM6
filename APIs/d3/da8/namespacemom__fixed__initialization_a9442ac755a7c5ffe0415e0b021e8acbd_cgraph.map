@@ -1,0 +1,7 @@
+<map id="mom_fixed_initialization::mom_initialize_rotation" name="mom_fixed_initialization::mom_initialize_rotation">
+<area shape="rect" id="node2" href="$d0/de6/namespacemom__error__handler.html#a9cda07a87815f0e5594066162b4345c3" title="Writes a message about entering a subroutine if call tree reporting is active. " alt="" coords="380,28,504,69"/>
+<area shape="rect" id="node4" href="$d0/de6/namespacemom__error__handler.html#a88ea67781e2ed9b73ab7eac8ea5e8578" title="Writes a message about leaving a subroutine if call tree reporting is active. " alt="" coords="380,93,504,135"/>
+<area shape="rect" id="node5" href="$d3/da8/namespacemom__fixed__initialization.html#a42e9050b26e7c7ed7634a115e1b8172a" title="mom_fixed_initialization\l::set_rotation_beta_plane" alt="" coords="189,28,332,69"/>
+<area shape="rect" id="node6" href="$d3/da8/namespacemom__fixed__initialization.html#aa14d02910013774bebbc5cf89e6d3077" title="mom_fixed_initialization\l::set_rotation_planetary" alt="" coords="193,93,328,135"/>
+<area shape="rect" id="node3" href="$d0/de6/namespacemom__error__handler.html#ad5f00a53059c72fe2332d1436c80ca71" title="mom_error_handler::\lis_root_pe" alt="" coords="552,61,676,103"/>
+</map>

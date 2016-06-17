@@ -1,0 +1,7 @@
+<map id="mom_internal_tides::propagate_y" name="mom_internal_tides::propagate_y">
+<area shape="rect" id="node2" href="$d6/d34/namespacemom__internal__tides.html#a08d375b914ce03bed1b317c9b7371f77" title="mom_internal_tides\l::merid_flux_en" alt="" coords="177,5,292,47"/>
+<area shape="rect" id="node3" href="$d6/d34/namespacemom__internal__tides.html#a6c3dc6d74dfd6e5b13d5f710899be278" title="mom_internal_tides\l::ppm_reconstruction_y" alt="" coords="168,71,301,112"/>
+<area shape="rect" id="node5" href="$d6/d34/namespacemom__internal__tides.html#a6c622bfe3863b8fcea98c78104477491" title="mom_internal_tides\l::reflect" alt="" coords="177,136,292,177"/>
+<area shape="rect" id="node6" href="$d6/d34/namespacemom__internal__tides.html#a0a20d26531e245a26385d1c056b6a5b6" title="mom_internal_tides\l::teleport" alt="" coords="177,201,292,243"/>
+<area shape="rect" id="node4" href="$d6/d34/namespacemom__internal__tides.html#a16dd5b071e0fc87eb04c32f602c08aa5" title="mom_internal_tides\l::ppm_limit_pos" alt="" coords="349,71,464,112"/>
+</map>

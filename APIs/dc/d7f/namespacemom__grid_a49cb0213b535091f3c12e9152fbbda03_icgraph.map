@@ -1,0 +1,11 @@
+<map id="mom_grid::adcroft_reciprocal" name="mom_grid::adcroft_reciprocal">
+<area shape="rect" id="node2" href="$dc/d7f/namespacemom__grid.html#ad5c6da36363b3908694605da62811a4b" title="set_derived_metrics calculates metric terms that are derived from other metrics. " alt="" coords="215,49,345,91"/>
+<area shape="rect" id="node3" href="$df/db8/namespacemom__transcribe__grid.html#aa794cd7c93cc632380b95fa142884288" title="Copies information from a dynamic (shared) horizontal grid type into an ocean_grid_type. " alt="" coords="393,5,553,47"/>
+<area shape="rect" id="node6" href="$d5/daa/namespacemom__grid__initialize.html#a235a9712823e2f78e4958e8d681b6ba4" title="set_grid_metrics is used to set the primary values in the model&#39;s horizontal grid. The bathymetry, land&#45;sea mask and any restricted channel widths are not know yet, so these are set later. " alt="" coords="417,92,529,133"/>
+<area shape="rect" id="node4" href="$da/d01/namespacemom.html#afebdc0103ad9cbe0ed4a54e522dc4104" title="This subroutine initializes MOM. " alt="" coords="784,91,903,118"/>
+<area shape="rect" id="node5" href="$de/dbc/MOM__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="951,117,1025,143"/>
+<area shape="rect" id="node7" href="$d6/d48/MOM__sum__driver_8F90.html#a08fffeb2d8e8acbf9ed4609be6d258c6" title="mom_main" alt="" coords="631,51,706,78"/>
+<area shape="rect" id="node8" href="$df/da2/namespacemom__ice__shelf.html#ae315e8464ef8a20062e3bccb61886755" title="mom_ice_shelf::initialize\l_ice_shelf" alt="" coords="601,168,736,209"/>
+<area shape="rect" id="node10" href="$d3/da8/namespacemom__fixed__initialization.html#adce0d050de4be34a2dc4fa39b49b8c27" title="MOM_initialize_fixed sets up time&#45;invariant quantities related to MOM6&#39;s horizontal grid..." alt="" coords="602,103,735,144"/>
+<area shape="rect" id="node9" href="$d5/d6d/ice__shelf__driver_8F90.html#aec5bef92f0dad343f545cd8d62e378d8" title="shelf_main" alt="" coords="807,193,880,219"/>
+</map>
