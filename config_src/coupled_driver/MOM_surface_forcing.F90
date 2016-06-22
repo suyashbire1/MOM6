@@ -708,18 +708,16 @@ subroutine apply_flux_adjustments(G, CS, Time, fluxes)
   real, dimension(SZI_(G),SZJ_(G)) :: tempx_at_h ! Delta to zonal wind stress at h points (Pa)
   real, dimension(SZI_(G),SZJ_(G)) :: tempy_at_h ! Delta to meridional wind stress at h points (Pa)
   real, dimension(SZI_(G),SZJ_(G)) :: temp_at_h ! Fluxes at h points 
-  integer :: is_in, ie_in, js_in, je_in, i, j
+  integer :: i, j, isc, iec, jsc, jec
   real :: dLonDx, dLonDy, rDlon, cosA, sinA, zonal_tau, merid_tau
   logical :: overrode_x, overrode_y, overrode_h
 
-  is_in = G%isc - G%isd + 1
-  ie_in = G%iec - G%isd + 1
-  js_in = G%jsc - G%jsd + 1
-  je_in = G%jec - G%jsd + 1
+  isc = G%isc; iec = G%iec
+  jsc = G%jsc; jec = G%jec
+
 
   overrode_h = .false.
-  call data_override('OCN', 'hflx_adj', temp_at_h, Time, override=overrode_h, &
-                     is_in=is_in, ie_in=ie_in, js_in=js_in, je_in=je_in)
+  call data_override('OCN', 'hflx_adj', temp_at_h(isc:iec,jsc:jec), Time, override=overrode_h)
 
   if (overrode_h) then 
     do j=G%jsc,G%jec ; do i=G%isc,G%iec
@@ -730,8 +728,7 @@ subroutine apply_flux_adjustments(G, CS, Time, fluxes)
   call pass_var(fluxes%heat_added, G%Domain)
 
   overrode_h = .false.
-  call data_override('OCN', 'sflx_adj', temp_at_h, Time, override=overrode_h, &
-                     is_in=is_in, ie_in=ie_in, js_in=js_in, je_in=je_in)
+  call data_override('OCN', 'sflx_adj', temp_at_h(isc:iec,jsc:jec), Time, override=overrode_h)
 
   if (overrode_h) then 
     do j=G%jsc,G%jec ; do i=G%isc,G%iec
@@ -742,8 +739,7 @@ subroutine apply_flux_adjustments(G, CS, Time, fluxes)
   call pass_var(fluxes%salt_flux_added, G%Domain)
 
   overrode_h = .false.
-  call data_override('OCN', 'prcme_adj', temp_at_h, Time, override=overrode_h, &
-                     is_in=is_in, ie_in=ie_in, js_in=js_in, je_in=je_in)
+  call data_override('OCN', 'prcme_adj', temp_at_h(isc:iec,jsc:jec), Time, override=overrode_h)
 
   if (overrode_h) then 
     do j=G%jsc,G%jec ; do i=G%isc,G%iec
@@ -758,10 +754,8 @@ subroutine apply_flux_adjustments(G, CS, Time, fluxes)
   tempx_at_h(:,:) = 0.0 ; tempy_at_h(:,:) = 0.0
   ! Either reads data or leaves contents unchanged
   overrode_x = .false. ; overrode_y = .false.
-  call data_override('OCN', 'taux_adj', tempx_at_h, Time, override=overrode_x, &
-                     is_in=is_in, ie_in=ie_in, js_in=js_in, je_in=je_in)
-  call data_override('OCN', 'tauy_adj', tempy_at_h, Time, override=overrode_y, &
-                     is_in=is_in, ie_in=ie_in, js_in=js_in, je_in=je_in)
+  call data_override('OCN', 'taux_adj', tempx_at_h(isc:iec,jsc:jec), Time, override=overrode_x)
+  call data_override('OCN', 'tauy_adj', tempy_at_h(isc:iec,jsc:jec), Time, override=overrode_y)
 
   if (overrode_x .or. overrode_y) then
     if (.not. (overrode_x .and. overrode_y)) call MOM_error(FATAL,"apply_flux_adjustments: "//&
