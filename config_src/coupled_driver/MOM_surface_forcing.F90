@@ -318,10 +318,14 @@ subroutine convert_IOB_to_fluxes(IOB, fluxes, index_bounds, Time, G, CS, state, 
 
     call safe_alloc_ptr(fluxes%salt_flux,isd,ied,jsd,jed)
     call safe_alloc_ptr(fluxes%salt_flux_in,isd,ied,jsd,jed)
-    call safe_alloc_ptr(fluxes%salt_flux_added,isd,ied,jsd,jed)
 
     call safe_alloc_ptr(fluxes%TKE_tidal,isd,ied,jsd,jed)
     call safe_alloc_ptr(fluxes%ustar_tidal,isd,ied,jsd,jed)
+
+    if (CS%allow_flux_adjustments) then
+      call safe_alloc_ptr(fluxes%heat_added,isd,ied,jsd,jed)	 
+      call safe_alloc_ptr(fluxes%salt_flux_added,isd,ied,jsd,jed)
+    endif
 
     do j=js-2,je+2 ; do i=is-2,ie+2
       fluxes%TKE_tidal(i,j)   = CS%TKE_tidal(i,j)
@@ -336,6 +340,11 @@ subroutine convert_IOB_to_fluxes(IOB, fluxes, index_bounds, Time, G, CS, state, 
     fluxes%dt_buoy_accum = 0.0
   endif   ! endif for allocation and initialization
 
+  if (CS%allow_flux_adjustments) then
+   fluxes%heat_added(:,:)=0.0
+   fluxes%salt_flux_added(:,:)=0.0
+  endif
+  
   ! allocation and initialization on first call to this routine
   if (CS%area_surf < 0.0) then
     do j=js,je ; do i=is,ie
@@ -721,7 +730,7 @@ subroutine apply_flux_adjustments(G, CS, Time, fluxes)
 
   if (overrode_h) then 
     do j=G%jsc,G%jec ; do i=G%isc,G%iec
-      fluxes%heat_added(i,j) = fluxes%heat_added(i,j) + temp_at_h(i,j)
+      fluxes%heat_added(i,j) = fluxes%heat_added(i,j) + temp_at_h(i,j)* G%mask2dT(i,j)
     enddo; enddo
   endif
 
@@ -732,7 +741,7 @@ subroutine apply_flux_adjustments(G, CS, Time, fluxes)
 
   if (overrode_h) then 
     do j=G%jsc,G%jec ; do i=G%isc,G%iec
-      fluxes%salt_flux_added(i,j) = fluxes%salt_flux_added(i,j) + temp_at_h(i,j)
+      fluxes%salt_flux_added(i,j) = fluxes%salt_flux_added(i,j) + temp_at_h(i,j)* G%mask2dT(i,j)
     enddo; enddo
   endif
 
@@ -743,7 +752,7 @@ subroutine apply_flux_adjustments(G, CS, Time, fluxes)
 
   if (overrode_h) then 
     do j=G%jsc,G%jec ; do i=G%isc,G%iec
-      fluxes%vprec(i,j) = fluxes%vprec(i,j) + temp_at_h(i,j)
+      fluxes%vprec(i,j) = fluxes%vprec(i,j) + temp_at_h(i,j)* G%mask2dT(i,j)
     enddo; enddo
   endif
 
