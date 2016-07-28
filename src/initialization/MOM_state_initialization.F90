@@ -71,6 +71,7 @@ use Rossby_front_2d_initialization, only : Rossby_front_initialize_temperature_s
 use Rossby_front_2d_initialization, only : Rossby_front_initialize_velocity
 use SCM_idealized_hurricane, only : SCM_idealized_hurricane_TS_init
 use BFB_initialization, only : BFB_initialize_sponges_southonly
+use BFB_initialization, only : BFB_initialize_thickness
 
 use midas_vertmap, only : find_interfaces, tracer_Z_init
 use midas_vertmap, only : determine_temperature
@@ -225,6 +226,8 @@ subroutine MOM_initialize_state(u, v, h, tv, Time, G, GV, PF, dirs, &
                " \t sloshing - TBD AJA. \n"//&
                " \t seamount - TBD AJA. \n"//&
                " \t rossby_front - a mixed layer front in thermal wind balance.\n"//&
+               " \t BFB - uniform thickness till the depth of abyssal layer for \n"//&
+               " \t\t buoy-forced basin case.\n"//&
                " \t USER - call a user modified routine.", &
                fail_if_missing=.true.)
       select case (trim(config))
@@ -252,6 +255,7 @@ subroutine MOM_initialize_state(u, v, h, tv, Time, G, GV, PF, dirs, &
          case ("seamount"); call seamount_initialize_thickness(h, G, GV, PF)
          case ("phillips"); call Phillips_initialize_thickness(h, G, GV, PF)
          case ("rossby_front"); call Rossby_front_initialize_thickness(h, G, GV, PF)
+         case ("BFB"); call BFB_initialize_thickness(h, G, GV, PF)
          case ("USER"); call user_initialize_thickness(h, G, PF, tv%T)
          case default ; call MOM_error(FATAL,  "MOM_initialize_state: "//&
               "Unrecognized layer thickness configuration "//trim(config))
