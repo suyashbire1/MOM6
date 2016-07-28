@@ -70,7 +70,8 @@ subroutine BFB_set_coord(Rlay, g_prime, GV, param_file, eqn_of_state)
   type(verticalGrid_type), intent(in)  :: GV
   type(param_file_type),   intent(in)  :: param_file
   type(EOS_type),          pointer     :: eqn_of_state
-  real                                 :: drho_dt, SST_s, T_bot, rho_top, rho_bot
+  real                                 :: drho_dt, SST_s, T_bot, T_aby
+  real                                 :: rho_top, rho_bot, rho_aby
   integer                              :: k, nz
   character(len=40)  :: mod = "BFB_set_coord" ! This subroutine's name.
 
@@ -81,15 +82,21 @@ subroutine BFB_set_coord(Rlay, g_prime, GV, param_file, eqn_of_state)
           "SST at the suothern edge of the domain.", units="C", default=20.0)
   call get_param(param_file, mod, "T_BOT", T_bot, &
                  "Bottom Temp", units="C", default=5.0)
+  call get_param(param_file, mod, "T_ABYSS", T_aby, &
+                 "Bottom Temp", units="C", default=2.0)
   rho_top = GV%rho0 + drho_dt*SST_s
   rho_bot = GV%rho0 + drho_dt*T_bot
+  rho_aby = GV%rho0 + drho_dt*T_aby
   nz = GV%ke
 
   !call MOM_error(FATAL, &
   ! "BFB_initialization.F90, BFB_set_coord: " // &
   ! "Unmodified user routine called - you must edit the routine to use it")
   do k = 1,nz
-    Rlay(k) = (rho_bot - rho_top)/(nz-1)*real(k-1) + rho_top
+    Rlay(k) = (rho_bot - rho_top)/(nz-2)*real(k-1) + rho_top
+    if (k == nz) then
+      Rlay(k) = rho_aby
+    end if
     if (k >1) then
       g_prime(k) = (Rlay(k) - Rlay(k-1))*GV%g_earth/GV%rho0
     else
@@ -98,11 +105,29 @@ subroutine BFB_set_coord(Rlay, g_prime, GV, param_file, eqn_of_state)
     !Rlay(:) = 0.0
     !g_prime(:) = 0.0
   end do
-  ! THis a needless comment
  
   if (first_call) call write_BFB_log(param_file)
 
 end subroutine BFB_set_coord
+
+subroutine BFB_initialize_thickness(h, G, param_file, T)
+  type(ocean_grid_type),                     intent(in) :: G          !< The ocean's grid structure.
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(out):: h          !< The thicknesses being
+                                                                      !! initialized.
+  type(param_file_type),                     intent(in) :: param_file !< A structure indicating the
+                                                                      !! open file to parse for model
+                                                                      !! parameter values.
+  real, dimension(SZI_(G),SZJ_(G), SZK_(G)), intent(in) :: T          !< Potential temperature.
+  character(len=40)  :: mod = "BFB_initialize_thickness"              ! This subroutine's name.
+  call MOM_error(FATAL, &
+   "USER_initialization.F90, USER_initialize_thickness: " // &
+   "Unmodified user routine called - you must edit the routine to use it")
+
+  h(:,:,1) = 0.0
+
+  if (first_call) call write_BFB_log(param_file)
+
+end subroutine BFB_initialize_thickness
 
 subroutine BFB_initialize_sponges_southonly(G, use_temperature, tv, param_file, CSp, h)
 ! This subroutine sets up the sponges for the southern bouundary of the domain. Maximum damping occurs within 2 degrees lat of the
