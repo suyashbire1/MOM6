@@ -98,6 +98,7 @@ subroutine BFB_set_coord(Rlay, g_prime, GV, param_file, eqn_of_state)
     !Rlay(:) = 0.0
     !g_prime(:) = 0.0
   end do
+  ! THis a needless comment
  
   if (first_call) call write_BFB_log(param_file)
 
