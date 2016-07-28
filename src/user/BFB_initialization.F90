@@ -56,6 +56,7 @@ implicit none ; private
 #include <MOM_memory.h>
 
 public BFB_set_coord 
+public BFB_initialize_thickness 
 public BFB_initialize_sponges_southonly
 
 logical :: first_call = .true.
@@ -110,24 +111,6 @@ subroutine BFB_set_coord(Rlay, g_prime, GV, param_file, eqn_of_state)
 
 end subroutine BFB_set_coord
 
-subroutine BFB_initialize_thickness(h, G, param_file, T)
-  type(ocean_grid_type),                     intent(in) :: G          !< The ocean's grid structure.
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(out):: h          !< The thicknesses being
-                                                                      !! initialized.
-  type(param_file_type),                     intent(in) :: param_file !< A structure indicating the
-                                                                      !! open file to parse for model
-                                                                      !! parameter values.
-  real, dimension(SZI_(G),SZJ_(G), SZK_(G)), intent(in) :: T          !< Potential temperature.
-  character(len=40)  :: mod = "BFB_initialize_thickness"              ! This subroutine's name.
-  call MOM_error(FATAL, &
-   "USER_initialization.F90, USER_initialize_thickness: " // &
-   "Unmodified user routine called - you must edit the routine to use it")
-
-  h(:,:,1) = 0.0
-
-  if (first_call) call write_BFB_log(param_file)
-
-end subroutine BFB_initialize_thickness
 
 subroutine BFB_initialize_sponges_southonly(G, use_temperature, tv, param_file, CSp, h)
 ! This subroutine sets up the sponges for the southern bouundary of the domain. Maximum damping occurs within 2 degrees lat of the
@@ -146,7 +129,7 @@ subroutine BFB_initialize_sponges_southonly(G, use_temperature, tv, param_file, 
   real :: Idamp(SZI_(G),SZJ_(G))    ! The inverse damping rate, in s-1.
 
   real :: H0(SZK_(G))
-  real :: min_depth
+  real :: min_depth, D_aby
   real :: damp, e_dense, damp_new, slat, wlon, lenlat, lenlon, nlat
   character(len=40)  :: mod = "BFB_initialize_sponges_southonly" ! This subroutine's name.
   integer :: i, j, k, is, ie, js, je, isd, ied, jsd, jed, nz
@@ -174,8 +157,12 @@ subroutine BFB_initialize_sponges_southonly(G, use_temperature, tv, param_file, 
   call get_param(param_file, mod, "LENLON", lenlon, &
                  "The longitudinal length of the domain.", units="degrees")
   nlat = slat + lenlat
-  do k=1,nz ; H0(k) = -G%max_depth * real(k-1) / real(nz) ; enddo
+
+  call get_param(param_file, mod, "D_ABYSS", D_aby, &
+                 "Depth at which abyssal layer starts", units="m", default=1500.0)
+!  do k=1,nz ; H0(k) = -G%max_depth * real(k-1) / real(nz) ; enddo
 !  do k=1,nz ; H0(k) = -G%max_depth * real(k-1) / real(nz-1) ; enddo ! Use for meridional thickness profile initialization
+  do k=1,nz ; H0(k) = -D_aby * real(k-1) / real(nz-1) ; enddo
   do i=is,ie; do j=js,je
     if (G%geoLatT(i,j) < slat+2.0) then ; damp = 1.0
     elseif (G%geoLatT(i,j) < slat+4.0) then
@@ -218,6 +205,35 @@ subroutine BFB_initialize_sponges_southonly(G, use_temperature, tv, param_file, 
   if (first_call) call write_BFB_log(param_file)
 
 end subroutine BFB_initialize_sponges_southonly
+
+subroutine BFB_initialize_thickness(h, G, param_file, T)
+  real, intent(out), dimension(NIMEM_,NJMEM_, NKMEM_) :: h
+  type(ocean_grid_type), intent(in) :: G
+  type(param_file_type), intent(in) :: param_file
+  real, intent(in), dimension(NIMEM_,NJMEM_, NKMEM_)  :: T
+  real :: eta(SZI_(G),SZJ_(G),SZK_(G)+1) ! A temporary array for eta.
+  real :: H0(SZK_(G))
+  real :: D_aby
+  character(len=40)  :: mod = "BFB_initialize_thickness" ! This subroutine's name.
+  integer :: i, j, k, is, ie, js, je, isd, ied, jsd, jed, nz
+
+  is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec ; nz = G%ke
+  isd = G%isd ; ied = G%ied ; jsd = G%jsd ; jed = G%jed
+
+  call get_param(param_file, mod, "D_ABYSS", D_aby, &
+                 "Depth at which abyssal layer starts", units="m", default=1500.0)
+
+  eta(:,:,:) = 0.0
+  do k=1,nz ; H0(k) = -D_aby * real(k-1) / real(nz-1) ; enddo
+  do i=is,ie; do j=js,je
+   do k = 1,nz; eta(i,j,k) = H0(k); enddo
+    eta(i,j,nz+1) = -G%max_depth
+    do k = 1,nz; h(i,j,k) = eta(i,j,k) - eta(i,j,k+1); enddo
+  enddo; enddo
+  
+ if (first_call) call write_BFB_log(param_file)
+
+end subroutine BFB_initialize_thickness
 
 !> Write output about the parameter values being used.
 subroutine write_BFB_log(param_file)
