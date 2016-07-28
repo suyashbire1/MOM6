@@ -255,7 +255,7 @@ subroutine MOM_initialize_state(u, v, h, tv, Time, G, GV, PF, dirs, &
          case ("seamount"); call seamount_initialize_thickness(h, G, GV, PF)
          case ("phillips"); call Phillips_initialize_thickness(h, G, GV, PF)
          case ("rossby_front"); call Rossby_front_initialize_thickness(h, G, GV, PF)
-         case ("BFB"); call BFB_initialize_thickness(h, G, GV, PF)
+         case ("BFB"); call BFB_initialize_thickness(h, G, PF)
          case ("USER"); call user_initialize_thickness(h, G, PF, tv%T)
          case default ; call MOM_error(FATAL,  "MOM_initialize_state: "//&
               "Unrecognized layer thickness configuration "//trim(config))

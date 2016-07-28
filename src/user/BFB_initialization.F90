@@ -206,11 +206,10 @@ subroutine BFB_initialize_sponges_southonly(G, use_temperature, tv, param_file, 
 
 end subroutine BFB_initialize_sponges_southonly
 
-subroutine BFB_initialize_thickness(h, G, param_file, T)
+subroutine BFB_initialize_thickness(h, G, param_file)
   real, intent(out), dimension(NIMEM_,NJMEM_, NKMEM_) :: h
   type(ocean_grid_type), intent(in) :: G
   type(param_file_type), intent(in) :: param_file
-  real, intent(in), dimension(NIMEM_,NJMEM_, NKMEM_)  :: T
   real :: eta(SZI_(G),SZJ_(G),SZK_(G)+1) ! A temporary array for eta.
   real :: H0(SZK_(G))
   real :: D_aby
