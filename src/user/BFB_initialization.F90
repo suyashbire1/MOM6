@@ -84,7 +84,6 @@ subroutine BFB_set_coord(Rlay, g_prime, GV, param_file, eqn_of_state)
   rho_top = GV%rho0 + drho_dt*SST_s
   rho_bot = GV%rho0 + drho_dt*T_bot
   nz = GV%ke
-  print(*,*) nz
 
   !call MOM_error(FATAL, &
   ! "BFB_initialization.F90, BFB_set_coord: " // &
@@ -129,7 +128,6 @@ subroutine BFB_initialize_sponges_southonly(G, use_temperature, tv, param_file, 
   is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec ; nz = G%ke
   isd = G%isd ; ied = G%ied ; jsd = G%jsd ; jed = G%jed
 
-  print(*,*) nz
   eta(:,:,:) = 0.0 ; Idamp(:,:) = 0.0
 
 !  Here the inverse damping time, in s-1, is set. Set Idamp to 0     !
