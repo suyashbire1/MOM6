@@ -58,7 +58,7 @@ use MOM_grid,              only : ocean_grid_type
 use MOM_interface_heights, only : find_eta
 use MOM_spatial_means,     only : global_area_mean, global_layer_mean, global_volume_mean
 use MOM_variables,         only : thermo_var_ptrs, ocean_internal_state, p3d
-use MOM_variables,         only : accel_diag_ptrs, cont_diag_ptrs
+use MOM_variables,         only : accel_diag_ptrs, cont_diag_ptrs, BT_cont_type
 use MOM_verticalGrid,      only : verticalGrid_type
 use MOM_wave_speed,        only : wave_speed, wave_speed_CS
 
@@ -122,6 +122,14 @@ type, public :: diagnostics_CS ; private
     KE_dia     => NULL(),&  ! KE source from diapycnal diffusion
     diag_tmp3d => NULL()    ! 3D re-usable arrays for diagnostics
 
+  real, pointer, dimension(:,:,:) :: &
+    twatest0   => NULL(),&  ! test twa quantity
+    twatest1   => NULL(),&  ! test twa quantity
+    twatest2   => NULL(),&  ! test twa quantity
+    twatest3   => NULL(),&  ! test twa quantity
+    twatest4   => NULL(),&  ! test twa quantity
+    twatest5   => NULL()    ! test twa quantity
+
   ! diagnostic IDs
   integer :: id_e              = -1, id_e_D            = -1
   integer :: id_du_dt          = -1, id_dv_dt          = -1
@@ -145,6 +153,12 @@ type, public :: diagnostics_CS ; private
   integer :: id_pbo            = -1
   integer :: id_thkcello       = -1, id_rhoinsitu      = -1
   integer :: id_rhopot0        = -1, id_rhopot2        = -1
+  integer :: id_twatest0       = -1
+  integer :: id_twatest1       = -1
+  integer :: id_twatest2       = -1
+  integer :: id_twatest3       = -1
+  integer :: id_twatest4       = -1
+  integer :: id_twatest5       = -1
 
   type(wave_speed_CS), pointer :: wave_speed_CSp => NULL()  
 
@@ -963,6 +977,91 @@ subroutine calculate_energy_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
 
 end subroutine calculate_energy_diagnostics
 
+subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, BT_cont, G, CS)
+  real, dimension(NIMEMB_,NJMEM_,NKMEM_), intent(in)    :: u
+  real, dimension(NIMEM_,NJMEMB_,NKMEM_), intent(in)    :: v
+  real, dimension(NIMEM_,NJMEM_,NKMEM_),  intent(in)    :: h
+  real, dimension(NIMEMB_,NJMEM_,NKMEM_), intent(in)    :: uh
+  real, dimension(NIMEM_,NJMEMB_,NKMEM_), intent(in)    :: vh
+  type(accel_diag_ptrs),                  intent(in)    :: ADp
+  type(cont_diag_ptrs),                   intent(in)    :: CDp
+  type(BT_cont_type),                     intent(in)    :: BT_cont
+ ! type(MOM_dyn_split_RK2_CS),               intent(in)    :: mdsrk2
+  type(ocean_grid_type),                  intent(inout) :: G
+  type(diagnostics_CS),                   intent(inout) :: CS
+
+! This subroutine calculates terms in the twa budget.
+
+! Arguments:
+!  (in)      u   - zonal velocity component (m/s)
+!  (in)      v   - meridional velocity componnent (m/s)
+!  (in)      h   - layer thickness: metre(Bouss) of kg/m2(non-Bouss)
+!  (in)      uh  - transport through zonal faces=u*h*dy: m3/s (Bouss) kg/s(non-Bouss)
+!  (in)      vh  - transport through merid faces=v*h*dx: m3/s (Bouss) kg/s(non-Bouss)
+!  (in)      ADp - structure pointing to accelerations in momentum equation
+!  (in)      CDp - structure pointing to terms in continuity equations
+!  (in)      G   - ocean grid structure
+!  (in)      CS  - control structure returned by a previous call to diagnostics_init
+
+  integer :: i, j, k, is, ie, js, je, Isq, Ieq, Jsq, Jeq, nz
+  is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec ; nz = G%ke
+  Isq = G%IscB ; Ieq = G%IecB ; Jsq = G%JscB ; Jeq = G%JecB
+
+  if (ASSOCIATED(CS%twatest0)) then
+    do k=1,nz
+      do j=js,je ; do I=Isq,Ieq
+        CS%twatest0(I,j,k) = BT_cont%h_u(I,j,k)
+      enddo ; enddo
+    enddo
+    if (CS%id_twatest0 > 0) call post_data(CS%id_twatest0, CS%twatest0, CS%diag)
+  endif
+  
+  if (ASSOCIATED(CS%twatest1)) then
+    do k=1,nz
+      do j=js,je ; do I=Isq,Ieq
+        CS%twatest1(I,j,k) = 101
+      enddo ; enddo
+    enddo
+    if (CS%id_twatest1 > 0) call post_data(CS%id_twatest1, CS%twatest1, CS%diag)
+  endif
+
+  if (ASSOCIATED(CS%twatest2)) then
+    do k=1,nz
+      do j=js,je ; do I=Isq,Ieq
+        CS%twatest2(I,j,k) = 101
+      enddo ; enddo
+    enddo
+    if (CS%id_twatest2 > 0) call post_data(CS%id_twatest2, CS%twatest2, CS%diag)
+  endif
+  
+  if (ASSOCIATED(CS%twatest3)) then
+    do k=1,nz
+      do j=js,je ; do I=Isq,Ieq
+        CS%twatest3(I,j,k) = 101
+      enddo ; enddo
+    enddo
+    if (CS%id_twatest3 > 0) call post_data(CS%id_twatest3, CS%twatest3, CS%diag)
+  endif
+  
+  if (ASSOCIATED(CS%twatest4)) then
+    do k=1,nz
+      do j=js,je ; do I=Isq,Ieq
+        CS%twatest4(I,j,k) = 101
+      enddo ; enddo
+    enddo
+    if (CS%id_twatest4 > 0) call post_data(CS%id_twatest4, CS%twatest4, CS%diag)
+  endif
+
+  if (ASSOCIATED(CS%twatest5)) then
+    do k=1,nz
+      do j=js,je ; do I=Isq,Ieq
+        CS%twatest5(I,j,k) = 101
+      enddo ; enddo
+    enddo
+    if (CS%id_twatest5 > 0) call post_data(CS%id_twatest5, CS%twatest5, CS%diag)
+  endif
+
+end subroutine calculate_twa_diagnostics
 
 subroutine register_time_deriv(f_ptr, deriv_ptr, CS)
   real, dimension(:,:,:), target :: f_ptr, deriv_ptr
@@ -1274,6 +1373,26 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
       long_name='Sea Water Pressure at Sea Floor', standard_name='sea_water_pressure_at_sea_floor', &
       units='Pa')
 
+  ! terms in the twa budget
+  CS%id_twatest0 = register_diag_field('ocean_model', 'twa_test0', diag%axesTL, Time, &
+      'some twa quantity', 'meter second-2')
+  call safe_alloc_ptr(CS%twatest0,isd,ied,jsd,jed,nz)
+  CS%id_twatest1 = register_diag_field('ocean_model', 'twa_test1', diag%axesTL, Time, &
+      'some twa quantity', 'meter second-2')
+  call safe_alloc_ptr(CS%twatest1,isd,ied,jsd,jed,nz)
+  CS%id_twatest2 = register_diag_field('ocean_model', 'twa_test2', diag%axesTL, Time, &
+      'some twa quantity', 'meter second-2')
+  call safe_alloc_ptr(CS%twatest2,isd,ied,jsd,jed,nz)
+  CS%id_twatest3 = register_diag_field('ocean_model', 'twa_test3', diag%axesTL, Time, &
+      'some twa quantity', 'meter second-2')
+  call safe_alloc_ptr(CS%twatest3,isd,ied,jsd,jed,nz)
+  CS%id_twatest4 = register_diag_field('ocean_model', 'twa_test4', diag%axesTL, Time, &
+      'some twa quantity', 'meter second-2')
+  call safe_alloc_ptr(CS%twatest4,isd,ied,jsd,jed,nz)
+  CS%id_twatest5 = register_diag_field('ocean_model', 'twa_test5', diag%axesTL, Time, &
+      'some twa quantity', 'meter second-2')
+  call safe_alloc_ptr(CS%twatest5,isd,ied,jsd,jed,nz)
+
   call set_dependent_diagnostics(MIS, ADp, CDp, G, CS)
 
 end subroutine MOM_diagnostics_init
@@ -1374,6 +1493,13 @@ subroutine MOM_diagnostics_end(CS, ADp)
   if (ASSOCIATED(ADp%dv_dt_dia))  deallocate(ADp%dv_dt_dia)
   if (ASSOCIATED(ADp%du_other))   deallocate(ADp%du_other)
   if (ASSOCIATED(ADp%dv_other))   deallocate(ADp%dv_other)
+
+  if (ASSOCIATED(CS%twatest0))     deallocate(CS%twatest0)
+  if (ASSOCIATED(CS%twatest1))     deallocate(CS%twatest1)
+  if (ASSOCIATED(CS%twatest2))     deallocate(CS%twatest2)
+  if (ASSOCIATED(CS%twatest3))     deallocate(CS%twatest3)
+  if (ASSOCIATED(CS%twatest4))     deallocate(CS%twatest4)
+  if (ASSOCIATED(CS%twatest5))     deallocate(CS%twatest5)
 
   do m=1,CS%num_time_deriv ; deallocate(CS%prev_val(m)%p) ; enddo
 
