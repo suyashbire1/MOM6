@@ -592,6 +592,7 @@ subroutine calculate_diagnostic_fields(u, v, h, uh, vh, tv, ADp, CDp, fluxes, &
     if (CS%id_dh_dt>0) call post_data(CS%id_dh_dt, CS%dh_dt, CS%diag)
 
     call calculate_energy_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
+    call calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
   endif
 
 end subroutine calculate_diagnostic_fields
@@ -977,7 +978,7 @@ subroutine calculate_energy_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
 
 end subroutine calculate_energy_diagnostics
 
-subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, BT_cont, G, CS)
+subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
   real, dimension(NIMEMB_,NJMEM_,NKMEM_), intent(in)    :: u
   real, dimension(NIMEM_,NJMEMB_,NKMEM_), intent(in)    :: v
   real, dimension(NIMEM_,NJMEM_,NKMEM_),  intent(in)    :: h
@@ -985,7 +986,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, BT_cont, G, CS)
   real, dimension(NIMEM_,NJMEMB_,NKMEM_), intent(in)    :: vh
   type(accel_diag_ptrs),                  intent(in)    :: ADp
   type(cont_diag_ptrs),                   intent(in)    :: CDp
-  type(BT_cont_type),                     intent(in)    :: BT_cont
+ ! type(BT_cont_type),                     intent(in)    :: BT_cont
  ! type(MOM_dyn_split_RK2_CS),               intent(in)    :: mdsrk2
   type(ocean_grid_type),                  intent(inout) :: G
   type(diagnostics_CS),                   intent(inout) :: CS
@@ -1010,7 +1011,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, BT_cont, G, CS)
   if (ASSOCIATED(CS%twatest0)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
-        CS%twatest0(I,j,k) = BT_cont%h_u(I,j,k)
+        CS%twatest0(I,j,k) = 101
       enddo ; enddo
     enddo
     if (CS%id_twatest0 > 0) call post_data(CS%id_twatest0, CS%twatest0, CS%diag)
