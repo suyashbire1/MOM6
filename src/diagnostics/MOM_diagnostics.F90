@@ -123,12 +123,13 @@ type, public :: diagnostics_CS ; private
     diag_tmp3d => NULL()    ! 3D re-usable arrays for diagnostics
 
   real, pointer, dimension(:,:,:) :: &
-    twatest0   => NULL(),&  ! test twa quantity
-    twatest1   => NULL(),&  ! test twa quantity
-    twatest2   => NULL(),&  ! test twa quantity
-    twatest3   => NULL(),&  ! test twa quantity
-    twatest4   => NULL(),&  ! test twa quantity
-    twatest5   => NULL()    ! test twa quantity
+    hmfu   => NULL(),&  ! test twa quantity
+    hpfu   => NULL(),&  ! test twa quantity
+    huwb   => NULL(),&  ! test twa quantity
+    huuxpt   => NULL(),&  ! test twa quantity
+    huvymt   => NULL(),&  ! test twa quantity
+    hdudtvisc   => NULL(),&    ! test twa quantity
+    hdiffu   => NULL()    ! test twa quantity
 
   ! diagnostic IDs
   integer :: id_e              = -1, id_e_D            = -1
@@ -153,12 +154,13 @@ type, public :: diagnostics_CS ; private
   integer :: id_pbo            = -1
   integer :: id_thkcello       = -1, id_rhoinsitu      = -1
   integer :: id_rhopot0        = -1, id_rhopot2        = -1
-  integer :: id_twatest0       = -1
-  integer :: id_twatest1       = -1
-  integer :: id_twatest2       = -1
-  integer :: id_twatest3       = -1
-  integer :: id_twatest4       = -1
-  integer :: id_twatest5       = -1
+  integer :: id_hmfu       = -1
+  integer :: id_hpfu       = -1
+  integer :: id_huwb       = -1
+  integer :: id_huuxpt       = -1
+  integer :: id_huvymt       = -1
+  integer :: id_hdudtvisc       = -1
+  integer :: id_hdiffu       = -1
 
   type(wave_speed_CS), pointer :: wave_speed_CSp => NULL()  
 
@@ -1004,64 +1006,92 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
 !  (in)      G   - ocean grid structure
 !  (in)      CS  - control structure returned by a previous call to diagnostics_init
 
+  real :: h_u(SZIB_(G),SZJ_(G),SZK_(G))
+  real :: h_v(SZI_(G),SZJB_(G),SZK_(G))
+  real :: dwd, temp
+
   integer :: i, j, k, is, ie, js, je, Isq, Ieq, Jsq, Jeq, nz
   is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec ; nz = G%ke
   Isq = G%IscB ; Ieq = G%IecB ; Jsq = G%JscB ; Jeq = G%JecB
 
-  if (ASSOCIATED(CS%twatest0)) then
+  do k=1,nz
+    do j=js,je ; do I=Isq,Ieq
+      h_u(I,j,k) = 0.5*(h(i,j,k) + h(i+1,j,k))
+    enddo ; enddo
+  enddo
+  do k=1,nz
+    do j=Jsq,Jeq ; do i=is,ie
+      h_v(i,J,k) = 0.5*(h(i,j,k) + h(i,j+1,k))
+    enddo ; enddo
+  enddo
+
+  if (ASSOCIATED(CS%hmfu)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
-        CS%twatest0(I,j,k) = 101
+        CS%hmfu(I,j,k) = h_u(I,j,k)*(ADp%CAu(I,j,k) - ADp%gradKEu(I,j,k) - ADP%rv_x_v(I,j,k))
       enddo ; enddo
     enddo
-    if (CS%id_twatest0 > 0) call post_data(CS%id_twatest0, CS%twatest0, CS%diag)
+    if (CS%id_hmfu > 0) call post_data(CS%id_hmfu, CS%hmfu, CS%diag)
   endif
   
-  if (ASSOCIATED(CS%twatest1)) then
+  if (ASSOCIATED(CS%hpfu)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
-        CS%twatest1(I,j,k) = 101
+        CS%hpfu(i,J,k) = h_u(I,j,k)*ADp%PFu(I,j,k)
       enddo ; enddo
     enddo
-    if (CS%id_twatest1 > 0) call post_data(CS%id_twatest1, CS%twatest1, CS%diag)
+    if (CS%id_hpfu > 0) call post_data(CS%id_hpfu, CS%hpfu, CS%diag)
   endif
 
-  if (ASSOCIATED(CS%twatest2)) then
+  if (ASSOCIATED(CS%huwb)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
-        CS%twatest2(I,j,k) = 101
+        dwd = 0.5*(CDp%diapyc_vel(i,j,k+1) - CDp%diapyc_vel(i,j,k) + CDp%diapyc_vel(i+1,j,k+1) - CDp%diapyc_vel(i+1,j,k))  
+        CS%huwb(I,j,k) = -h_u(I,j,k)*ADp%du_dt_dia(I,j,k) - dwd*u(I,j,k)
       enddo ; enddo
     enddo
-    if (CS%id_twatest2 > 0) call post_data(CS%id_twatest2, CS%twatest2, CS%diag)
+    if (CS%id_huwb > 0) call post_data(CS%id_huwb, CS%huwb, CS%diag)
   endif
   
-  if (ASSOCIATED(CS%twatest3)) then
+  if (ASSOCIATED(CS%huuxpt)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
-        CS%twatest3(I,j,k) = 101
+        temp = 0.5*((CDp%uh(I,j,k)*G%dxCu(I,j) - CDp%uh(I-1,j,k)*G%dxCu(I-1,j))*G%IareaT(i,j) &
+                + (CDp%uh(I+1,j,k)*G%dxCu(I+1,j) - CDp%uh(I,j,k)*G%dxCu(I,j))*G%IareaT(i+1,j)) 
+        CS%huuxpt(I,j,k) = h_u(I,j,k)*ADp%gradKEu(I,j,k) - temp*u(I,j,k)
       enddo ; enddo
     enddo
-    if (CS%id_twatest3 > 0) call post_data(CS%id_twatest3, CS%twatest3, CS%diag)
+    if (CS%id_huuxpt > 0) call post_data(CS%id_huuxpt, CS%huuxpt, CS%diag)
   endif
   
-  if (ASSOCIATED(CS%twatest4)) then
+  if (ASSOCIATED(CS%huvymt)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
-        CS%twatest4(I,j,k) = 101
+        temp = 0.5*((CDp%vh(i,j,k)*G%dyCv(i,j) - CDp%vh(i,j-1,k)*G%dyCv(i,j-1))*G%IareaT(i,j) &
+                + (CDp%vh(i,j+1,k)*G%dyCv(i,j+1) - CDp%vh(i,j,k)*G%dyCv(i,j))*G%IareaT(i,j+1)) 
+        CS%huvymt(I,j,k) = h_u(I,j,k)*ADp%rv_x_v(I,j,k) - temp*u(I,j,k)
       enddo ; enddo
     enddo
-    if (CS%id_twatest4 > 0) call post_data(CS%id_twatest4, CS%twatest4, CS%diag)
+    if (CS%id_huvymt > 0) call post_data(CS%id_huvymt, CS%huvymt, CS%diag)
   endif
 
-  if (ASSOCIATED(CS%twatest5)) then
+  if (ASSOCIATED(CS%hdudtvisc)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
-        CS%twatest5(I,j,k) = 101
+        CS%hdudtvisc(I,j,k) = h_u(I,j,k)*ADp%du_dt_visc(I,j,k)
       enddo ; enddo
     enddo
-    if (CS%id_twatest5 > 0) call post_data(CS%id_twatest5, CS%twatest5, CS%diag)
+    if (CS%id_hdudtvisc > 0) call post_data(CS%id_hdudtvisc, CS%hdudtvisc, CS%diag)
   endif
 
+  if (ASSOCIATED(CS%hdiffu)) then
+    do k=1,nz
+      do j=js,je ; do I=Isq,Ieq
+        CS%hdiffu(I,j,k) = h_u(I,j,k)*ADp%diffu(I,j,k)
+      enddo ; enddo
+    enddo
+    if (CS%id_hdiffu > 0) call post_data(CS%id_hdiffu, CS%hdiffu, CS%diag)
+  endif
 end subroutine calculate_twa_diagnostics
 
 subroutine register_time_deriv(f_ptr, deriv_ptr, CS)
@@ -1375,24 +1405,27 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
       units='Pa')
 
   ! terms in the twa budget
-  CS%id_twatest0 = register_diag_field('ocean_model', 'twa_test0', diag%axesTL, Time, &
+  CS%id_hmfu = register_diag_field('ocean_model', 'twa_hmfu', diag%axesCuL, Time, &
       'some twa quantity', 'meter second-2')
-  call safe_alloc_ptr(CS%twatest0,isd,ied,jsd,jed,nz)
-  CS%id_twatest1 = register_diag_field('ocean_model', 'twa_test1', diag%axesTL, Time, &
+  call safe_alloc_ptr(CS%hmfu,IsdB,IedB,jsd,jed,nz)
+  CS%id_hpfu = register_diag_field('ocean_model', 'twa_hpfu', diag%axesCuL, Time, &
       'some twa quantity', 'meter second-2')
-  call safe_alloc_ptr(CS%twatest1,isd,ied,jsd,jed,nz)
-  CS%id_twatest2 = register_diag_field('ocean_model', 'twa_test2', diag%axesTL, Time, &
+  call safe_alloc_ptr(CS%hpfu,IsdB,IedB,jsd,jed,nz)
+  CS%id_huwb = register_diag_field('ocean_model', 'twa_huwb', diag%axesCuL, Time, &
       'some twa quantity', 'meter second-2')
-  call safe_alloc_ptr(CS%twatest2,isd,ied,jsd,jed,nz)
-  CS%id_twatest3 = register_diag_field('ocean_model', 'twa_test3', diag%axesTL, Time, &
+  call safe_alloc_ptr(CS%huwb,IsdB,IedB,jsd,jed,nz)
+  CS%id_huuxpt = register_diag_field('ocean_model', 'twa_huuxpt', diag%axesCuL, Time, &
       'some twa quantity', 'meter second-2')
-  call safe_alloc_ptr(CS%twatest3,isd,ied,jsd,jed,nz)
-  CS%id_twatest4 = register_diag_field('ocean_model', 'twa_test4', diag%axesTL, Time, &
+  call safe_alloc_ptr(CS%huuxpt,IsdB,IedB,jsd,jed,nz)
+  CS%id_huvymt = register_diag_field('ocean_model', 'twa_huvymt', diag%axesCuL, Time, &
       'some twa quantity', 'meter second-2')
-  call safe_alloc_ptr(CS%twatest4,isd,ied,jsd,jed,nz)
-  CS%id_twatest5 = register_diag_field('ocean_model', 'twa_test5', diag%axesTL, Time, &
+  call safe_alloc_ptr(CS%huvymt,IsdB,IedB,jsd,jed,nz)
+  CS%id_hdudtvisc = register_diag_field('ocean_model', 'twa_hdudtvisc', diag%axesCuL, Time, &
       'some twa quantity', 'meter second-2')
-  call safe_alloc_ptr(CS%twatest5,isd,ied,jsd,jed,nz)
+  call safe_alloc_ptr(CS%hdudtvisc,IsdB,IedB,jsd,jed,nz)
+  CS%id_hdiffu = register_diag_field('ocean_model', 'twa_hdiffu', diag%axesCuL, Time, &
+      'some twa quantity', 'meter second-2')
+  call safe_alloc_ptr(CS%hdiffu,IsdB,IedB,jsd,jed,nz)
 
   call set_dependent_diagnostics(MIS, ADp, CDp, G, CS)
 
@@ -1458,6 +1491,11 @@ subroutine set_dependent_diagnostics(MIS, ADp, CDp, G, CS)
   if (ASSOCIATED(CS%uhGM_Rlay)) call safe_alloc_ptr(CDp%uhGM,IsdB,IedB,jsd,jed,nz)
   if (ASSOCIATED(CS%vhGM_Rlay)) call safe_alloc_ptr(CDp%vhGM,isd,ied,JsdB,JedB,nz)
 
+  if (ASSOCIATED(CS%huwb)) then
+    call safe_alloc_ptr(CDp%diapyc_vel,isd,ied,jsd,jed,nz+1)
+    call safe_alloc_ptr(ADp%du_dt_dia,IsdB,IedB,jsd,jed,nz)
+  endif
+
 end subroutine set_dependent_diagnostics
 
 
@@ -1495,12 +1533,13 @@ subroutine MOM_diagnostics_end(CS, ADp)
   if (ASSOCIATED(ADp%du_other))   deallocate(ADp%du_other)
   if (ASSOCIATED(ADp%dv_other))   deallocate(ADp%dv_other)
 
-  if (ASSOCIATED(CS%twatest0))     deallocate(CS%twatest0)
-  if (ASSOCIATED(CS%twatest1))     deallocate(CS%twatest1)
-  if (ASSOCIATED(CS%twatest2))     deallocate(CS%twatest2)
-  if (ASSOCIATED(CS%twatest3))     deallocate(CS%twatest3)
-  if (ASSOCIATED(CS%twatest4))     deallocate(CS%twatest4)
-  if (ASSOCIATED(CS%twatest5))     deallocate(CS%twatest5)
+  if (ASSOCIATED(CS%hmfu))     deallocate(CS%hmfu)
+  if (ASSOCIATED(CS%hpfu))     deallocate(CS%hpfu)
+  if (ASSOCIATED(CS%huwb))     deallocate(CS%huwb)
+  if (ASSOCIATED(CS%huuxpt))     deallocate(CS%huuxpt)
+  if (ASSOCIATED(CS%huvymt))     deallocate(CS%huvymt)
+  if (ASSOCIATED(CS%hdudtvisc))     deallocate(CS%hdudtvisc)
+  if (ASSOCIATED(CS%hdiffu))     deallocate(CS%hdiffu)
 
   do m=1,CS%num_time_deriv ; deallocate(CS%prev_val(m)%p) ; enddo
 
