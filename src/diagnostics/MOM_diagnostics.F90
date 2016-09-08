@@ -123,7 +123,7 @@ type, public :: diagnostics_CS ; private
     diag_tmp3d => NULL()    ! 3D re-usable arrays for diagnostics
 
   real, pointer, dimension(:,:,:) :: &
-    hmfu   => NULL(),&  ! test twa quantity
+    hmfv   => NULL(),&  ! test twa quantity
     hpfu   => NULL(),&  ! test twa quantity
     huwb   => NULL(),&  ! test twa quantity
     huuxpt   => NULL(),&  ! test twa quantity
@@ -154,7 +154,7 @@ type, public :: diagnostics_CS ; private
   integer :: id_pbo            = -1
   integer :: id_thkcello       = -1, id_rhoinsitu      = -1
   integer :: id_rhopot0        = -1, id_rhopot2        = -1
-  integer :: id_hmfu       = -1
+  integer :: id_hmfv       = -1
   integer :: id_hpfu       = -1
   integer :: id_huwb       = -1
   integer :: id_huuxpt       = -1
@@ -1025,13 +1025,13 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
     enddo ; enddo
   enddo
 
-  if (ASSOCIATED(CS%hmfu)) then
+  if (ASSOCIATED(CS%hmfv)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
-        CS%hmfu(I,j,k) = h_u(I,j,k)*(ADp%CAu(I,j,k) - ADp%gradKEu(I,j,k) - ADP%rv_x_v(I,j,k))
+        CS%hmfv(I,j,k) = h_u(I,j,k)*(ADp%CAu(I,j,k) - ADp%gradKEu(I,j,k) - ADP%rv_x_v(I,j,k))
       enddo ; enddo
     enddo
-    if (CS%id_hmfu > 0) call post_data(CS%id_hmfu, CS%hmfu, CS%diag)
+    if (CS%id_hmfv > 0) call post_data(CS%id_hmfv, CS%hmfv, CS%diag)
   endif
   
   if (ASSOCIATED(CS%hpfu)) then
@@ -1405,9 +1405,9 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
       units='Pa')
 
   ! terms in the twa budget
-  CS%id_hmfu = register_diag_field('ocean_model', 'twa_hmfu', diag%axesCuL, Time, &
+  CS%id_hmfv = register_diag_field('ocean_model', 'twa_hmfv', diag%axesCuL, Time, &
       'some twa quantity', 'meter second-2')
-  call safe_alloc_ptr(CS%hmfu,IsdB,IedB,jsd,jed,nz)
+  call safe_alloc_ptr(CS%hmfv,IsdB,IedB,jsd,jed,nz)
   CS%id_hpfu = register_diag_field('ocean_model', 'twa_hpfu', diag%axesCuL, Time, &
       'some twa quantity', 'meter second-2')
   call safe_alloc_ptr(CS%hpfu,IsdB,IedB,jsd,jed,nz)
@@ -1491,10 +1491,31 @@ subroutine set_dependent_diagnostics(MIS, ADp, CDp, G, CS)
   if (ASSOCIATED(CS%uhGM_Rlay)) call safe_alloc_ptr(CDp%uhGM,IsdB,IedB,jsd,jed,nz)
   if (ASSOCIATED(CS%vhGM_Rlay)) call safe_alloc_ptr(CDp%vhGM,isd,ied,JsdB,JedB,nz)
 
+  if (ASSOCIATED(CS%hmfv)) then
+    call safe_alloc_ptr(ADp%CAu,IsdB,IedB,jsd,jed,nz)
+    call safe_alloc_ptr(ADp%gradKEu,IsdB,IedB,jsd,jed,nz)
+    call safe_alloc_ptr(ADp%rv_x_v,IsdB,IedB,jsd,jed,nz)
+  endif
+
+  if (ASSOCIATED(CS%hpfu)) call safe_alloc_ptr(ADp%PFu,IsdB,IedB,jsd,jed,nz)
+
   if (ASSOCIATED(CS%huwb)) then
     call safe_alloc_ptr(CDp%diapyc_vel,isd,ied,jsd,jed,nz+1)
     call safe_alloc_ptr(ADp%du_dt_dia,IsdB,IedB,jsd,jed,nz)
   endif
+
+  if (ASSOCIATED(CS%huuxpt)) then
+    call safe_alloc_ptr(CDp%uh,IsdB,IedB,jsd,jed,nz)
+    call safe_alloc_ptr(ADp%gradKEu,IsdB,IedB,jsd,jed,nz)
+  endif
+
+  if (ASSOCIATED(CS%huvymt)) then
+    call safe_alloc_ptr(CDp%vh,isd,ied,JsdB,JedB,nz)
+    call safe_alloc_ptr(ADp%rv_x_v,IsdB,IedB,jsd,jed,nz)
+  endif
+
+  if (ASSOCIATED(CS%hdudtvisc)) call safe_alloc_ptr(ADp%du_dt_visc,IsdB,IedB,jsd,jed,nz)
+  if (ASSOCIATED(CS%hdiffu)) call safe_alloc_ptr(ADp%diffu,IsdB,IedB,jsd,jed,nz)
 
 end subroutine set_dependent_diagnostics
 
@@ -1533,7 +1554,7 @@ subroutine MOM_diagnostics_end(CS, ADp)
   if (ASSOCIATED(ADp%du_other))   deallocate(ADp%du_other)
   if (ASSOCIATED(ADp%dv_other))   deallocate(ADp%dv_other)
 
-  if (ASSOCIATED(CS%hmfu))     deallocate(CS%hmfu)
+  if (ASSOCIATED(CS%hmfv))     deallocate(CS%hmfv)
   if (ASSOCIATED(CS%hpfu))     deallocate(CS%hpfu)
   if (ASSOCIATED(CS%huwb))     deallocate(CS%huwb)
   if (ASSOCIATED(CS%huuxpt))     deallocate(CS%huuxpt)
