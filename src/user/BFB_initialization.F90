@@ -71,8 +71,8 @@ subroutine BFB_set_coord(Rlay, g_prime, GV, param_file, eqn_of_state)
   type(verticalGrid_type), intent(in)  :: GV
   type(param_file_type),   intent(in)  :: param_file
   type(EOS_type),          pointer     :: eqn_of_state
-  real                                 :: drho_dt, SST_s, T_bot, T_aby
-  real                                 :: rho_top, rho_bot, rho_aby
+  real                                 :: drho_dt, SST_s, T_bot
+  real                                 :: rho_top, rho_bot
   integer                              :: k, nz
   character(len=40)  :: mod = "BFB_set_coord" ! This subroutine's name.
 
@@ -83,21 +83,16 @@ subroutine BFB_set_coord(Rlay, g_prime, GV, param_file, eqn_of_state)
           "SST at the suothern edge of the domain.", units="C", default=20.0)
   call get_param(param_file, mod, "T_BOT", T_bot, &
                  "Bottom Temp", units="C", default=5.0)
-  call get_param(param_file, mod, "T_ABYSS", T_aby, &
-                 "Bottom Temp", units="C", default=2.0)
+
   rho_top = GV%rho0 + drho_dt*SST_s
   rho_bot = GV%rho0 + drho_dt*T_bot
-  rho_aby = GV%rho0 + drho_dt*T_aby
   nz = GV%ke
 
   !call MOM_error(FATAL, &
   ! "BFB_initialization.F90, BFB_set_coord: " // &
   ! "Unmodified user routine called - you must edit the routine to use it")
   do k = 1,nz
-    Rlay(k) = (rho_bot - rho_top)/(nz-2)*real(k-1) + rho_top
-    if (k == nz) then
-      Rlay(k) = rho_aby
-    end if
+    Rlay(k) = (rho_bot - rho_top)/(nz-1)*real(k-1) + rho_top
     if (k >1) then
       g_prime(k) = (Rlay(k) - Rlay(k-1))*GV%g_earth/GV%rho0
     else
