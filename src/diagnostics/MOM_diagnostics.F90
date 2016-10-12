@@ -1033,16 +1033,13 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
 !  (in)      CS  - control structure returned by a previous call to diagnostics_init
 
   real :: dwd, uhxCu,vhyCu, uhxCv, vhyCv
+  real :: usq, vsq
+  real, dimension(SZK_(G)+1) :: wdatui, wdatvi
 
   integer :: i, j, k, is, ie, js, je, Isq, Ieq, Jsq, Jeq, nz
   is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec ; nz = G%ke
   Isq = G%IscB ; Ieq = G%IecB ; Jsq = G%JscB ; Jeq = G%JecB
 
-    hw_Cu        => NULL(),&
-    hwb_Cu       => NULL(),&
-
-    hw_Cv        => NULL(),&
-    hwb_Cv       => NULL()
   if (ASSOCIATED(CS%h_Cu)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
@@ -1103,21 +1100,48 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
 
   if (ASSOCIATED(CS%hw_Cu)) then
     do j=js,je ; do I=Isq,Ieq
+      wdatui(1) = 0.5*(CDp%diapyc_vel(i,j,1)+CDp%diapyc_vel(i+1,j,1))
       do k=2,nz
         wdatui(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i+1,j,k))*GV%gprime(k)
-        CS%hw_Cu(I,j,k) = 
+        CS%hw_Cu(I,j,k-1) = 0.5*(wdatui(k) + wdatui(k-1))
       enddo
+      wdatui(nz+1) = 0.0
+      CS%hw_Cu(I,j,nz) = 0.5*(wdatui(nz+1) + wdatui(nz))
     enddo ; enddo
     if (CS%id_hw_Cu > 0) call post_data(CS%id_hw_Cu, CS%hw_Cu, CS%diag)
   endif
 
-  if (ASSOCIATED(CS%h_Cv)) then
+  if (ASSOCIATED(CS%hw_Cv)) then
+    do J=Jsq,Jeq ; do i=is,ie
+      wdatvi(1) = 0.5*(CDp%diapyc_vel(i,j,1)+CDp%diapyc_vel(i,j+1,1))
+      do k=2,nz
+        wdatvi(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i,j+1,k))*GV%gprime(k)
+        CS%hw_Cv(i,J,k-1) = 0.5*(wdatvi(k) + wdatvi(k-1))
+      enddo
+      wdatvi(nz+1) = 0.0
+      CS%hw_Cv(i,J,nz) = 0.5*(wdatvi(nz+1) + wdatvi(nz))
+    enddo ; enddo
+    if (CS%id_hw_Cv > 0) call post_data(CS%id_hw_Cv, CS%hw_Cv, CS%diag)
+  endif
+
+  if (ASSOCIATED(CS%hwb_Cu)) then
     do k=1,nz
-      do j=Jsq,Jeq ; do i=is,ie
-        CS%h_Cv(i,J,k) = 0.5*(h(i,j,k) + h(i,j+1,k))
+      do j=js,je ; do I=Isq,Ieq
+        CS%hwb_Cu(I,j,k) = 0.25*(CDp%diapyc_vel(i,j,k) + CDp%diapyc_vel(i+1,j,k) + &
+          CDp%diapyc_vel(i,j,k+1) + CDp%diapyc_vel(i+1,j,k+1))
       enddo ; enddo
     enddo
-    if (CS%id_h_Cv > 0) call post_data(CS%id_h_Cv, CS%h_Cv, CS%diag)
+    if (CS%id_hwb_Cu > 0) call post_data(CS%id_hwb_Cu, CS%hwb_Cu, CS%diag)
+  endif
+
+  if (ASSOCIATED(CS%hwb_Cv)) then
+    do k=1,nz
+      do j=js,je ; do I=Isq,Ieq
+        CS%hwb_Cv(i,J,k) = 0.25*(CDp%diapyc_vel(i,j,k) + CDp%diapyc_vel(i,j+1,k) + &
+          CDp%diapyc_vel(i,j,k+1) + CDp%diapyc_vel(i,j+1,k+1))
+      enddo ; enddo
+    enddo
+    if (CS%id_hwb_Cv > 0) call post_data(CS%id_hwb_Cv, CS%hwb_Cv, CS%diag)
   endif
 
   if (ASSOCIATED(CS%hfv)) then
