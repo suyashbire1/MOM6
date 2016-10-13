@@ -622,7 +622,7 @@ subroutine calculate_diagnostic_fields(u, v, h, uh, vh, tv, ADp, CDp, fluxes, &
     if (CS%id_dh_dt>0) call post_data(CS%id_dh_dt, CS%dh_dt, CS%diag)
 
     call calculate_energy_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
-    call calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
+    call calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   endif
 
 end subroutine calculate_diagnostic_fields
@@ -1008,7 +1008,7 @@ subroutine calculate_energy_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
 
 end subroutine calculate_energy_diagnostics
 
-subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
+subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   real, dimension(NIMEMB_,NJMEM_,NKMEM_), intent(in)    :: u
   real, dimension(NIMEM_,NJMEMB_,NKMEM_), intent(in)    :: v
   real, dimension(NIMEM_,NJMEM_,NKMEM_),  intent(in)    :: h
@@ -1017,6 +1017,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
   type(accel_diag_ptrs),                  intent(in)    :: ADp
   type(cont_diag_ptrs),                   intent(in)    :: CDp
   type(ocean_grid_type),                  intent(inout) :: G
+  type(verticalGrid_type),                intent(in)    :: GV
   type(diagnostics_CS),                   intent(inout) :: CS
 
 ! This subroutine calculates terms in the twa budget.
@@ -1100,9 +1101,9 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
 
   if (ASSOCIATED(CS%hw_Cu)) then
     do j=js,je ; do I=Isq,Ieq
-      wdatui(1) = 0.5*(CDp%diapyc_vel(i,j,1)+CDp%diapyc_vel(i+1,j,1))
+      wdatui(1) = 0.0
       do k=2,nz
-        wdatui(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i+1,j,k))*GV%gprime(k)
+        wdatui(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i+1,j,k))*GV%g_prime(k)
         CS%hw_Cu(I,j,k-1) = 0.5*(wdatui(k) + wdatui(k-1))
       enddo
       wdatui(nz+1) = 0.0
@@ -1113,9 +1114,9 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, CS)
 
   if (ASSOCIATED(CS%hw_Cv)) then
     do J=Jsq,Jeq ; do i=is,ie
-      wdatvi(1) = 0.5*(CDp%diapyc_vel(i,j,1)+CDp%diapyc_vel(i,j+1,1))
+      wdatvi(1) = 0.0
       do k=2,nz
-        wdatvi(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i,j+1,k))*GV%gprime(k)
+        wdatvi(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i,j+1,k))*GV%g_prime(k)
         CS%hw_Cv(i,J,k-1) = 0.5*(wdatvi(k) + wdatvi(k-1))
       enddo
       wdatvi(nz+1) = 0.0
@@ -1735,46 +1736,86 @@ subroutine set_dependent_diagnostics(MIS, ADp, CDp, G, CS)
   if (ASSOCIATED(CS%vhGM_Rlay)) call safe_alloc_ptr(CDp%vhGM,isd,ied,JsdB,JedB,nz)
 
   if (ASSOCIATED(CS%hfv)) then
+    call safe_alloc_ptr(CS%h_Cu,IsdB,IedB,jsd,jed,nz)
     call safe_alloc_ptr(ADp%gradKEu,IsdB,IedB,jsd,jed,nz)
     call safe_alloc_ptr(ADp%rv_x_v,IsdB,IedB,jsd,jed,nz)
   endif
 
   if (ASSOCIATED(CS%huwb)) then
+    call safe_alloc_ptr(CS%h_Cu,IsdB,IedB,jsd,jed,nz)
     call safe_alloc_ptr(CDp%diapyc_vel,isd,ied,jsd,jed,nz+1)
     call safe_alloc_ptr(ADp%du_dt_dia,IsdB,IedB,jsd,jed,nz)
   endif
 
   if (ASSOCIATED(CS%huuxpt)) then
+    call safe_alloc_ptr(CS%h_Cu,IsdB,IedB,jsd,jed,nz)
     call safe_alloc_ptr(ADp%gradKEu,IsdB,IedB,jsd,jed,nz)
   endif
 
   if (ASSOCIATED(CS%huvymt)) then
+    call safe_alloc_ptr(CS%h_Cu,IsdB,IedB,jsd,jed,nz)
     call safe_alloc_ptr(ADp%rv_x_v,IsdB,IedB,jsd,jed,nz)
   endif
 
-  if (ASSOCIATED(CS%hdudtvisc)) call safe_alloc_ptr(ADp%du_dt_visc,IsdB,IedB,jsd,jed,nz)
-  if (ASSOCIATED(CS%hdiffu)) call safe_alloc_ptr(ADp%diffu,IsdB,IedB,jsd,jed,nz)
+  if (ASSOCIATED(CS%hdudtvisc)) then
+    call safe_alloc_ptr(ADp%du_dt_visc,IsdB,IedB,jsd,jed,nz)
+    call safe_alloc_ptr(CS%h_Cu,IsdB,IedB,jsd,jed,nz)
+  endif
+
+  if (ASSOCIATED(CS%hdiffu)) then
+    call safe_alloc_ptr(ADp%diffu,IsdB,IedB,jsd,jed,nz)
+    call safe_alloc_ptr(CS%h_Cu,IsdB,IedB,jsd,jed,nz)
+  endif
 
   if (ASSOCIATED(CS%hmfu)) then
+    call safe_alloc_ptr(CS%h_Cv,isd,ied,JsdB,JedB,nz)
     call safe_alloc_ptr(ADp%gradKEv,isd,ied,JsdB,JedB,nz)
     call safe_alloc_ptr(ADp%rv_x_u,isd,ied,JsdB,JedB,nz)
   endif
 
   if (ASSOCIATED(CS%hvwb)) then
+    call safe_alloc_ptr(CS%h_Cv,isd,ied,JsdB,JedB,nz)
     call safe_alloc_ptr(CDp%diapyc_vel,isd,ied,jsd,jed,nz+1)
     call safe_alloc_ptr(ADp%dv_dt_dia,isd,ied,JsdB,JedB,nz)
   endif
 
   if (ASSOCIATED(CS%huvxpt)) then
+    call safe_alloc_ptr(CS%h_Cv,isd,ied,JsdB,JedB,nz)
     call safe_alloc_ptr(ADp%rv_x_u,isd,ied,JsdB,JedB,nz)
   endif
 
   if (ASSOCIATED(CS%hvvymt)) then
+    call safe_alloc_ptr(CS%h_Cv,isd,ied,JsdB,JedB,nz)
     call safe_alloc_ptr(ADp%gradKEv,isd,ied,JsdB,JedB,nz)
   endif
 
-  if (ASSOCIATED(CS%hdvdtvisc)) call safe_alloc_ptr(ADp%dv_dt_visc,isd,ied,JsdB,JedB,nz)
-  if (ASSOCIATED(CS%hdiffv)) call safe_alloc_ptr(ADp%diffv,isd,ied,JsdB,JedB,nz)
+  if (ASSOCIATED(CS%hdvdtvisc)) then
+    call safe_alloc_ptr(ADp%dv_dt_visc,isd,ied,JsdB,JedB,nz)
+    call safe_alloc_ptr(CS%h_Cv,isd,ied,JsdB,JedB,nz)
+  endif
+
+  if (ASSOCIATED(CS%hdiffv)) then
+    call safe_alloc_ptr(ADp%diffv,isd,ied,JsdB,JedB,nz)
+    call safe_alloc_ptr(CS%h_Cv,isd,ied,JsdB,JedB,nz)
+  endif
+
+  if (ASSOCIATED(CS%hw_Cu)) then
+    call safe_alloc_ptr(CS%h_Cu,IsdB,IedB,jsd,jed,nz)
+    call safe_alloc_ptr(CDp%diapyc_vel,isd,ied,jsd,jed,nz+1)
+  endif
+
+  if (ASSOCIATED(CS%hw_Cv)) then
+    call safe_alloc_ptr(CS%h_Cv,isd,ied,JsdB,JedB,nz)
+    call safe_alloc_ptr(CDp%diapyc_vel,isd,ied,jsd,jed,nz+1)
+  endif
+
+  if (ASSOCIATED(CS%hwb_Cu)) then
+    call safe_alloc_ptr(CDp%diapyc_vel,isd,ied,jsd,jed,nz+1)
+  endif
+
+  if (ASSOCIATED(CS%hwb_Cv)) then
+    call safe_alloc_ptr(CDp%diapyc_vel,isd,ied,jsd,jed,nz+1)
+  endif
 end subroutine set_dependent_diagnostics
 
 
