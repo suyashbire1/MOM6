@@ -1053,7 +1053,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   do k = 1,nz
     do J=Jsq,Jeq ; do I=Isq,Ieq
       hmin = min(h(i,j,k), h(i+1,j,k), h(i,j+1,k), h(i+1,j+1,k))
-      ishqlarge(I,J,k) = abs(hmin-GV%Angstrom_z)/hmin
+      ishqlarge(I,J,k) = ceiling(abs(hmin-GV%Angstrom_z)/hmin)
     enddo ; enddo
   enddo
 
