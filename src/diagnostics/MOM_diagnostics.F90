@@ -1049,6 +1049,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   real :: usq, vsq, hmin
   real, dimension(SZK_(G)+1) :: wdatui, wdatvi
   real, dimension(SZI_(G),SZJ_(G),SZK_(G)) :: ishqlarge
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)+1) :: wdatui1,wdatvi1
 
   integer :: i, j, k, is, ie, js, je, Isq, Ieq, Jsq, Jeq, nz
   is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec ; nz = G%ke
@@ -1117,28 +1118,51 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
     if (CS%id_hu_Cv > 0) call post_data(CS%id_hu_Cv, CS%hu_Cv, CS%diag)
   endif
 
+!  if (ASSOCIATED(CS%hw_Cu)) then
+!    do j=js,je ; do I=Isq,Ieq
+!      wdatui(1) = 0.0
+!      do k=2,nz
+!        wdatui(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i+1,j,k))*GV%g_prime(k)
+!        CS%hw_Cu(I,j,k-1) = 0.5*(wdatui(k) + wdatui(k-1))*ishqlarge(I,J,k-1)
+!      enddo
+!      wdatui(nz+1) = 0.0
+!      CS%hw_Cu(I,j,nz) = 0.5*(wdatui(nz+1) + wdatui(nz))*ishqlarge(I,J,nz)
+!    enddo ; enddo
+!    if (CS%id_hw_Cu > 0) call post_data(CS%id_hw_Cu, CS%hw_Cu, CS%diag)
+!  endif
+!
+!  if (ASSOCIATED(CS%hw_Cv)) then
+!    do J=Jsq,Jeq ; do i=is,ie
+!      wdatvi(1) = 0.0
+!      do k=2,nz
+!        wdatvi(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i,j+1,k))*GV%g_prime(k)
+!        CS%hw_Cv(i,J,k-1) = 0.5*(wdatvi(k) + wdatvi(k-1))*ishqlarge(I,J,k-1)
+!      enddo
+!      wdatvi(nz+1) = 0.0
+!      CS%hw_Cv(i,J,nz) = 0.5*(wdatvi(nz+1) + wdatvi(nz))*ishqlarge(I,J,nz)
+!    enddo ; enddo
+!    if (CS%id_hw_Cv > 0) call post_data(CS%id_hw_Cv, CS%hw_Cv, CS%diag)
+!  endif
   if (ASSOCIATED(CS%hw_Cu)) then
     do j=js,je ; do I=Isq,Ieq
-      wdatui(1) = 0.0
-      do k=2,nz
-        wdatui(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i+1,j,k))*GV%g_prime(k)
-        CS%hw_Cu(I,j,k-1) = 0.5*(wdatui(k) + wdatui(k-1))*ishqlarge(I,J,k-1)
+      do k=1,nz-1
+        CS%hw_Cu(I,j,k) = 0.25*((CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i+1,j,k))*GV%g_prime(k)&
+            +(CDp%diapyc_vel(i,j,k+1)+CDp%diapyc_vel(i+1,j,k+1))*GV%g_prime(k))*ishqlarge(I,J,k-1)
       enddo
-      wdatui(nz+1) = 0.0
-      CS%hw_Cu(I,j,nz) = 0.5*(wdatui(nz+1) + wdatui(nz))*ishqlarge(I,J,nz)
+      CS%hw_Cu(I,j,nz) = 0.25*(CDp%diapyc_vel(i,j,nz)+CDp%diapyc_vel(i+1,j,nz))&
+          *GV%g_prime(nz)*ishqlarge(I,J,k-1)
     enddo ; enddo
     if (CS%id_hw_Cu > 0) call post_data(CS%id_hw_Cu, CS%hw_Cu, CS%diag)
   endif
 
   if (ASSOCIATED(CS%hw_Cv)) then
     do J=Jsq,Jeq ; do i=is,ie
-      wdatvi(1) = 0.0
-      do k=2,nz
-        wdatvi(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i,j+1,k))*GV%g_prime(k)
-        CS%hw_Cv(i,J,k-1) = 0.5*(wdatvi(k) + wdatvi(k-1))*ishqlarge(I,J,k-1)
+      do k=1,nz-1
+        CS%hw_Cv(i,J,k) = 0.25*((CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i,j+1,k))*GV%g_prime(k)&
+            +(CDp%diapyc_vel(i,j,k+1)+CDp%diapyc_vel(i,j+1,k+1))*GV%g_prime(k))*ishqlarge(I,J,k-1)
       enddo
-      wdatvi(nz+1) = 0.0
-      CS%hw_Cv(i,J,nz) = 0.5*(wdatvi(nz+1) + wdatvi(nz))*ishqlarge(I,J,nz)
+      CS%hw_Cv(i,J,nz) = 0.25*(CDp%diapyc_vel(i,j,nz)+CDp%diapyc_vel(i+1,j,nz))&
+          *GV%g_prime(nz)*ishqlarge(I,J,k-1)
     enddo ; enddo
     if (CS%id_hw_Cv > 0) call post_data(CS%id_hw_Cv, CS%hw_Cv, CS%diag)
   endif
@@ -1165,7 +1189,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
 
   if (ASSOCIATED(CS%esq_Cu)) then
     do k=1,nz
-      do j=js,je ; do i=is,ie
+      do j=js,je ; do I=Isq,Ieq
         CS%esq_Cu(i,j,k) = 0.25*(CS%e(i,j,k)*CS%e(i,j,k)+CS%e(i,j,k+1)*CS%e(i,j,k+1)&
           +CS%e(i+1,j,k)*CS%e(i+1,j,k)+CS%e(i+1,j,k+1)*CS%e(i+1,j,k+1))*ishqlarge(I,J,k)
       enddo ; enddo
@@ -1175,7 +1199,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
 
   if (ASSOCIATED(CS%esq_Cv)) then
     do k=1,nz
-      do j=js,je ; do i=is,ie
+      do J=Jsq,Jeq ; do i=is,ie
         CS%esq_Cv(i,j,k) = 0.25*(CS%e(i,j,k)*CS%e(i,j,k)+CS%e(i,j,k+1)*CS%e(i,j,k+1)&
           +CS%e(i,j+1,k)*CS%e(i,j+1,k)+CS%e(i,j+1,k+1)*CS%e(i,j+1,k+1))*ishqlarge(I,J,k)
       enddo ; enddo
@@ -1752,7 +1776,7 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
   CS%id_esq_Cu = register_diag_field('ocean_model', 'esq_Cu', diag%axesCuL, Time, &
       'e**2 at Cu points', 'meter2')
   call safe_alloc_ptr(CS%esq_Cu,IsdB,IedB,jsd,jed,nz)
-  CS%id_esq_Cv = register_diag_field('ocean_model', 'esq_Cv', diag%axesCuL, Time, &
+  CS%id_esq_Cv = register_diag_field('ocean_model', 'esq_Cv', diag%axesCvL, Time, &
       'e**2 at Cv points', 'meter2')
   call safe_alloc_ptr(CS%esq_Cu,isd,ied,JsdB,JedB,nz)
   CS%id_e_Cu = register_diag_field('ocean_model', 'e_Cu', diag%axesCuL, Time, &
