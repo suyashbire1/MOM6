@@ -1147,7 +1147,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
     do j=js,je ; do I=Isq,Ieq
       do k=1,nz-1
         CS%hw_Cu(I,j,k) = 0.25*((CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i+1,j,k))*GV%g_prime(k)&
-            +(CDp%diapyc_vel(i,j,k+1)+CDp%diapyc_vel(i+1,j,k+1))*GV%g_prime(k))*ishqlarge(I,J,k-1)
+            +(CDp%diapyc_vel(i,j,k+1)+CDp%diapyc_vel(i+1,j,k+1))*GV%g_prime(k+1))*ishqlarge(I,J,k-1)
       enddo
       CS%hw_Cu(I,j,nz) = 0.25*(CDp%diapyc_vel(i,j,nz)+CDp%diapyc_vel(i+1,j,nz))&
           *GV%g_prime(nz)*ishqlarge(I,J,k-1)
@@ -1159,7 +1159,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
     do J=Jsq,Jeq ; do i=is,ie
       do k=1,nz-1
         CS%hw_Cv(i,J,k) = 0.25*((CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i,j+1,k))*GV%g_prime(k)&
-            +(CDp%diapyc_vel(i,j,k+1)+CDp%diapyc_vel(i,j+1,k+1))*GV%g_prime(k))*ishqlarge(I,J,k-1)
+            +(CDp%diapyc_vel(i,j,k+1)+CDp%diapyc_vel(i,j+1,k+1))*GV%g_prime(k+1))*ishqlarge(I,J,k-1)
       enddo
       CS%hw_Cv(i,J,nz) = 0.25*(CDp%diapyc_vel(i,j,nz)+CDp%diapyc_vel(i+1,j,nz))&
           *GV%g_prime(nz)*ishqlarge(I,J,k-1)
@@ -1754,7 +1754,7 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
   call safe_alloc_ptr(CS%huu_Cu,IsdB,IedB,jsd,jed,nz)
   CS%id_hvv_Cv = register_diag_field('ocean_model', 'hvv_Cv', diag%axesCvL, Time, &
       'hvv at Cv points', 'meter3 second-1')
-  call safe_alloc_ptr(CS%huu_Cu,isd,ied,JsdB,JedB,nz)
+  call safe_alloc_ptr(CS%hvv_Cv,isd,ied,JsdB,JedB,nz)
   CS%id_hv_Cu = register_diag_field('ocean_model', 'hv_Cu', diag%axesCuL, Time, &
       'hv at Cu points', 'meter2 second-1')
   call safe_alloc_ptr(CS%hv_Cu,IsdB,IedB,jsd,jed,nz)
@@ -1778,7 +1778,7 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
   call safe_alloc_ptr(CS%esq_Cu,IsdB,IedB,jsd,jed,nz)
   CS%id_esq_Cv = register_diag_field('ocean_model', 'esq_Cv', diag%axesCvL, Time, &
       'e**2 at Cv points', 'meter2')
-  call safe_alloc_ptr(CS%esq_Cu,isd,ied,JsdB,JedB,nz)
+  call safe_alloc_ptr(CS%esq_Cv,isd,ied,JsdB,JedB,nz)
   CS%id_e_Cu = register_diag_field('ocean_model', 'e_Cu', diag%axesCuL, Time, &
       'e at Cu points', 'meter')
   call safe_alloc_ptr(CS%e_Cu,IsdB,IedB,jsd,jed,nz)
