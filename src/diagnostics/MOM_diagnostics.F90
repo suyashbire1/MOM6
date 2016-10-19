@@ -1046,7 +1046,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
 !  (in)      CS  - control structure returned by a previous call to diagnostics_init
 
   real :: dwd, uhxCu,vhyCu, uhxCv, vhyCv
-  real :: usq, vsq, hmin
+  real :: hmin
   real, dimension(SZK_(G)+1) :: wdatui, wdatvi
   real, dimension(SZI_(G),SZJ_(G),SZK_(G)) :: ishqlarge
   real, dimension(SZI_(G),SZJ_(G),SZK_(G)+1) :: wdatui1,wdatvi1
