@@ -1147,10 +1147,10 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
     do j=js,je ; do I=Isq,Ieq
       do k=1,nz-1
         CS%hw_Cu(I,j,k) = 0.25*((CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i+1,j,k))*GV%g_prime(k)&
-            +(CDp%diapyc_vel(i,j,k+1)+CDp%diapyc_vel(i+1,j,k+1))*GV%g_prime(k+1))*ishqlarge(I,J,k-1)
+            +(CDp%diapyc_vel(i,j,k+1)+CDp%diapyc_vel(i+1,j,k+1))*GV%g_prime(k+1))*ishqlarge(I,J,k)
       enddo
       CS%hw_Cu(I,j,nz) = 0.25*(CDp%diapyc_vel(i,j,nz)+CDp%diapyc_vel(i+1,j,nz))&
-          *GV%g_prime(nz)*ishqlarge(I,J,k-1)
+          *GV%g_prime(nz)*ishqlarge(I,J,nz)
     enddo ; enddo
     if (CS%id_hw_Cu > 0) call post_data(CS%id_hw_Cu, CS%hw_Cu, CS%diag)
   endif
@@ -1159,10 +1159,10 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
     do J=Jsq,Jeq ; do i=is,ie
       do k=1,nz-1
         CS%hw_Cv(i,J,k) = 0.25*((CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i,j+1,k))*GV%g_prime(k)&
-            +(CDp%diapyc_vel(i,j,k+1)+CDp%diapyc_vel(i,j+1,k+1))*GV%g_prime(k+1))*ishqlarge(I,J,k-1)
+            +(CDp%diapyc_vel(i,j,k+1)+CDp%diapyc_vel(i,j+1,k+1))*GV%g_prime(k+1))*ishqlarge(I,J,k)
       enddo
       CS%hw_Cv(i,J,nz) = 0.25*(CDp%diapyc_vel(i,j,nz)+CDp%diapyc_vel(i+1,j,nz))&
-          *GV%g_prime(nz)*ishqlarge(I,J,k-1)
+          *GV%g_prime(nz)*ishqlarge(I,J,nz)
     enddo ; enddo
     if (CS%id_hw_Cv > 0) call post_data(CS%id_hw_Cv, CS%hw_Cv, CS%diag)
   endif
