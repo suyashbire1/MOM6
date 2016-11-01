@@ -27,9 +27,6 @@ public calculateBuoyancyFlux1d, calculateBuoyancyFlux2d, forcing_accumulate
 public forcing_SinglePointPrint, mech_forcing_diags, forcing_diagnostics
 public register_forcing_type_diags, allocate_forcing_type, deallocate_forcing_type
 
-integer :: num_msg = 0
-integer :: max_msg = 2
-
 !> Structure that contains pointers to the boundary forcing
 !! used to drive the liquid ocean simulated by MOM.
 !! Data in this type is allocated in the module
@@ -164,6 +161,10 @@ type, public :: forcing
      !! All arrays in tr_fluxes use the coupler indexing, which has no halos.
      !! This is not a convenient convention, but imposed on MOM6 by the coupler.
 
+  ! For internal error tracking
+  integer :: num_msg = 0 !< Number of messages issues about excessive SW penetration
+  integer :: max_msg = 2 !< Maximum number of messages to issue about excessive SW penetration
+
 end type forcing
 
 !> Structure that defines the id handles for the forcing type
@@ -175,6 +176,7 @@ type, public :: forcing_diags
   integer :: id_lprec        = -1, id_fprec       = -1
   integer :: id_lrunoff      = -1, id_frunoff     = -1
   integer :: id_net_massout  = -1, id_net_massin  = -1
+  integer :: id_massout_flux = -1, id_massin_flux = -1
   integer :: id_seaice_melt  = -1
 
   ! global area integrated mass flux diagnostic handles
@@ -479,9 +481,9 @@ subroutine extractFluxes1d(G, GV, fluxes, optics, nsw, j, dt,                   
 !     (fluxes%heat_content_cond(i,j)     +  fluxes%heat_content_vprec(i,j))))))
 !    endif
 
-    if (num_msg < max_msg) then
+    if (fluxes%num_msg < fluxes%max_msg) then
       if (Pen_SW_tot(i) > 1.000001*J_m2_to_H*scale*dt*fluxes%sw(i,j)) then
-        num_msg = num_msg + 1
+        fluxes%num_msg = fluxes%num_msg + 1
         write(mesg,'("Penetrating shortwave of ",1pe17.10, &
                     &" exceeds total shortwave of ",1pe17.10,&
                     &" at ",1pg11.4,"E, "1pg11.4,"N.")') &
@@ -1055,7 +1057,12 @@ subroutine register_forcing_type_diags(Time, diag, use_temperature, handles)
   handles%id_net_massin  = register_diag_field('ocean_model', 'net_massin', diag%axesT1, Time, &
         'Net mass entering ocean due to precip, runoff, ice melt', 'kilogram meter-2 second-1')
 
+  handles%id_massout_flux = register_diag_field('ocean_model', 'massout_flux', diag%axesT1, Time, &
+        'Net mass flux of freshwater out of the ocean (used in the boundary flux calculation)', &
+         'kilogram meter-2')
 
+  handles%id_massin_flux  = register_diag_field('ocean_model', 'massin_flux', diag%axesT1, Time, &
+        'Net mass mass flux of freshwater into the ocean (used in boundary flux calculation)', 'kilogram meter-2')
   !=========================================================================
   ! area integrated surface mass transport
 
@@ -1796,6 +1803,8 @@ subroutine forcing_diagnostics(fluxes, state, dt, G, diag, handles)
         call post_data(handles%id_total_net_massout, total_transport, diag)
       endif
     endif
+    
+    if(handles%id_massout_flux > 0) call post_data(handles%id_massout_flux,fluxes%netMassOut,diag)
 
     if(handles%id_net_massin > 0 .or. handles%id_total_net_massin > 0) then
       sum(:,:) = 0.0
@@ -1812,6 +1821,8 @@ subroutine forcing_diagnostics(fluxes, state, dt, G, diag, handles)
         call post_data(handles%id_total_net_massin, total_transport, diag)
       endif
     endif
+    
+    if(handles%id_massin_flux > 0) call post_data(handles%id_massin_flux,fluxes%netMassIn,diag)
 
     if ((handles%id_evap > 0) .and. ASSOCIATED(fluxes%evap)) &
       call post_data(handles%id_evap, fluxes%evap, diag)
