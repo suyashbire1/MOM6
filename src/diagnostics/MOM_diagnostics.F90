@@ -1748,10 +1748,10 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
   call safe_alloc_ptr(CS%h_Cv,isd,ied,JsdB,JedB,nz)
   CS%id_huu_T = register_diag_field('ocean_model', 'huu_T', diag%axesTl, Time, &
       'huu at T points', 'meter3 second-1')
-  call safe_alloc_ptr(CS%huu_T,IsdB,IedB,jsd,jed,nz)
+  call safe_alloc_ptr(CS%huu_T,isd,ied,jsd,jed,nz)
   CS%id_hvv_T = register_diag_field('ocean_model', 'hvv_T', diag%axesTl, Time, &
       'hvv at T points', 'meter3 second-1')
-  call safe_alloc_ptr(CS%huu_T,isd,ied,JsdB,JedB,nz)
+  call safe_alloc_ptr(CS%hvv_T,isd,ied,jsd,jed,nz)
   CS%id_hv_Cu = register_diag_field('ocean_model', 'hv_Cu', diag%axesCuL, Time, &
       'hv at Cu points', 'meter2 second-1')
   call safe_alloc_ptr(CS%hv_Cu,IsdB,IedB,jsd,jed,nz)
