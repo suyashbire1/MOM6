@@ -162,6 +162,9 @@ type, public :: diagnostics_CS ; private
     e_Cv         => NULL(),&
     epfv         => NULL()
 
+  real, pointer, dimension(:,:,:) :: &
+    islayerdeep  => NULL()
+
   ! diagnostic IDs
   integer :: id_e              = -1, id_e_D            = -1
   integer :: id_du_dt          = -1, id_dv_dt          = -1
@@ -203,7 +206,7 @@ type, public :: diagnostics_CS ; private
   integer :: id_hwb_Cu         = -1, id_hwb_Cv         = -1
   integer :: id_epfu           = -1, id_epfv           = -1
   integer :: id_e_Cu           = -1, id_e_Cv           = -1
-  integer :: id_esq            = -1
+  integer :: id_esq            = -1, id_islayerdeep    = -1
 
   type(wave_speed_CS), pointer :: wave_speed_CSp => NULL()  
 
@@ -1081,8 +1084,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
 
   real :: dwd, uhxCu,vhyCu, uhxCv, vhyCv
   real :: hmin
-  real, dimension(SZK_(G)+1) :: wdatui, wdatvi
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)) :: ishqlarge
+  real, dimension(SZIB_(G),SZJB_(G),SZK_(G)) :: ishqlarge
 
   integer :: i, j, k, is, ie, js, je, Isq, Ieq, Jsq, Jeq, nz
   is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec ; nz = G%ke
@@ -1092,8 +1094,10 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
     do J=Jsq,Jeq ; do I=Isq,Ieq
       hmin = min(h(i,j,k), h(i+1,j,k), h(i,j+1,k), h(i+1,j+1,k))
       ishqlarge(I,J,k) = ceiling(abs(hmin-GV%Angstrom_z)/hmin)
+      CS%islayerdeep(I,J,k) = CS%islayerdeep(I,J,k) + ishqlarge(I,J,k) 
     enddo ; enddo
   enddo
+  if (CS%id_islayerdeep > 0) call post_data(CS%id_islayerdeep, CS%islayerdeep, CS%diag)
 
   if (ASSOCIATED(CS%h_Cu)) then
     do k=1,nz
@@ -1809,6 +1813,10 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
   CS%id_epfv = register_diag_field('ocean_model', 'epfv', diag%axesCvL, Time, &
       'epfv at Cv points', 'meter2 second-1')
   call safe_alloc_ptr(CS%epfv,isd,ied,JsdB,JedB,nz)
+  CS%id_islayerdeep = register_diag_field('ocean_model', 'islayerdeep', &
+      diag%axesBul, Time, &
+      'Total number of times the layer was deeper than Angstrom_z', 'no units')
+  call safe_alloc_ptr(CS%islayerdeep,IsdB,IedB,JsdB,JedB,nz)
 
 
   call set_dependent_diagnostics(MIS, ADp, CDp, G, CS)
@@ -2034,6 +2042,7 @@ subroutine MOM_diagnostics_end(CS, ADp)
   if (ASSOCIATED(CS%hu_Cv))       deallocate(CS%hu_Cv)
   if (ASSOCIATED(CS%hw_Cv))       deallocate(CS%hw_Cv)
   if (ASSOCIATED(CS%hwb_Cv))      deallocate(CS%hwb_Cv)
+  if (ASSOCIATED(CS%islayerdeep)) deallocate(CS%islayerdeep)
 
   do m=1,CS%num_time_deriv ; deallocate(CS%prev_val(m)%p) ; enddo
 
