@@ -1080,7 +1080,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
 !  (in)      CS  - control structure returned by a previous call to diagnostics_init
 
   real :: dwd, uhxCu,vhyCu, uhxCv, vhyCv
-  real :: usq, vsq, hmin
+  real :: hmin
   real, dimension(SZK_(G)+1) :: wdatui, wdatvi
   real, dimension(SZI_(G),SZJ_(G),SZK_(G)) :: ishqlarge
 
@@ -1116,8 +1116,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%huu_T)) then
     do k=1,nz
       do j=js,je ; do i=is,ie
-        usq = 0.5*(u(i,j,k)*u(i,j,k)+u(i-1,j,k)*u(i-1,j,k))
-        CS%huu_T(i,j,k) = h(i,j,k)*usq*ishqlarge(I,J,k)
+        CS%huu_T(i,j,k) = h(i,j,k)*0.5*(u(i,j,k)*u(i,j,k)+&&
+          u(i-1,j,k)*u(i-1,j,k))*ishqlarge(I,J,k)
       enddo ; enddo
     enddo
     if (CS%id_huu_T > 0) call post_data(CS%id_huu_T, CS%huu_T, CS%diag)
@@ -1126,8 +1126,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%hvv_T)) then
     do k=1,nz
       do j=js,je ; do i=is,ie
-        vsq = 0.5*(v(i,j,k)*v(i,j,k)+v(i,j-1,k)*v(i,j-1,k))
-        CS%hvv_T(i,j,k) = h(i,j,k)*vsq*ishqlarge(I,J,k)
+        CS%hvv_T(i,j,k) = h(i,j,k)*0.5*(v(i,j,k)*v(i,j,k)+&&
+          v(i,j-1,k)*v(i,j-1,k))*ishqlarge(I,J,k)
       enddo ; enddo
     enddo
     if (CS%id_hvv_T > 0) call post_data(CS%id_hvv_T, CS%hvv_T, CS%diag)
@@ -1153,28 +1153,52 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
     if (CS%id_hu_Cv > 0) call post_data(CS%id_hu_Cv, CS%hu_Cv, CS%diag)
   endif
 
+!  if (ASSOCIATED(CS%hw_Cu)) then
+!    do j=js,je ; do I=Isq,Ieq
+!      wdatui(1) = 0.0
+!      do k=2,nz
+!        wdatui(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i+1,j,k))*GV%g_prime(k)
+!        CS%hw_Cu(I,j,k-1) = 0.5*(wdatui(k) + wdatui(k-1))*ishqlarge(I,J,k-1)
+!      enddo
+!      wdatui(nz+1) = 0.0
+!      CS%hw_Cu(I,j,nz) = 0.5*(wdatui(nz+1) + wdatui(nz))*ishqlarge(I,J,nz)
+!    enddo ; enddo
+!    if (CS%id_hw_Cu > 0) call post_data(CS%id_hw_Cu, CS%hw_Cu, CS%diag)
+!  endif
+!
+!  if (ASSOCIATED(CS%hw_Cv)) then
+!    do J=Jsq,Jeq ; do i=is,ie
+!      wdatvi(1) = 0.0
+!      do k=2,nz
+!        wdatvi(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i,j+1,k))*GV%g_prime(k)
+!        CS%hw_Cv(i,J,k-1) = 0.5*(wdatvi(k) + wdatvi(k-1))*ishqlarge(I,J,k-1)
+!      enddo
+!      wdatvi(nz+1) = 0.0
+!      CS%hw_Cv(i,J,nz) = 0.5*(wdatvi(nz+1) + wdatvi(nz))*ishqlarge(I,J,nz)
+!    enddo ; enddo
+!    if (CS%id_hw_Cv > 0) call post_data(CS%id_hw_Cv, CS%hw_Cv, CS%diag)
+!  endif
+
   if (ASSOCIATED(CS%hw_Cu)) then
     do j=js,je ; do I=Isq,Ieq
-      wdatui(1) = 0.0
-      do k=2,nz
-        wdatui(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i+1,j,k))*GV%g_prime(k)
-        CS%hw_Cu(I,j,k-1) = 0.5*(wdatui(k) + wdatui(k-1))*ishqlarge(I,J,k-1)
+      do k=1,nz-1
+        CS%hw_Cu(I,j,k) = 0.25*((CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i+1,j,k))*GV%g_prime(k)&
+            +(CDp%diapyc_vel(i,j,k+1)+CDp%diapyc_vel(i+1,j,k+1))*GV%g_prime(k+1))*ishqlarge(I,J,k)
       enddo
-      wdatui(nz+1) = 0.0
-      CS%hw_Cu(I,j,nz) = 0.5*(wdatui(nz+1) + wdatui(nz))*ishqlarge(I,J,nz)
+      CS%hw_Cu(I,j,nz) = 0.25*(CDp%diapyc_vel(i,j,nz)+CDp%diapyc_vel(i+1,j,nz))&
+          *GV%g_prime(nz)*ishqlarge(I,J,nz)
     enddo ; enddo
     if (CS%id_hw_Cu > 0) call post_data(CS%id_hw_Cu, CS%hw_Cu, CS%diag)
   endif
 
   if (ASSOCIATED(CS%hw_Cv)) then
     do J=Jsq,Jeq ; do i=is,ie
-      wdatvi(1) = 0.0
-      do k=2,nz
-        wdatvi(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i,j+1,k))*GV%g_prime(k)
-        CS%hw_Cv(i,J,k-1) = 0.5*(wdatvi(k) + wdatvi(k-1))*ishqlarge(I,J,k-1)
+      do k=1,nz-1
+        CS%hw_Cv(i,J,k) = 0.25*((CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i,j+1,k))*GV%g_prime(k)&
+            +(CDp%diapyc_vel(i,j,k+1)+CDp%diapyc_vel(i,j+1,k+1))*GV%g_prime(k+1))*ishqlarge(I,J,k)
       enddo
-      wdatvi(nz+1) = 0.0
-      CS%hw_Cv(i,J,nz) = 0.5*(wdatvi(nz+1) + wdatvi(nz))*ishqlarge(I,J,nz)
+      CS%hw_Cv(i,J,nz) = 0.25*(CDp%diapyc_vel(i,j,nz)+CDp%diapyc_vel(i+1,j,nz))&
+          *GV%g_prime(nz)*ishqlarge(I,J,nz)
     enddo ; enddo
     if (CS%id_hw_Cv > 0) call post_data(CS%id_hw_Cv, CS%hw_Cv, CS%diag)
   endif
