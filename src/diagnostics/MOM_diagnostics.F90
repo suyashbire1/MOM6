@@ -1120,8 +1120,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%huu_T)) then
     do k=1,nz
       do j=js,je ; do i=is,ie
-        CS%huu_T(i,j,k) = h(i,j,k)*0.5*(u(i,j,k)*u(i,j,k)+&&
-          u(i-1,j,k)*u(i-1,j,k))*ishqlarge(I,J,k)
+        CS%huu_T(i,j,k) = h(i,j,k)*0.5*(u(i,j,k)*u(i,j,k)+u(i-1,j,k)*u(i-1,j,k))*ishqlarge(I,J,k)
       enddo ; enddo
     enddo
     if (CS%id_huu_T > 0) call post_data(CS%id_huu_T, CS%huu_T, CS%diag)
@@ -1130,8 +1129,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%hvv_T)) then
     do k=1,nz
       do j=js,je ; do i=is,ie
-        CS%hvv_T(i,j,k) = h(i,j,k)*0.5*(v(i,j,k)*v(i,j,k)+&&
-          v(i,j-1,k)*v(i,j-1,k))*ishqlarge(I,J,k)
+        CS%hvv_T(i,j,k) = h(i,j,k)*0.5*(v(i,j,k)*v(i,j,k)+v(i,j-1,k)*v(i,j-1,k))*ishqlarge(I,J,k)
       enddo ; enddo
     enddo
     if (CS%id_hvv_T > 0) call post_data(CS%id_hvv_T, CS%hvv_T, CS%diag)
@@ -1814,7 +1812,7 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
       'epfv at Cv points', 'meter2 second-1')
   call safe_alloc_ptr(CS%epfv,isd,ied,JsdB,JedB,nz)
   CS%id_islayerdeep = register_diag_field('ocean_model', 'islayerdeep', &
-      diag%axesBul, Time, &
+      diag%axesBL, Time, &
       'Total number of times the layer was deeper than Angstrom_z', 'no units')
   call safe_alloc_ptr(CS%islayerdeep,IsdB,IedB,JsdB,JedB,nz)
 
