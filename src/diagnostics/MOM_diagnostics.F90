@@ -153,6 +153,7 @@ type, public :: diagnostics_CS ; private
     esq          => NULL(),&
     e_Cu         => NULL(),&
     epfu         => NULL(),&
+    pfu_masked   => NULL(),&
 
     h_Cv         => NULL(),&
     hvv_T        => NULL(),&
@@ -160,7 +161,8 @@ type, public :: diagnostics_CS ; private
     hw_Cv        => NULL(),&
     hwb_Cv       => NULL(),&
     e_Cv         => NULL(),&
-    epfv         => NULL()
+    epfv         => NULL(),&
+    pfv_masked   => NULL()
 
   real, pointer, dimension(:,:,:) :: &
     islayerdeep  => NULL()
@@ -207,6 +209,7 @@ type, public :: diagnostics_CS ; private
   integer :: id_epfu           = -1, id_epfv           = -1
   integer :: id_e_Cu           = -1, id_e_Cv           = -1
   integer :: id_esq            = -1, id_islayerdeep    = -1
+  integer :: id_pfu_masked     = -1, id_pfv_masked     = -1
 
   type(wave_speed_CS), pointer :: wave_speed_CSp => NULL()  
 
@@ -1259,6 +1262,24 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
     if (CS%id_epfv > 0) call post_data(CS%id_epfv, CS%epfv, CS%diag)
   endif
 
+  if (ASSOCIATED(CS%pfu_masked)) then
+    do k=1,nz
+      do j=js,je ; do I=Isq,Ieq
+        CS%pfu_masked(i,J,k) = ADp%PFu(I,j,k)*ishqlarge(I,J,k)
+      enddo ; enddo
+    enddo
+    if (CS%id_pfu_masked > 0) call post_data(CS%id_pfu_masked, CS%pfu_masked, CS%diag)
+  endif
+
+  if (ASSOCIATED(CS%pfv_masked)) then
+    do k=1,nz
+      do j=js,je ; do I=Isq,Ieq
+        CS%pfv_masked(i,J,k) = ADp%PFv(I,j,k)*ishqlarge(I,J,k)
+      enddo ; enddo
+    enddo
+    if (CS%id_pfv_masked > 0) call post_data(CS%id_pfv_masked, CS%pfv_masked, CS%diag)
+  endif
+
   if (ASSOCIATED(CS%hfv)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
@@ -1815,6 +1836,12 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
       diag%axesBL, Time, &
       'Total number of times the layer was deeper than Angstrom_z', 'no units')
   call safe_alloc_ptr(CS%islayerdeep,IsdB,IedB,JsdB,JedB,nz)
+  CS%id_pfu_masked = register_diag_field('ocean_model', 'pfu_masked', diag%axesCuL, Time, &
+      'pfu_masked at Cu points', 'meter2 second-1')
+  call safe_alloc_ptr(CS%pfu_masked,IsdB,IedB,jsd,jed,nz)
+  CS%id_pfv_masked = register_diag_field('ocean_model', 'pfv_masked', diag%axesCvL, Time, &
+      'pfv_masked at Cv points', 'meter2 second-1')
+  call safe_alloc_ptr(CS%pfv_masked,isd,ied,JsdB,JedB,nz)
 
 
   call set_dependent_diagnostics(MIS, ADp, CDp, G, CS)
