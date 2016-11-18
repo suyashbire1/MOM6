@@ -1265,7 +1265,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%pfu_masked)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
-        CS%pfu_masked(i,J,k) = ADp%PFu(I,j,k)*ishqlarge(I,J,k)
+        CS%pfu_masked(I,j,k) = ADp%PFu(I,j,k)*ishqlarge(I,J,k)
       enddo ; enddo
     enddo
     if (CS%id_pfu_masked > 0) call post_data(CS%id_pfu_masked, CS%pfu_masked, CS%diag)
@@ -1273,8 +1273,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
 
   if (ASSOCIATED(CS%pfv_masked)) then
     do k=1,nz
-      do j=js,je ; do I=Isq,Ieq
-        CS%pfv_masked(i,J,k) = ADp%PFv(I,j,k)*ishqlarge(I,J,k)
+      do J=Jsq,Jeq ; do i=is,ie
+        CS%pfv_masked(i,J,k) = ADp%PFv(i,J,k)*ishqlarge(I,J,k)
       enddo ; enddo
     enddo
     if (CS%id_pfv_masked > 0) call post_data(CS%id_pfv_masked, CS%pfv_masked, CS%diag)
