@@ -1086,17 +1086,23 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
 !  (in)      CS  - control structure returned by a previous call to diagnostics_init
 
   real :: dwd, uhxCu,vhyCu, uhxCv, vhyCv
-  real :: hmin
+  real :: hmin, hmintol
   real, dimension(SZIB_(G),SZJB_(G),SZK_(G)) :: ishqlarge
 
   integer :: i, j, k, is, ie, js, je, Isq, Ieq, Jsq, Jeq, nz
   is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec ; nz = G%ke
   Isq = G%IscB ; Ieq = G%IecB ; Jsq = G%JscB ; Jeq = G%JecB
 
+  hmintol = 2.0*GV%Angstrom_z
   do k = 1,nz
     do J=Jsq,Jeq ; do I=Isq,Ieq
       hmin = min(h(i,j,k), h(i+1,j,k), h(i,j+1,k), h(i+1,j+1,k))
-      ishqlarge(I,J,k) = ceiling(abs(hmin-GV%Angstrom_z)/hmin)
+!      ishqlarge(I,J,k) = ceiling(abs(hmin-GV%Angstrom_z)/hmin)
+      if (hmin <= hmintol) then
+        ishqlarge(I,j,k) = 1.0
+      else
+        ishqlarge(I,j,k) = 0.0
+      endif
       CS%islayerdeep(I,J,k) = CS%islayerdeep(I,J,k) + ishqlarge(I,J,k) 
     enddo ; enddo
   enddo
