@@ -1099,9 +1099,9 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
       hmin = min(h(i,j,k), h(i+1,j,k), h(i,j+1,k), h(i+1,j+1,k))
 !      ishqlarge(I,J,k) = ceiling(abs(hmin-GV%Angstrom_z)/hmin)
       if (hmin <= hmintol) then
-        ishqlarge(I,j,k) = 1.0
-      else
         ishqlarge(I,j,k) = 0.0
+      else
+        ishqlarge(I,j,k) = 1.0
       endif
       CS%islayerdeep(I,J,k) = CS%islayerdeep(I,J,k) + ishqlarge(I,J,k) 
     enddo ; enddo
