@@ -130,7 +130,7 @@ contains
 !! is the <em>interfacial coupling thickness per time step</em>,
 !! encompassing background viscosity as well as contributions from
 !! enhanced mixed and bottom layer viscosities.
-!! $r_k$ is a Rayleight drag term due to channel drag. 
+!! $r_k$ is a Rayleight drag term due to channel drag.
 !! There is an additional stress term on the right-hand side
 !! if DIRECT_STRESS is true, applied to the surface layer.
 
@@ -155,7 +155,7 @@ subroutine vertvisc(u, v, h, fluxes, visc, dt, OBC, ADp, CDp, G, GV, CS, &
   !> Zonal bottom stress from ocean to rock in Pa
   real, optional, intent(out), dimension(SZIB_(G),SZJ_(G)) :: taux_bot
   !> Meridional bottom stress from ocean to rock in Pa
-  real, optional, intent(out), dimension(SZI_(G),SZJB_(G)) :: tauy_bot 
+  real, optional, intent(out), dimension(SZI_(G),SZJB_(G)) :: tauy_bot
 
   ! Fields from fluxes used in this subroutine:
   !   taux: Zonal wind stress in Pa.
@@ -391,15 +391,13 @@ subroutine vertvisc(u, v, h, fluxes, visc, dt, OBC, ADp, CDp, G, GV, CS, &
   if (associated(OBC)) then ; if (OBC%OBC_pe) then
     if (OBC%specified_u_BCs_exist_globally) then
       do k=1,nz ; do j=G%jsc,G%jec ; do I=Isq,Ieq
-        if (OBC%OBC_mask_u(I,j) .and. &
-            (OBC%OBC_segment_number(OBC%OBC_segment_u(I,j))%specified)) &
+        if (OBC%OBC_segment_number(OBC%OBC_segment_u(I,j))%specified) &
           u(I,j,k) = OBC%u(I,j,k)
       enddo ; enddo ; enddo
     endif
     if (OBC%specified_v_BCs_exist_globally) then
       do k=1,nz ; do J=Jsq,Jeq ; do i=G%isc,G%iec
-        if (OBC%OBC_mask_v(i,J) .and. &
-            (OBC%OBC_segment_number(OBC%OBC_segment_v(i,J))%specified)) &
+        if (OBC%OBC_segment_number(OBC%OBC_segment_v(i,J))%specified) &
           v(i,J,k) = OBC%v(i,J,k)
       enddo ; enddo ; enddo
     endif

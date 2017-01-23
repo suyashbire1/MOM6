@@ -83,7 +83,7 @@ subroutine MOM_initialize_fixed(G, OBC, PF, write_geom, output_dir)
 
 ! Determine the position of any open boundaries
   call open_boundary_config(G, PF, OBC)
-  if (open_boundary_query(OBC, apply_orig_OBCs=.true.)) then
+  if (open_boundary_query(OBC, apply_specified_OBC=.true.)) then
     call get_param(PF, mod, "OBC_CONFIG", config, &
                  "A string that sets how the open boundary conditions are \n"//&
                  " configured: \n", default="none")
@@ -241,7 +241,7 @@ subroutine MOM_initialize_topography(D, max_depth, G, PF)
   if (trim(config) .ne. "DOME") then
     call limit_topography(D, G, PF, max_depth)
   endif
-  
+
 end subroutine MOM_initialize_topography
 
 end module MOM_fixed_initialization
