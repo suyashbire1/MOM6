@@ -1096,8 +1096,6 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   hmintol = 2.0*GV%Angstrom_z
   do k = 1,nz
     do J=Jsq,Jeq ; do I=Isq,Ieq
-      if ( i == ieq) write(*,*) i,j,k,h(i+1,j,k)
-      if ( j == jeq) write(*,*) i,j,k,h(i,j+1,k)
       hmin = min(h(i,j,k), h(i+1,j,k), h(i,j+1,k), h(i+1,j+1,k))
 !      ishqlarge(I,J,k) = ceiling(abs(hmin-GV%Angstrom_z)/hmin)
       if (hmin <= hmintol) then
@@ -1105,6 +1103,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
       else
         ishqlarge(I,j,k) = 1.0
       endif
+      if ( i == ieq) write(*,*) i,j,k,h(i,j,k),h(i+1,j,k),ishqlarge(i,j,k)
+      if ( j == jeq) write(*,*) i,j,k,h(i,j,k),h(i,j+1,k),ishqlarge(i,j,k)
       CS%islayerdeep(I,J,k) = CS%islayerdeep(I,J,k) + ishqlarge(I,J,k) 
     enddo ; enddo
   enddo
