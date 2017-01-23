@@ -55,12 +55,8 @@ implicit none ; private
 
 #include <MOM_memory.h>
 
-<<<<<<< HEAD
 public BFB_set_coord 
 public BFB_initialize_thickness 
-=======
-public BFB_set_coord
->>>>>>> user/ssb/buoy_forced_basin
 public BFB_initialize_sponges_southonly
 
 logical :: first_call = .true.
