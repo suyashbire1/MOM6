@@ -61,6 +61,7 @@ use MOM_variables,         only : thermo_var_ptrs, ocean_internal_state, p3d
 use MOM_variables,         only : accel_diag_ptrs, cont_diag_ptrs, BT_cont_type
 use MOM_verticalGrid,      only : verticalGrid_type
 use MOM_wave_speed,        only : wave_speed, wave_speed_CS, wave_speed_init
+use mpp_domains_mod,       only : mpp_group_update_is_set
 
 implicit none ; private
 
@@ -222,6 +223,7 @@ type, public :: diagnostics_CS ; private
 
   ! for group halo pass
   type(group_pass_type) :: pass_KE_uv
+  type(group_pass_type) :: pass_e_diapyc_vel
 
 end type diagnostics_CS
 
@@ -1093,18 +1095,58 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec ; nz = G%ke
   Isq = G%IscB ; Ieq = G%IecB ; Jsq = G%JscB ; Jeq = G%JecB
 
+  if(.not.G%symmetric) then 
+    if(ASSOCIATED(CS%e_Cu) .OR. ASSOCIATED(CS%e_Cv) .OR. & 
+      ASSOCIATED(CS%epfu) .OR. ASSOCIATED(CS%epfv)) then 
+        call create_group_pass(CS%pass_e_diapyc_vel, CS%e, G%Domain) 
+    endif
+    if(ASSOCIATED(CS%hw_Cu) .OR. ASSOCIATED(CS%hw_Cv) .OR. & 
+      ASSOCIATED(CS%hwb_Cu) .OR. ASSOCIATED(CS%hwb_Cv) .OR. &
+      ASSOCIATED(CS%huwb) .OR.  ASSOCIATED(CS%hvwb)) then 
+        call create_group_pass(CS%pass_e_diapyc_vel, CDp%diapyc_vel, G%Domain) 
+    endif
+!    if(ASSOCIATED(CS%e_Cu) .OR. ASSOCIATED(CS%e_Cv) .OR. & 
+!      ASSOCIATED(CS%epfu) .OR. ASSOCIATED(CS%epfv) .OR. & 
+!      ASSOCIATED(CS%hw_Cu) .OR. ASSOCIATED(CS%hw_Cv) .OR. & 
+!      ASSOCIATED(CS%hwb_Cu) .OR. ASSOCIATED(CS%hwb_Cv) .OR. &
+!      ASSOCIATED(CS%huwb) .OR.  ASSOCIATED(CS%hvwb)) then 
+    if (mpp_group_update_is_set(CS%pass_e_diapyc_vel)) then
+        call do_group_pass(CS%pass_e_diapyc_vel, G%domain) 
+    endif
+  endif
+
+!  if(.not.G%symmetric) then
+!    if(ASSOCIATED(CS%e_Cu) .OR. ASSOCIATED(CS%e_Cv) .OR. &
+!       ASSOCIATED(CS%epfu) .OR. ASSOCIATED(CS%epfv)) then
+!        call create_group_pass(CS%pass_e_uv, CS%e, G%Domain)
+!        call do_group_pass(CS%pass_e_uv, G%domain)
+!    endif
+!    if(ASSOCIATED(CS%hw_Cu) .OR. ASSOCIATED(CS%hw_Cv) .OR. &
+!       ASSOCIATED(CS%hwb_Cu) .OR. ASSOCIATED(CS%hwb_Cv) .OR. &
+!       ASSOCIATED(CS%huwb) .OR. ASSOCIATED(CS%hvwb)) then
+!        call create_group_pass(CS%pass_w_uv, CDp%diapyc_vel, G%Domain)
+!        call do_group_pass(CS%pass_w_uv, G%domain)
+!    endif
+!  endif
+
   hmintol = 2.0*GV%Angstrom_z
   do k = 1,nz
     do J=Jsq,Jeq ; do I=Isq,Ieq
-      hmin = min(h(i,j,k), h(i+1,j,k), h(i,j+1,k), h(i+1,j+1,k))
-!      ishqlarge(I,J,k) = ceiling(abs(hmin-GV%Angstrom_z)/hmin)
+      if ( i < ieq .AND. j < jeq ) then
+        hmin = min(h(i,j,k), h(i+1,j,k), h(i,j+1,k), h(i+1,j+1,k))
+      elseif ( i == ieq .AND. j < jeq ) then
+        hmin = min(h(i,j,k), h(i,j+1,k))
+      elseif ( i < ieq .AND. j == jeq ) then
+        hmin = min(h(i,j,k), h(i+1,j,k))
+      else
+        hmin = h(i,j,k)
+      endif
+
       if (hmin <= hmintol) then
         ishqlarge(I,j,k) = 0.0
       else
         ishqlarge(I,j,k) = 1.0
       endif
-      if ( i == ieq) write(*,*) i,j,k,h(i,j,k),h(i+1,j,k),ishqlarge(i,j,k)
-      if ( j == jeq) write(*,*) i,j,k,h(i,j,k),h(i,j+1,k),ishqlarge(i,j,k)
       CS%islayerdeep(I,J,k) = CS%islayerdeep(I,J,k) + ishqlarge(I,J,k) 
     enddo ; enddo
   enddo
