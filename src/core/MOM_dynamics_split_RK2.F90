@@ -20,7 +20,7 @@ use MOM_domains,           only : MOM_domains_init
 use MOM_domains,           only : To_South, To_West, To_All, CGRID_NE, SCALAR_PAIR
 use MOM_domains,           only : create_group_pass, do_group_pass, group_pass_type
 use MOM_domains,           only : start_group_pass, complete_group_pass
-use MOM_checksums,         only : MOM_checksums_init, hchksum, uchksum, vchksum
+use MOM_debugging,         only : hchksum, uchksum, vchksum
 use MOM_error_handler,     only : MOM_error, MOM_mesg, FATAL, WARNING, is_root_pe
 use MOM_error_handler,     only : MOM_set_verbosity, callTree_showQuery
 use MOM_error_handler,     only : callTree_enter, callTree_leave, callTree_waypoint
@@ -38,7 +38,7 @@ use MOM_barotropic,            only : register_barotropic_restarts, set_dtbt, ba
 use MOM_continuity,            only : continuity, continuity_init, continuity_CS
 use MOM_CoriolisAdv,           only : CorAdCalc, CoriolisAdv_init, CoriolisAdv_CS
 use MOM_diabatic_driver,       only : diabatic, diabatic_driver_init, diabatic_CS
-use MOM_error_checking,        only : check_redundant
+use MOM_debugging,             only : check_redundant
 use MOM_grid,                  only : ocean_grid_type
 use MOM_hor_index,             only : hor_index_type
 use MOM_hor_visc,              only : horizontal_viscosity, hor_visc_init, hor_visc_CS
