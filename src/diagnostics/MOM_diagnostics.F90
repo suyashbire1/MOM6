@@ -154,6 +154,7 @@ type, public :: diagnostics_CS ; private
     esq          => NULL(),&
     e_Cu         => NULL(),&
     epfu         => NULL(),&
+    uh_masked    => NULL(),&
     pfu_masked   => NULL(),&
 
     h_Cv         => NULL(),&
@@ -163,6 +164,7 @@ type, public :: diagnostics_CS ; private
     hwb_Cv       => NULL(),&
     e_Cv         => NULL(),&
     epfv         => NULL(),&
+    vh_masked    => NULL(),&
     pfv_masked   => NULL()
 
   real, pointer, dimension(:,:,:) :: &
@@ -211,6 +213,7 @@ type, public :: diagnostics_CS ; private
   integer :: id_e_Cu           = -1, id_e_Cv           = -1
   integer :: id_esq            = -1, id_islayerdeep    = -1
   integer :: id_pfu_masked     = -1, id_pfv_masked     = -1
+  integer :: id_uh_masked      = -1, id_vh_masked      = -1
 
   type(wave_speed_CS), pointer :: wave_speed_CSp => NULL()  
 
@@ -1105,31 +1108,13 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
       ASSOCIATED(CS%huwb) .OR.  ASSOCIATED(CS%hvwb)) then 
         call create_group_pass(CS%pass_e_diapyc_vel, CDp%diapyc_vel, G%Domain) 
     endif
-!    if(ASSOCIATED(CS%e_Cu) .OR. ASSOCIATED(CS%e_Cv) .OR. & 
-!      ASSOCIATED(CS%epfu) .OR. ASSOCIATED(CS%epfv) .OR. & 
-!      ASSOCIATED(CS%hw_Cu) .OR. ASSOCIATED(CS%hw_Cv) .OR. & 
-!      ASSOCIATED(CS%hwb_Cu) .OR. ASSOCIATED(CS%hwb_Cv) .OR. &
-!      ASSOCIATED(CS%huwb) .OR.  ASSOCIATED(CS%hvwb)) then 
     if (mpp_group_update_is_set(CS%pass_e_diapyc_vel)) then
         call do_group_pass(CS%pass_e_diapyc_vel, G%domain) 
     endif
   endif
 
-!  if(.not.G%symmetric) then
-!    if(ASSOCIATED(CS%e_Cu) .OR. ASSOCIATED(CS%e_Cv) .OR. &
-!       ASSOCIATED(CS%epfu) .OR. ASSOCIATED(CS%epfv)) then
-!        call create_group_pass(CS%pass_e_uv, CS%e, G%Domain)
-!        call do_group_pass(CS%pass_e_uv, G%domain)
-!    endif
-!    if(ASSOCIATED(CS%hw_Cu) .OR. ASSOCIATED(CS%hw_Cv) .OR. &
-!       ASSOCIATED(CS%hwb_Cu) .OR. ASSOCIATED(CS%hwb_Cv) .OR. &
-!       ASSOCIATED(CS%huwb) .OR. ASSOCIATED(CS%hvwb)) then
-!        call create_group_pass(CS%pass_w_uv, CDp%diapyc_vel, G%Domain)
-!        call do_group_pass(CS%pass_w_uv, G%domain)
-!    endif
-!  endif
-
-  hmintol = 2.0*GV%Angstrom_z
+  !hmintol = 2.0*GV%Angstrom_z
+  hmintol = 1e-3   ! 1 mm
   do k = 1,nz
     do J=Jsq,Jeq ; do I=Isq,Ieq
       if ( i < ieq .AND. j < jeq ) then
@@ -1170,10 +1155,47 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
     if (CS%id_h_Cv > 0) call post_data(CS%id_h_Cv, CS%h_Cv, CS%diag)
   endif
 
+  if (ASSOCIATED(CS%uh_masked)) then
+    do k=1,nz
+      do j=js,je ; do I=Isq,Ieq
+        CS%uh_masked(I,j,k) = uh(I,j,k)*ishqlarge(I,J,k)
+      enddo ; enddo
+    enddo
+    if (CS%id_uh_masked > 0) call post_data(CS%id_uh_masked, CS%uh_masked, CS%diag)
+  endif
+
+  if (ASSOCIATED(CS%vh_masked)) then
+    do k=1,nz
+      do J=Jsq,Jeq ; do i=is,ie
+        CS%vh_masked(i,J,k) = vh(i,J,k)*ishqlarge(I,J,k)
+      enddo ; enddo
+    enddo
+    if (CS%id_vh_masked > 0) call post_data(CS%id_vh_masked, CS%vh_masked, CS%diag)
+  endif
+
+  if (ASSOCIATED(CS%pfu_masked)) then
+    do k=1,nz
+      do j=js,je ; do I=Isq,Ieq
+        CS%pfu_masked(I,j,k) = ADp%PFu(I,j,k)*ishqlarge(I,J,k)
+      enddo ; enddo
+    enddo
+    if (CS%id_pfu_masked > 0) call post_data(CS%id_pfu_masked, CS%pfu_masked, CS%diag)
+  endif
+
+  if (ASSOCIATED(CS%pfv_masked)) then
+    do k=1,nz
+      do J=Jsq,Jeq ; do i=is,ie
+        CS%pfv_masked(i,J,k) = ADp%PFv(i,J,k)*ishqlarge(I,J,k)
+      enddo ; enddo
+    enddo
+    if (CS%id_pfv_masked > 0) call post_data(CS%id_pfv_masked, CS%pfv_masked, CS%diag)
+  endif
+
   if (ASSOCIATED(CS%huu_T)) then
     do k=1,nz
       do j=js,je ; do i=is,ie
-        CS%huu_T(i,j,k) = h(i,j,k)*0.5*(u(i,j,k)*u(i,j,k)+u(i-1,j,k)*u(i-1,j,k))*ishqlarge(I,J,k)
+        CS%huu_T(i,j,k) = 0.5*(CS%uh_masked(i,j,k)  *u(i,j,k) + &
+                               CS%uh_masked(i-1,j,k)*u(i-1,j,k))
       enddo ; enddo
     enddo
     if (CS%id_huu_T > 0) call post_data(CS%id_huu_T, CS%huu_T, CS%diag)
@@ -1182,7 +1204,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%hvv_T)) then
     do k=1,nz
       do j=js,je ; do i=is,ie
-        CS%hvv_T(i,j,k) = h(i,j,k)*0.5*(v(i,j,k)*v(i,j,k)+v(i,j-1,k)*v(i,j-1,k))*ishqlarge(I,J,k)
+        CS%hvv_T(i,j,k) = 0.5*(CS%vh_masked(i,j,k)  *v(i,j,k) + &
+                               CS%vh_masked(i,j-1,k)*v(i,j-1,k))
       enddo ; enddo
     enddo
     if (CS%id_hvv_T > 0) call post_data(CS%id_hvv_T, CS%hvv_T, CS%diag)
@@ -1191,8 +1214,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%hv_Cu)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
-        CS%hv_Cu(I,j,k) = CS%h_Cu(I,j,k)*0.25* &
-          (v(i,j,k)+v(i,j-1,k)+v(i+1,j,k)+v(i+1,j-1,k))
+        CS%hv_Cu(I,j,k) = 0.25*(CS%vh_masked(i,j,k)+CS%vh_masked(i,j-1,k) + &
+                                CS%vh_masked(i+1,j,k)+CS%vh_masked(i+1,j-1,k))
       enddo ; enddo
     enddo
     if (CS%id_hv_Cu > 0) call post_data(CS%id_hv_Cu, CS%hv_Cu, CS%diag)
@@ -1201,38 +1224,12 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%hu_Cv)) then
     do k=1,nz
       do J=Jsq,Jeq ; do i=is,ie
-        CS%hu_Cv(i,J,k) = CS%h_Cv(i,J,k)*0.25* &
-          (u(i,j,k)+u(i,j+1,k)+u(i-1,j,k)+u(i-1,j+1,k))
+        CS%hu_Cv(i,J,k) = 0.25*(CS%uh_masked(i,j,k)+CS%uh_masked(i,j+1,k) + &
+                                CS%uh_masked(i-1,j,k)+CS%uh_masked(i-1,j+1,k))
       enddo ; enddo
     enddo
     if (CS%id_hu_Cv > 0) call post_data(CS%id_hu_Cv, CS%hu_Cv, CS%diag)
   endif
-
-!  if (ASSOCIATED(CS%hw_Cu)) then
-!    do j=js,je ; do I=Isq,Ieq
-!      wdatui(1) = 0.0
-!      do k=2,nz
-!        wdatui(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i+1,j,k))*GV%g_prime(k)
-!        CS%hw_Cu(I,j,k-1) = 0.5*(wdatui(k) + wdatui(k-1))*ishqlarge(I,J,k-1)
-!      enddo
-!      wdatui(nz+1) = 0.0
-!      CS%hw_Cu(I,j,nz) = 0.5*(wdatui(nz+1) + wdatui(nz))*ishqlarge(I,J,nz)
-!    enddo ; enddo
-!    if (CS%id_hw_Cu > 0) call post_data(CS%id_hw_Cu, CS%hw_Cu, CS%diag)
-!  endif
-!
-!  if (ASSOCIATED(CS%hw_Cv)) then
-!    do J=Jsq,Jeq ; do i=is,ie
-!      wdatvi(1) = 0.0
-!      do k=2,nz
-!        wdatvi(k) = 0.5*(CDp%diapyc_vel(i,j,k)+CDp%diapyc_vel(i,j+1,k))*GV%g_prime(k)
-!        CS%hw_Cv(i,J,k-1) = 0.5*(wdatvi(k) + wdatvi(k-1))*ishqlarge(I,J,k-1)
-!      enddo
-!      wdatvi(nz+1) = 0.0
-!      CS%hw_Cv(i,J,nz) = 0.5*(wdatvi(nz+1) + wdatvi(nz))*ishqlarge(I,J,nz)
-!    enddo ; enddo
-!    if (CS%id_hw_Cv > 0) call post_data(CS%id_hw_Cv, CS%hw_Cv, CS%diag)
-!  endif
 
   if (ASSOCIATED(CS%hw_Cu)) then
     do j=js,je ; do I=Isq,Ieq
@@ -1288,47 +1285,6 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
     if (CS%id_esq > 0) call post_data(CS%id_esq, CS%esq, CS%diag)
   endif
 
-  if (ASSOCIATED(CS%e_Cu) .OR. ASSOCIATED(CS%epfu)) then
-    do k=1,nz
-      do j=js,je ; do I=Isq,Ieq
-        CS%e_Cu(I,j,k) = 0.25*(CS%e(i,j,k)+CS%e(i+1,j,k)+&
-          CS%e(i,j,k+1)+CS%e(i+1,j,k+1))*ishqlarge(I,J,k)
-        CS%epfu(I,j,k) = ADp%PFu(I,j,k)*CS%e_Cu(I,j,k)
-      enddo ; enddo
-    enddo
-    if (CS%id_e_Cu > 0) call post_data(CS%id_e_Cu, CS%e_Cu, CS%diag)
-    if (CS%id_epfu > 0) call post_data(CS%id_epfu, CS%epfu, CS%diag)
-  endif
-
-  if (ASSOCIATED(CS%e_Cv) .OR. ASSOCIATED(CS%epfv)) then
-    do k=1,nz
-      do J=Jsq,Jeq ; do i=is,ie
-        CS%e_Cv(i,J,k) = 0.25*(CS%e(i,j,k)+CS%e(i,j+1,k)+&
-          CS%e(i,j,k+1)+CS%e(i,j+1,k+1))*ishqlarge(I,J,k)
-        CS%epfv(i,J,k) = ADp%PFv(i,J,k)*CS%e_Cv(i,J,k)
-      enddo ; enddo
-    enddo
-    if (CS%id_e_Cv > 0) call post_data(CS%id_e_Cv, CS%e_Cv, CS%diag)
-    if (CS%id_epfv > 0) call post_data(CS%id_epfv, CS%epfv, CS%diag)
-  endif
-
-  if (ASSOCIATED(CS%pfu_masked)) then
-    do k=1,nz
-      do j=js,je ; do I=Isq,Ieq
-        CS%pfu_masked(I,j,k) = ADp%PFu(I,j,k)*ishqlarge(I,J,k)
-      enddo ; enddo
-    enddo
-    if (CS%id_pfu_masked > 0) call post_data(CS%id_pfu_masked, CS%pfu_masked, CS%diag)
-  endif
-
-  if (ASSOCIATED(CS%pfv_masked)) then
-    do k=1,nz
-      do J=Jsq,Jeq ; do i=is,ie
-        CS%pfv_masked(i,J,k) = ADp%PFv(i,J,k)*ishqlarge(I,J,k)
-      enddo ; enddo
-    enddo
-    if (CS%id_pfv_masked > 0) call post_data(CS%id_pfv_masked, CS%pfv_masked, CS%diag)
-  endif
 
   if (ASSOCIATED(CS%hfv)) then
     do k=1,nz
@@ -1362,8 +1318,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%huuxpt)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
-        uhxCu = 0.5*((CDp%uh(I,j,k) - CDp%uh(I-1,j,k))*G%IareaT(i,j) &
-                + (CDp%uh(I+1,j,k) - CDp%uh(I,j,k))*G%IareaT(i+1,j))*ishqlarge(I,J,k) 
+        uhxCu = 0.5*((uh(I,j,k) - uh(I-1,j,k))*G%IareaT(i,j) &
+                + (uh(I+1,j,k) - uh(I,j,k))*G%IareaT(i+1,j))*ishqlarge(I,J,k) 
         CS%huuxpt(I,j,k) = CS%h_Cu(I,j,k)*ADp%gradKEu(I,j,k) - uhxCu*u(I,j,k)
       enddo ; enddo
     enddo
@@ -1373,8 +1329,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%huvymt)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
-        vhyCu = 0.5*((CDp%vh(i,j,k) - CDp%vh(i,j-1,k))*G%IareaT(i,j) &
-                + (CDp%vh(i+1,j,k) - CDp%vh(i+1,j-1,k))*G%IareaT(i+1,j))*ishqlarge(I,J,k)
+        vhyCu = 0.5*((vh(i,j,k) - vh(i,j-1,k))*G%IareaT(i,j) &
+                + (vh(i+1,j,k) - vh(i+1,j-1,k))*G%IareaT(i+1,j))*ishqlarge(I,J,k)
         CS%huvymt(I,j,k) = CS%h_Cu(I,j,k)*ADp%rv_x_v(I,j,k) - vhyCu*u(I,j,k)
       enddo ; enddo
     enddo
@@ -1432,8 +1388,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%huvxpt)) then
     do k=1,nz
       do J=Jsq,Jeq ; do i=is,ie
-        uhxCv = 0.5*((CDp%uh(i,j,k) - CDp%uh(i-1,j,k))*G%IareaT(i,j) &
-                + (CDp%uh(i,j+1,k) - CDp%uh(i-1,j+1,k))*G%IareaT(i,j+1))*ishqlarge(I,J,k) 
+        uhxCv = 0.5*((uh(i,j,k) - uh(i-1,j,k))*G%IareaT(i,j) &
+                + (uh(i,j+1,k) - uh(i-1,j+1,k))*G%IareaT(i,j+1))*ishqlarge(I,J,k) 
         CS%huvxpt(i,J,k) = CS%h_Cv(i,J,k)*ADp%rv_x_u(i,J,k) - uhxCv*v(i,J,k)
       enddo ; enddo
     enddo
@@ -1443,8 +1399,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%hvvymt)) then
     do k=1,nz
       do J=Jsq,Jeq ; do i=is,ie
-        vhyCv = 0.5*((CDp%vh(i,J,k) - CDp%vh(i,J-1,k))*G%IareaT(i,j) &
-                + (CDp%vh(i,J+1,k) - CDp%vh(i,J,k))*G%IareaT(i,j+1)) *ishqlarge(I,J,k)
+        vhyCv = 0.5*((vh(i,J,k) - vh(i,J-1,k))*G%IareaT(i,j) &
+                + (vh(i,J+1,k) - vh(i,J,k))*G%IareaT(i,j+1)) *ishqlarge(I,J,k)
         CS%hvvymt(i,J,k) = CS%h_Cv(i,J,k)*ADp%gradKEv(i,J,k) - vhyCv*v(i,J,k)
       enddo ; enddo
     enddo
@@ -1892,6 +1848,12 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
   CS%id_pfv_masked = register_diag_field('ocean_model', 'pfv_masked', diag%axesCvL, Time, &
       'pfv_masked at Cv points', 'meter2 second-1')
   call safe_alloc_ptr(CS%pfv_masked,isd,ied,JsdB,JedB,nz)
+  CS%id_uh_masked = register_diag_field('ocean_model', 'uh_masked', diag%axesCuL, Time, &
+      'uh_masked at Cu points', 'meter2 second-1')
+  call safe_alloc_ptr(CS%uh_masked,IsdB,IedB,jsd,jed,nz)
+  CS%id_vh_masked = register_diag_field('ocean_model', 'vh_masked', diag%axesCvL, Time, &
+      'vh_masked at Cv points', 'meter2 second-1')
+  call safe_alloc_ptr(CS%vh_masked,isd,ied,JsdB,JedB,nz)
 
 
   call set_dependent_diagnostics(MIS, ADp, CDp, G, CS)
