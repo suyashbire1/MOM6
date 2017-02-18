@@ -80,6 +80,8 @@ type, public :: diagnostics_CS ; private
   real :: mono_N2_depth = -1.          !< The depth below which N2 is limited as monotonic for the purposes of
                                        !! calculating the equivalent barotropic wave speed. (m)
 
+  logical :: no_slip                   !! this value is read from the param_file to check if NOSLIP is true
+
   type(diag_ctrl), pointer :: diag ! structure to regulate diagnostics timing
 
   ! following arrays store diagnostics calculated here and unavailable outside.
@@ -170,6 +172,10 @@ type, public :: diagnostics_CS ; private
   real, pointer, dimension(:,:,:) :: &
     islayerdeep  => NULL()
 
+  ! Okubo-Weiss parameter (W)
+  real, pointer, dimension(:,:,:) :: &
+    wparam => NULL()
+
   ! diagnostic IDs
   integer :: id_e              = -1, id_e_D            = -1
   integer :: id_du_dt          = -1, id_dv_dt          = -1
@@ -195,6 +201,7 @@ type, public :: diagnostics_CS ; private
   integer :: id_pbo            = -1
   integer :: id_thkcello       = -1, id_rhoinsitu      = -1
   integer :: id_rhopot0        = -1, id_rhopot2        = -1
+  integer :: id_wparam         = -1
 
   integer :: id_hfv            = -1, id_hmfu           = -1
   integer :: id_hpfu           = -1, id_hpfv           = -1
@@ -294,6 +301,10 @@ subroutine calculate_diagnostic_fields(u, v, h, uh, vh, tv, ADp, CDp, fluxes, &
 
   real, dimension(SZK_(G)) :: temp_layer_ave, salt_layer_ave
   real :: thetaoga, soga, masso, tosga, sosga
+
+  ! tmp variables for calculating wparam
+  real :: dudx, dvdy
+  real, dimension(SZI_(G)+1, SZJ_(G)+1) :: dvdx, dudy
 
   is  = G%isc  ; ie   = G%iec  ; js  = G%jsc  ; je  = G%jec
   Isq = G%IscB ; Ieq  = G%IecB ; Jsq = G%JscB ; Jeq = G%JecB
@@ -669,6 +680,28 @@ subroutine calculate_diagnostic_fields(u, v, h, uh, vh, tv, ADp, CDp, fluxes, &
       enddo ; enddo
       call post_data(CS%id_Rd_ebt, CS%Rd1, CS%diag)
     endif
+  endif
+
+  if (CS%id_wparam>0) then
+    do k=1,nz  
+      do J=Jsq-1,Jeq ; do I=Isq-1,Ieq
+        if (CS%no_slip ) then
+          dvdx(I,J) = (2.0-G%mask2dBu(I,J))*(v(i+1,J,k)*G%dyCv(i+1,J) - v(i,J,k)*G%dyCv(i,J)) * (G%IdxBu(I,J) * G%IdyBu(I,J))
+          dudy(I,J) = (2.0-G%mask2dBu(I,J))*(u(I,j+1,k)*G%dxCu(I,J+1) - u(I,j,k)*G%dxCu(I,j)) * (G%IdxBu(I,J) * G%IdyBu(I,J))
+        else
+          dvdx(I,J) = (G%mask2dBu(I,J))*(v(i+1,J,k)*G%dyCv(i+1,J) - v(i,J,k)*G%dyCv(i,J)) * (G%IdxBu(I,J) * G%IdyBu(I,J))
+          dudy(I,J) = (G%mask2dBu(I,J))*(u(I,j+1,k)*G%dxCu(I,J+1) - u(I,j,k)*G%dxCu(I,j)) * (G%IdxBu(I,J) * G%IdyBu(I,J))
+        endif
+      enddo ; enddo
+      do j=js,je ; do i=is,ie
+        dudx = (u(I,j,k)*G%dycu(I,j) - u(I-1,j,k)*G%dycu(I-1,j)) * G%IareaT(i,j)
+        dvdy = (v(i,J,k)*G%dxCv(i,J) - v(i,J-1,k)*G%dxCv(i,J-1)) * G%IareaT(i,j)
+        CS%wparam(i,j,k) = ((dvdx(I,J) + dvdx(I-1,J) + dvdx(I,J-1) + dvdx(I-1,J-1)) * &
+                            (dudy(I,J) + dudy(I-1,J) + dudy(I,J-1) + dudy(I-1,J-1)) - 4.0*dudx*dvdy) + &
+                           (dudx + dvdy)*(dudx + dvdy)
+      enddo ; enddo
+    enddo
+    if (CS%id_wparam > 0) call post_data(CS%id_wparam, CS%wparam, CS%diag)
   endif
 
   if (dt > 0.0) then
@@ -1544,6 +1577,13 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
                  "The depth below which N2 is limited as monotonic for the\n"// &
                  "purposes of calculating the equivalent barotropic wave speed.", &
                  units='m', default=-1.)
+  call get_param(param_file, mod, "NOSLIP", CS%no_slip, &
+                 "If true, no slip boundary conditions are used; otherwise \n"//&
+                 "free slip boundary conditions are assumed. The \n"//&
+                 "implementation of the free slip BCs on a C-grid is much \n"//&
+                 "cleaner than the no slip BCs. The use of free slip BCs \n"//&
+                 "is strongly encouraged, and no slip BCs are not used with \n"//&
+                 "the biharmonic viscosity.", default=.false.)
 
   if (GV%Boussinesq) then
     thickness_units = "meter" ; flux_units = "meter3 second-1"
@@ -1693,6 +1733,10 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
       'Kinetic Energy Source from Diapycnal Diffusion', 'meter3 second-3')
   if (CS%id_KE_dia>0) call safe_alloc_ptr(CS%KE_dia,isd,ied,jsd,jed,nz)
 
+  ! W-parameter
+  CS%id_wparam = register_diag_field('ocean_model', 'wparam', diag%axesTL, Time, &
+      'Okubo-Weiss parameter', 'second-2')
+  if (CS%id_wparam>0) call safe_alloc_ptr(CS%wparam,isd,ied,jsd,jed,nz)
 
   ! gravity wave CFLs
   CS%id_cg1 = register_diag_field('ocean_model', 'cg1', diag%axesT1, Time, &
@@ -2080,6 +2124,8 @@ subroutine MOM_diagnostics_end(CS, ADp)
   if (ASSOCIATED(CS%hw_Cv))       deallocate(CS%hw_Cv)
   if (ASSOCIATED(CS%hwb_Cv))      deallocate(CS%hwb_Cv)
   if (ASSOCIATED(CS%islayerdeep)) deallocate(CS%islayerdeep)
+
+  if (ASSOCIATED(CS%wparam))      deallocate(CS%wparam)
 
   do m=1,CS%num_time_deriv ; deallocate(CS%prev_val(m)%p) ; enddo
 
