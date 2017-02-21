@@ -157,6 +157,7 @@ type, public :: diagnostics_CS ; private
     e_Cu         => NULL(),&
     epfu         => NULL(),&
     uh_masked    => NULL(),&
+    u_masked     => NULL(),&
     pfu_masked   => NULL(),&
 
     h_Cv         => NULL(),&
@@ -167,6 +168,7 @@ type, public :: diagnostics_CS ; private
     e_Cv         => NULL(),&
     epfv         => NULL(),&
     vh_masked    => NULL(),&
+    v_masked     => NULL(),&
     pfv_masked   => NULL()
 
   real, pointer, dimension(:,:,:) :: &
@@ -221,6 +223,7 @@ type, public :: diagnostics_CS ; private
   integer :: id_esq            = -1, id_islayerdeep    = -1
   integer :: id_pfu_masked     = -1, id_pfv_masked     = -1
   integer :: id_uh_masked      = -1, id_vh_masked      = -1
+  integer :: id_u_masked       = -1, id_v_masked       = -1
 
   type(wave_speed_CS), pointer :: wave_speed_CSp => NULL()  
 
@@ -1206,6 +1209,24 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
     if (CS%id_vh_masked > 0) call post_data(CS%id_vh_masked, CS%vh_masked, CS%diag)
   endif
 
+  if (ASSOCIATED(CS%u_masked)) then
+    do k=1,nz
+      do j=js,je ; do I=Isq,Ieq
+        CS%u_masked(I,j,k) = u(I,j,k)*ishqlarge(I,J,k)
+      enddo ; enddo
+    enddo
+    if (CS%id_u_masked > 0) call post_data(CS%id_u_masked, CS%u_masked, CS%diag)
+  endif
+
+  if (ASSOCIATED(CS%v_masked)) then
+    do k=1,nz
+      do J=Jsq,Jeq ; do i=is,ie
+        CS%v_masked(i,J,k) = v(i,J,k)*ishqlarge(I,J,k)
+      enddo ; enddo
+    enddo
+    if (CS%id_v_masked > 0) call post_data(CS%id_v_masked, CS%v_masked, CS%diag)
+  endif
+
   if (ASSOCIATED(CS%pfu_masked)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
@@ -1227,8 +1248,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%huu_T)) then
     do k=1,nz
       do j=js,je ; do i=is,ie
-        CS%huu_T(i,j,k) = 0.5*(CS%uh_masked(i,j,k)  *u(i,j,k) + &
-                               CS%uh_masked(i-1,j,k)*u(i-1,j,k))
+        CS%huu_T(i,j,k) = 0.5*h(i,j,k)*(u(i,j,k)*u(i,j,k) + &
+                              u(i-1,j,k)*u(i-1,j,k))*ishqlarge(I,J,k)
       enddo ; enddo
     enddo
     if (CS%id_huu_T > 0) call post_data(CS%id_huu_T, CS%huu_T, CS%diag)
@@ -1237,8 +1258,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%hvv_T)) then
     do k=1,nz
       do j=js,je ; do i=is,ie
-        CS%hvv_T(i,j,k) = 0.5*(CS%vh_masked(i,j,k)  *v(i,j,k) + &
-                               CS%vh_masked(i,j-1,k)*v(i,j-1,k))
+        CS%hvv_T(i,j,k) = 0.5*h(i,j,k)*(v(i,j,k)  *v(i,j,k) + &
+                               v(i,j-1,k)*v(i,j-1,k))*ishqlarge(I,J,k)
       enddo ; enddo
     enddo
     if (CS%id_hvv_T > 0) call post_data(CS%id_hvv_T, CS%hvv_T, CS%diag)
@@ -1893,10 +1914,15 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
       'pfv_masked at Cv points', 'meter2 second-1')
   call safe_alloc_ptr(CS%pfv_masked,isd,ied,JsdB,JedB,nz)
   CS%id_uh_masked = register_diag_field('ocean_model', 'uh_masked', diag%axesCuL, Time, &
-      'uh_masked at Cu points', 'meter2 second-1')
+      'uh_masked at Cu points', 'meter3 second-1')
   call safe_alloc_ptr(CS%uh_masked,IsdB,IedB,jsd,jed,nz)
   CS%id_vh_masked = register_diag_field('ocean_model', 'vh_masked', diag%axesCvL, Time, &
-      'vh_masked at Cv points', 'meter2 second-1')
+      'vh_masked at Cv points', 'meter3 second-1')
+  CS%id_u_masked = register_diag_field('ocean_model', 'u_masked', diag%axesCuL, Time, &
+      'u_masked at Cu points', 'meter second-1')
+  call safe_alloc_ptr(CS%uh_masked,IsdB,IedB,jsd,jed,nz)
+  CS%id_v_masked = register_diag_field('ocean_model', 'v_masked', diag%axesCvL, Time, &
+      'v_masked at Cv points', 'meter second-1')
   call safe_alloc_ptr(CS%vh_masked,isd,ied,JsdB,JedB,nz)
 
 
@@ -2117,14 +2143,25 @@ subroutine MOM_diagnostics_end(CS, ADp)
   if (ASSOCIATED(CS%hv_Cu))       deallocate(CS%hv_Cu)
   if (ASSOCIATED(CS%hw_Cu))       deallocate(CS%hw_Cu)
   if (ASSOCIATED(CS%hwb_Cu))      deallocate(CS%hwb_Cu)
+  if (ASSOCIATED(CS%e_Cu))        deallocate(CS%e_Cu)
+  if (ASSOCIATED(CS%epfu))        deallocate(CS%epfu)
+  if (ASSOCIATED(CS%uh_masked))   deallocate(CS%uh_masked)
+  if (ASSOCIATED(CS%u_masked))    deallocate(CS%u_masked)
+  if (ASSOCIATED(CS%pfu_masked))  deallocate(CS%pfu_masked)
 
   if (ASSOCIATED(CS%h_Cv))        deallocate(CS%h_Cv)
   if (ASSOCIATED(CS%hvv_T))       deallocate(CS%hvv_T)
   if (ASSOCIATED(CS%hu_Cv))       deallocate(CS%hu_Cv)
   if (ASSOCIATED(CS%hw_Cv))       deallocate(CS%hw_Cv)
   if (ASSOCIATED(CS%hwb_Cv))      deallocate(CS%hwb_Cv)
-  if (ASSOCIATED(CS%islayerdeep)) deallocate(CS%islayerdeep)
+  if (ASSOCIATED(CS%e_Cv))        deallocate(CS%e_Cv)
+  if (ASSOCIATED(CS%epfv))        deallocate(CS%epfv)
+  if (ASSOCIATED(CS%vh_masked))   deallocate(CS%vh_masked)
+  if (ASSOCIATED(CS%v_masked))    deallocate(CS%v_masked)
+  if (ASSOCIATED(CS%pfv_masked))  deallocate(CS%pfv_masked)
 
+  if (ASSOCIATED(CS%islayerdeep)) deallocate(CS%islayerdeep)
+  if (ASSOCIATED(CS%esq))         deallocate(CS%esq)
   if (ASSOCIATED(CS%wparam))      deallocate(CS%wparam)
 
   do m=1,CS%num_time_deriv ; deallocate(CS%prev_val(m)%p) ; enddo

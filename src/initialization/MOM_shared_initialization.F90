@@ -1077,7 +1077,7 @@ subroutine write_ocean_geometry_file(G, param_file, directory, geom_file)
 !  (in)      directory - The directory into which to place the file.
   character(len=240) :: filepath
   character(len=40)  :: mod = "write_ocean_geometry_file"
-  integer, parameter :: nFlds=23
+  integer, parameter :: nFlds=26
   type(vardesc) :: vars(nFlds)
   type(fieldtype) :: fields(nFlds)
   integer :: unit
@@ -1127,13 +1127,16 @@ subroutine write_ocean_geometry_file(G, param_file, directory, geom_file)
   vars(17)= var_desc("dxCvo","m","Open zonal grid spacing at v points",'v','1','1')
   vars(18)= var_desc("dyCuo","m","Open meridional grid spacing at u points",'u','1','1')
   vars(19)= var_desc("wet", "none", "land or ocean?", 'h','1','1')
+  vars(20)= var_desc("wetBu", "none", "land or ocean?", 'q','1','1')
+  vars(21)= var_desc("wetCu", "none", "land or ocean?", 'u','1','1')
+  vars(22)= var_desc("wetCv", "none", "land or ocean?", 'v','1','1')
 
-  vars(20) = var_desc("Dblock_u","meter","Blocked depth at u points",'u','1','1')
-  vars(21) = var_desc("Dopen_u","meter","Open depth at u points",'u','1','1')
-  vars(22) = var_desc("Dblock_v","meter","Blocked depth at v points",'v','1','1')
-  vars(23) = var_desc("Dopen_v","meter","Open depth at v points",'v','1','1')
+  vars(23) = var_desc("Dblock_u","meter","Blocked depth at u points",'u','1','1')
+  vars(24) = var_desc("Dopen_u","meter","Open depth at u points",'u','1','1')
+  vars(25) = var_desc("Dblock_v","meter","Blocked depth at v points",'v','1','1')
+  vars(26) = var_desc("Dopen_v","meter","Open depth at v points",'v','1','1')
 
-  nFlds_used = 19 ; if (G%bathymetry_at_vel) nFlds_used = 23
+  nFlds_used = 22 ; if (G%bathymetry_at_vel) nFlds_used = 26
 
   if (present(geom_file)) then
     filepath = trim(directory) // trim(geom_file)
@@ -1197,12 +1200,15 @@ subroutine write_ocean_geometry_file(G, param_file, directory, geom_file)
   call write_field(unit, fields(17), G%Domain%mpp_domain, G%dx_Cv)
   call write_field(unit, fields(18), G%Domain%mpp_domain, G%dy_Cu)
   call write_field(unit, fields(19), G%Domain%mpp_domain, G%mask2dT)
+  call write_field(unit, fields(20), G%Domain%mpp_domain, G%mask2dBu)
+  call write_field(unit, fields(21), G%Domain%mpp_domain, G%mask2dCu)
+  call write_field(unit, fields(22), G%Domain%mpp_domain, G%mask2dCv)
 
   if (G%bathymetry_at_vel) then
-    call write_field(unit, fields(20), G%Domain%mpp_domain, G%Dblock_u)
-    call write_field(unit, fields(21), G%Domain%mpp_domain, G%Dopen_u)
-    call write_field(unit, fields(22), G%Domain%mpp_domain, G%Dblock_v)
-    call write_field(unit, fields(23), G%Domain%mpp_domain, G%Dopen_v)
+    call write_field(unit, fields(23), G%Domain%mpp_domain, G%Dblock_u)
+    call write_field(unit, fields(24), G%Domain%mpp_domain, G%Dopen_u)
+    call write_field(unit, fields(25), G%Domain%mpp_domain, G%Dblock_v)
+    call write_field(unit, fields(26), G%Domain%mpp_domain, G%Dopen_v)
   endif
 
   call close_file(unit)
