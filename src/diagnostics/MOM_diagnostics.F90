@@ -1918,6 +1918,7 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
   call safe_alloc_ptr(CS%uh_masked,IsdB,IedB,jsd,jed,nz)
   CS%id_vh_masked = register_diag_field('ocean_model', 'vh_masked', diag%axesCvL, Time, &
       'vh_masked at Cv points', 'meter3 second-1')
+  call safe_alloc_ptr(CS%vh_masked,isd,ied,JsdB,JedB,nz)
   CS%id_u_masked = register_diag_field('ocean_model', 'u_masked', diag%axesCuL, Time, &
       'u_masked at Cu points', 'meter second-1')
   call safe_alloc_ptr(CS%u_masked,IsdB,IedB,jsd,jed,nz)
