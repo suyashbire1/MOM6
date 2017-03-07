@@ -1363,7 +1363,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
       do j=js,je ; do I=Isq,Ieq
         dwd = 0.5*(CDp%diapyc_vel(i,j,k+1) - CDp%diapyc_vel(i,j,k) &
           + CDp%diapyc_vel(i+1,j,k+1) - CDp%diapyc_vel(i+1,j,k))*ishqlarge(I,J,k)
-        CS%huwb(I,j,k) = -CS%h_Cu(I,j,k)*ADp%du_dt_dia(I,j,k) - dwd*u(I,j,k)
+        CS%huwb(I,j,k) = CS%h_Cu(I,j,k)*ADp%du_dt_dia(I,j,k) - dwd*u(I,j,k)
       enddo ; enddo
     enddo
     if (CS%id_huwb > 0) call post_data(CS%id_huwb, CS%huwb, CS%diag)
@@ -1433,7 +1433,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
       do J=Jsq,Jeq ; do i=is,ie
         dwd = 0.5*(CDp%diapyc_vel(i,j,k+1) - CDp%diapyc_vel(i,j,k) &
           + CDp%diapyc_vel(i,j+1,k+1) - CDp%diapyc_vel(i,j+1,k))*ishqlarge(I,J,k)  
-        CS%hvwb(i,J,k) = -CS%h_Cv(i,J,k)*ADp%dv_dt_dia(i,J,k) - dwd*v(i,J,k)
+        CS%hvwb(i,J,k) = CS%h_Cv(i,J,k)*ADp%dv_dt_dia(i,J,k) - dwd*v(i,J,k)
       enddo ; enddo
     enddo
     if (CS%id_hvwb > 0) call post_data(CS%id_hvwb, CS%hvwb, CS%diag)
