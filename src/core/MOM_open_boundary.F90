@@ -121,6 +121,8 @@ type, public :: ocean_OBC_type
                                                       !! in the global domain use Flather BCs.
   logical :: Flather_v_BCs_exist_globally = .false.   !< True if any meridional velocity points
                                                       !! in the global domain use Flather BCs.
+  logical :: oblique_BCs_exist_globally = .false.     !< True if any velocity points
+                                                      !! in the global domain use oblique BCs.
   logical :: nudged_u_BCs_exist_globally = .false.    !< True if any velocity points in the
                                                       !! global domain use nudged BCs.
   logical :: nudged_v_BCs_exist_globally = .false.    !< True if any velocity points in the
@@ -141,6 +143,7 @@ type, public :: ocean_OBC_type
                                                       !! in the strain on open boundaries.
   logical :: zero_biharmonic = .false.                !< If True, zeros the Laplacian of flow on open boundaries for
                                                       !! use in the biharmonic viscosity term.
+  logical :: extend_segments = .false.                !< If True, extend OBC segments (for testing)
   real :: g_Earth
   ! Properties of the segments used.
   type(OBC_segment_type), pointer, dimension(:) :: &
@@ -227,6 +230,13 @@ subroutine open_boundary_config(G, param_file, OBC)
                  "The number of model layers", default=0, do_not_log=.true.)
 
   if (config1 .ne. "none") OBC%user_BCs_set_globally = .true.
+  ! Should this be set in MOM_input instead?
+  if (config1 .eq. "tidal_bay") OBC%update_OBC = .true.
+
+  call get_param(param_file, mod, "EXTEND_OBC_SEGMENTS", OBC%extend_segments, &
+                   "If true, extend OBC segments. This option is used to recover\n"//&
+                   "legacy solutions dependent on an incomplete implementaion of OBCs.\n"//&
+                   "This option will be obsoleted in the future.", default=.false.)
 
   if (OBC%number_of_segments > 0) then
     call get_param(param_file, mod, "OBC_ZERO_VORTICITY", OBC%zero_vorticity, &
@@ -542,17 +552,19 @@ subroutine setup_u_point_obc(OBC, G, segment_str, l_seg)
   this_kind = OBC_NONE
 
   ! Hack to extend segment by one point
-  if (Js_obc<Je_obc) then
-    Js_obc = Js_obc - 1 ; Je_obc = Je_obc + 1
-  else
-    Js_obc = Js_obc + 1 ; Je_obc = Je_obc - 1
+  if (OBC%extend_segments) then
+    if (Js_obc<Je_obc) then
+      Js_obc = Js_obc - 1 ; Je_obc = Je_obc + 1
+    else
+      Js_obc = Js_obc + 1 ; Je_obc = Je_obc - 1
+    endif
   endif
 
   if (Je_obc>Js_obc) then
-     OBC%segment(l_seg)%direction = OBC_DIRECTION_E
+    OBC%segment(l_seg)%direction = OBC_DIRECTION_E
   else if (Je_obc<Js_obc) then
-     OBC%segment(l_seg)%direction = OBC_DIRECTION_W
-     j=js_obc;js_obc=je_obc;je_obc=j
+    OBC%segment(l_seg)%direction = OBC_DIRECTION_W
+    j=js_obc;js_obc=je_obc;je_obc=j
   endif
 
   OBC%segment(l_seg)%on_pe = .false.
@@ -567,12 +579,11 @@ subroutine setup_u_point_obc(OBC, G, segment_str, l_seg)
       OBC%open_u_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'ORLANSKI') then
       OBC%segment(l_seg)%radiation = .true.
-      OBC%Flather_u_BCs_exist_globally = .true.
       OBC%open_u_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'OBLIQUE') then
       OBC%segment(l_seg)%radiation = .true.
       OBC%segment(l_seg)%oblique = .true.
-      OBC%Flather_u_BCs_exist_globally = .true.
+      OBC%oblique_BCs_exist_globally = .true.
       OBC%open_u_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'NUDGED') then
       OBC%segment(l_seg)%nudged = .true.
@@ -593,7 +604,10 @@ subroutine setup_u_point_obc(OBC, G, segment_str, l_seg)
       OBC%segment(l_seg)%specified = .true.
       OBC%specified_u_BCs_exist_globally = .true. ! This avoids deallocation
       ! Hack to undo the hack above for SIMPLE BCs
-      Js_obc = Js_obc + 1 ; Je_obc = Je_obc - 1
+      if (OBC%extend_segments) then
+        Js_obc = Js_obc + 1
+        Je_obc = Je_obc - 1
+      endif
     else
       call MOM_error(FATAL, "MOM_open_boundary.F90, setup_u_point_obc: "//&
                      "String '"//trim(action_str(a_loop))//"' not understood.")
@@ -642,10 +656,12 @@ subroutine setup_v_point_obc(OBC, G, segment_str, l_seg)
   this_kind = OBC_NONE
 
   ! Hack to extend segment by one point
-  if (Is_obc<Ie_obc) then
-    Is_obc = Is_obc - 1 ; Ie_obc = Ie_obc + 1
-  else
-    Is_obc = Is_obc + 1 ; Ie_obc = Ie_obc - 1
+  if (OBC%extend_segments) then
+    if (Is_obc<Ie_obc) then
+      Is_obc = Is_obc - 1 ; Ie_obc = Ie_obc + 1
+    else
+      Is_obc = Is_obc + 1 ; Ie_obc = Ie_obc - 1
+    endif
   endif
 
   if (Ie_obc>Is_obc) then
@@ -667,12 +683,11 @@ subroutine setup_v_point_obc(OBC, G, segment_str, l_seg)
       OBC%open_v_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'ORLANSKI') then
       OBC%segment(l_seg)%radiation = .true.
-      OBC%Flather_v_BCs_exist_globally = .true.
       OBC%open_v_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'OBLIQUE') then
       OBC%segment(l_seg)%radiation = .true.
       OBC%segment(l_seg)%oblique = .true.
-      OBC%Flather_v_BCs_exist_globally = .true.
+      OBC%oblique_BCs_exist_globally = .true.
       OBC%open_v_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'NUDGED') then
       OBC%segment(l_seg)%nudged = .true.
@@ -693,7 +708,10 @@ subroutine setup_v_point_obc(OBC, G, segment_str, l_seg)
       OBC%segment(l_seg)%specified = .true.
       OBC%specified_v_BCs_exist_globally = .true. ! This avoids deallocation
       ! Hack to undo the hack above for SIMPLE BCs
-      Is_obc = Is_obc + 1 ; Ie_obc = Ie_obc - 1
+      if (OBC%extend_segments) then
+        Is_obc = Is_obc + 1
+        Ie_obc = Ie_obc - 1
+      endif
     else
       call MOM_error(FATAL, "MOM_open_boundary.F90, setup_v_point_obc: "//&
                      "String '"//trim(action_str(a_loop))//"' not understood.")
@@ -1361,16 +1379,16 @@ subroutine gradient_at_q_points(G,segment,uvel,vvel)
       I=segment%HI%iscB
       do k=1,G%ke
         do J=segment%HI%JscB,segment%HI%JecB
-          segment%grad_normal(J,1,k) = uvel(I-1,j+1,k)-uvel(I-1,j,k)
-          segment%grad_normal(J,2,k) = uvel(I,j+1,k)-uvel(I,j,k)
+          segment%grad_normal(J,1,k) = (uvel(I-1,j+1,k)-uvel(I-1,j,k)) * G%mask2dBu(I-1,J)
+          segment%grad_normal(J,2,k) = (uvel(I,j+1,k)-uvel(I,j,k)) * G%mask2dBu(I,J)
         enddo
       enddo
     else ! western segment
       I=segment%HI%iscB
       do k=1,G%ke
         do J=segment%HI%JscB,segment%HI%JecB
-          segment%grad_normal(J,1,k) = uvel(I+1,j+1,k)-uvel(I+1,j,k)
-          segment%grad_normal(J,2,k) = uvel(I,j+1,k)-uvel(I,j,k)
+          segment%grad_normal(J,1,k) = (uvel(I+1,j+1,k)-uvel(I+1,j,k)) * G%mask2dBu(I+1,J)
+          segment%grad_normal(J,2,k) = (uvel(I,j+1,k)-uvel(I,j,k)) * G%mask2dBu(I,J)
         enddo
       enddo
     endif
@@ -1384,16 +1402,16 @@ subroutine gradient_at_q_points(G,segment,uvel,vvel)
       J=segment%HI%jscB
       do k=1,G%ke
         do I=segment%HI%IscB,segment%HI%IecB
-          segment%grad_normal(I,1,k) = vvel(i+1,J-1,k)-vvel(i,J-1,k)
-          segment%grad_normal(I,2,k) = vvel(i+1,J,k)-vvel(i,J,k)
+          segment%grad_normal(I,1,k) = (vvel(i+1,J-1,k)-vvel(i,J-1,k)) * G%mask2dBu(I,J-1)
+          segment%grad_normal(I,2,k) = (vvel(i+1,J,k)-vvel(i,J,k)) * G%mask2dBu(I,J)
         enddo
       enddo
     else ! south segment
       J=segment%HI%jscB
       do k=1,G%ke
         do I=segment%HI%IscB,segment%HI%IecB
-          segment%grad_normal(I,1,k) = vvel(i+1,J+1,k)-vvel(i,J+1,k)
-          segment%grad_normal(I,2,k) = vvel(i+1,J,k)-vvel(i,J,k)
+          segment%grad_normal(I,1,k) = (vvel(i+1,J+1,k)-vvel(i,J+1,k)) * G%mask2dBu(I,J+1)
+          segment%grad_normal(I,2,k) = (vvel(i+1,J,k)-vvel(i,J,k)) * G%mask2dBu(I,J)
         enddo
       enddo
     endif
