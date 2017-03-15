@@ -49,7 +49,7 @@ use MOM_diag_mediator,     only : post_data, post_data_1d_k
 use MOM_diag_mediator,     only : register_diag_field, register_scalar_field
 use MOM_diag_mediator,     only : diag_ctrl, time_type, safe_alloc_ptr
 use MOM_domains,           only : create_group_pass, do_group_pass, group_pass_type
-use MOM_domains,           only : To_North, To_East
+use MOM_domains,           only : To_North, To_East, To_South, To_West, To_all
 use MOM_EOS,               only : calculate_density, int_density_dz
 use MOM_error_handler,     only : MOM_error, FATAL, WARNING
 use MOM_file_parser,       only : get_param, log_version, param_file_type
@@ -150,6 +150,8 @@ type, public :: diagnostics_CS ; private
   real, pointer, dimension(:,:,:) :: &
     h_Cu         => NULL(),&
     huu_T        => NULL(),&
+    huu_Cu       => NULL(),&
+    usq          => NULL(),&
     hv_Cu        => NULL(),&
     hw_Cu        => NULL(),&
     hwb_Cu       => NULL(),&
@@ -162,6 +164,8 @@ type, public :: diagnostics_CS ; private
 
     h_Cv         => NULL(),&
     hvv_T        => NULL(),&
+    hvv_Cv       => NULL(),&
+    vsq          => NULL(),&
     hu_Cv        => NULL(),&
     hw_Cv        => NULL(),&
     hwb_Cv       => NULL(),&
@@ -169,7 +173,11 @@ type, public :: diagnostics_CS ; private
     epfv         => NULL(),&
     vh_masked    => NULL(),&
     v_masked     => NULL(),&
-    pfv_masked   => NULL()
+    pfv_masked   => NULL(),&
+
+    uv           => NULL(),&
+    huv_Bu       => NULL(),&
+    huv_Bu1      => NULL()
 
   real, pointer, dimension(:,:,:) :: &
     islayerdeep  => NULL()
@@ -215,6 +223,8 @@ type, public :: diagnostics_CS ; private
 
   integer :: id_h_Cu           = -1, id_h_Cv           = -1
   integer :: id_huu_T          = -1, id_hvv_T          = -1
+  integer :: id_huu_Cu         = -1, id_hvv_Cv         = -1
+  integer :: id_usq            = -1, id_vsq            = -1
   integer :: id_hv_Cu          = -1, id_hu_Cv          = -1
   integer :: id_hw_Cu          = -1, id_hw_Cv          = -1
   integer :: id_hwb_Cu         = -1, id_hwb_Cv         = -1
@@ -224,6 +234,8 @@ type, public :: diagnostics_CS ; private
   integer :: id_pfu_masked     = -1, id_pfv_masked     = -1
   integer :: id_uh_masked      = -1, id_vh_masked      = -1
   integer :: id_u_masked       = -1, id_v_masked       = -1
+  integer :: id_huv_Bu         = -1, id_huv_Bu1        = -1
+  integer :: id_uv             = -1
 
   type(wave_speed_CS), pointer :: wave_speed_CSp => NULL()  
 
@@ -236,7 +248,9 @@ type, public :: diagnostics_CS ; private
 
   ! for group halo pass
   type(group_pass_type) :: pass_KE_uv
-  type(group_pass_type) :: pass_e_diapyc_vel
+  type(group_pass_type) :: pass_uhvh
+  type(group_pass_type) :: pass_e
+  type(group_pass_type) :: pass_diapyc_vel
 
 end type diagnostics_CS
 
@@ -1127,26 +1141,28 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
 !  (in)      CS  - control structure returned by a previous call to diagnostics_init
 
   real :: dwd, uhxCu,vhyCu, uhxCv, vhyCv
-  real :: hmin, hmintol
+  real :: hmin, hmintol, hq
   real, dimension(SZIB_(G),SZJB_(G),SZK_(G)) :: ishqlarge
 
   integer :: i, j, k, is, ie, js, je, Isq, Ieq, Jsq, Jeq, nz
   is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec ; nz = G%ke
   Isq = G%IscB ; Ieq = G%IecB ; Jsq = G%JscB ; Jeq = G%JecB
 
-  if(.not.G%symmetric) then 
-    if(ASSOCIATED(CS%e_Cu) .OR. ASSOCIATED(CS%e_Cv) .OR. & 
-      ASSOCIATED(CS%epfu) .OR. ASSOCIATED(CS%epfv)) then 
-        call create_group_pass(CS%pass_e_diapyc_vel, CS%e, G%Domain) 
-    endif
-    if(ASSOCIATED(CS%hw_Cu) .OR. ASSOCIATED(CS%hw_Cv) .OR. & 
-      ASSOCIATED(CS%hwb_Cu) .OR. ASSOCIATED(CS%hwb_Cv) .OR. &
-      ASSOCIATED(CS%huwb) .OR.  ASSOCIATED(CS%hvwb)) then 
-        call create_group_pass(CS%pass_e_diapyc_vel, CDp%diapyc_vel, G%Domain) 
-    endif
-    if (mpp_group_update_is_set(CS%pass_e_diapyc_vel)) then
-        call do_group_pass(CS%pass_e_diapyc_vel, G%domain) 
-    endif
+  if(ASSOCIATED(CS%e_Cu) .OR. ASSOCIATED(CS%e_Cv) .OR. & 
+    ASSOCIATED(CS%epfu) .OR. ASSOCIATED(CS%epfv)) then 
+      call create_group_pass(CS%pass_e, CS%e, G%Domain) 
+      call do_group_pass(CS%pass_e, G%domain) 
+  endif
+  if(ASSOCIATED(CS%hw_Cu) .OR. ASSOCIATED(CS%hw_Cv) .OR. & 
+    ASSOCIATED(CS%hwb_Cu) .OR. ASSOCIATED(CS%hwb_Cv) .OR. &
+    ASSOCIATED(CS%huwb) .OR.  ASSOCIATED(CS%hvwb)) then 
+      call create_group_pass(CS%pass_diapyc_vel, CDp%diapyc_vel, G%Domain, To_West+To_South) 
+      call do_group_pass(CS%pass_diapyc_vel, G%domain) 
+  endif
+  if(ASSOCIATED(CS%huuxpt) .OR. ASSOCIATED(CS%huvymt) .OR. & 
+    ASSOCIATED(CS%huvxpt) .OR. ASSOCIATED(CS%hvvymt)) then 
+      call create_group_pass(CS%pass_uhvh, CDp%uh, CDp%vh, G%Domain) 
+      call do_group_pass(CS%pass_uhvh, G%domain) 
   endif
 
   !hmintol = 2.0*GV%Angstrom_z
@@ -1265,6 +1281,65 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
     if (CS%id_hvv_T > 0) call post_data(CS%id_hvv_T, CS%hvv_T, CS%diag)
   endif
 
+  if (ASSOCIATED(CS%huu_Cu)) then
+    do k=1,nz
+      do j=js,je ; do I=Isq,Ieq
+        CS%huu_Cu(i,j,k) = CDp%uh(i,j,k)*u(i,j,k)*ishqlarge(I,J,k)
+      enddo ; enddo
+    enddo
+    if (CS%id_huu_Cu > 0) call post_data(CS%id_huu_Cu, CS%huu_Cu, CS%diag)
+  endif
+
+  if (ASSOCIATED(CS%hvv_Cv)) then
+    do k=1,nz
+      do J=Jsq,Jeq ; do i=is,ie
+        CS%hvv_Cv(i,j,k) = CDp%vh(i,j,k)*v(i,j,k)*ishqlarge(I,J,k)
+      enddo ; enddo
+    enddo
+    if (CS%id_hvv_Cv > 0) call post_data(CS%id_hvv_Cv, CS%hvv_Cv, CS%diag)
+  endif
+
+  if (ASSOCIATED(CS%usq)) then
+    do k=1,nz
+      do j=js,je ; do I=Isq,Ieq
+        CS%usq(I,j,k) = u(I,j,k)*u(I,j,k)*ishqlarge(I,J,k)
+      enddo ; enddo
+    enddo
+    if (CS%id_usq > 0) call post_data(CS%id_usq, CS%usq, CS%diag)
+  endif
+
+  if (ASSOCIATED(CS%vsq)) then
+    do k=1,nz
+      do J=Jsq,Jeq ; do i=is,ie
+        CS%vsq(i,J,k) = v(i,J,k)*v(i,J,k)*ishqlarge(I,J,k)
+      enddo ; enddo
+    enddo
+    if (CS%id_vsq > 0) call post_data(CS%id_vsq, CS%vsq, CS%diag)
+  endif
+
+  if (ASSOCIATED(CS%huv_Bu)) then
+    do k=1,nz
+      do J=Jsq,Jeq ; do I=Isq,Ieq
+        hq = 0.25*(h(i,j,k) + h(i+1,j,k) + h(i,j+1,k) + h(i+1,j+1,k))
+        CS%huv_Bu(I,J,k) = 0.25*(CDp%vh(i,J,k) + CDp%vh(i+1,J,k))*(CDp%uh(I,j,k) + CDp%uh(I,j+1,k))*G%IareaBu(I,J)/hq*ishqlarge(I,J,k)
+      enddo ; enddo
+    enddo
+    if (CS%id_huv_Bu > 0) call post_data(CS%id_huv_Bu, CS%huv_Bu, CS%diag)
+  endif
+
+  if (ASSOCIATED(CS%huv_Bu1) .or. ASSOCIATED(CS%uv)) then
+    do k=1,nz
+      do J=Jsq,Jeq ; do I=Isq,Ieq
+        hq = 0.25*(h(i,j,k) + h(i+1,j,k) + h(i,j+1,k) + h(i+1,j+1,k))
+        CS%uv(I,J,k) = 0.25*(v(i,J,k) + v(i+1,J,k)) &
+          *(u(I,j,k) + u(I,j+1,k))*ishqlarge(I,J,k)
+        CS%huv_Bu1(I,J,k) = CS%uv(I,J,k)*hq
+      enddo ; enddo
+    enddo
+    if (CS%id_uv > 0) call post_data(CS%id_uv, CS%uv, CS%diag)
+    if (CS%id_huv_Bu1 > 0) call post_data(CS%id_huv_Bu1, CS%huv_Bu1, CS%diag)
+  endif
+  
   if (ASSOCIATED(CS%hv_Cu)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
@@ -1372,8 +1447,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%huuxpt)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
-        uhxCu = 0.5*((uh(I,j,k) - uh(I-1,j,k))*G%IareaT(i,j) &
-                + (uh(I+1,j,k) - uh(I,j,k))*G%IareaT(i+1,j))*ishqlarge(I,J,k) 
+        uhxCu = 0.5*((CDp%uh(I,j,k) - CDp%uh(I-1,j,k))*G%IareaT(i,j) &
+                + (CDp%uh(I+1,j,k) - CDp%uh(I,j,k))*G%IareaT(i+1,j))*ishqlarge(I,J,k) 
         CS%huuxpt(I,j,k) = CS%h_Cu(I,j,k)*ADp%gradKEu(I,j,k) - uhxCu*u(I,j,k)
       enddo ; enddo
     enddo
@@ -1383,8 +1458,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%huvymt)) then
     do k=1,nz
       do j=js,je ; do I=Isq,Ieq
-        vhyCu = 0.5*((vh(i,j,k) - vh(i,j-1,k))*G%IareaT(i,j) &
-                + (vh(i+1,j,k) - vh(i+1,j-1,k))*G%IareaT(i+1,j))*ishqlarge(I,J,k)
+        vhyCu = 0.5*((CDp%vh(i,j,k) - CDp%vh(i,j-1,k))*G%IareaT(i,j) &
+                + (CDp%vh(i+1,j,k) - CDp%vh(i+1,j-1,k))*G%IareaT(i+1,j))*ishqlarge(I,J,k)
         CS%huvymt(I,j,k) = CS%h_Cu(I,j,k)*ADp%rv_x_v(I,j,k) - vhyCu*u(I,j,k)
       enddo ; enddo
     enddo
@@ -1442,8 +1517,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%huvxpt)) then
     do k=1,nz
       do J=Jsq,Jeq ; do i=is,ie
-        uhxCv = 0.5*((uh(i,j,k) - uh(i-1,j,k))*G%IareaT(i,j) &
-                + (uh(i,j+1,k) - uh(i-1,j+1,k))*G%IareaT(i,j+1))*ishqlarge(I,J,k) 
+        uhxCv = 0.5*((CDp%uh(i,j,k) - CDp%uh(i-1,j,k))*G%IareaT(i,j) &
+                + (CDp%uh(i,j+1,k) - CDp%uh(i-1,j+1,k))*G%IareaT(i,j+1))*ishqlarge(I,J,k) 
         CS%huvxpt(i,J,k) = CS%h_Cv(i,J,k)*ADp%rv_x_u(i,J,k) - uhxCv*v(i,J,k)
       enddo ; enddo
     enddo
@@ -1453,8 +1528,8 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
   if (ASSOCIATED(CS%hvvymt)) then
     do k=1,nz
       do J=Jsq,Jeq ; do i=is,ie
-        vhyCv = 0.5*((vh(i,J,k) - vh(i,J-1,k))*G%IareaT(i,j) &
-                + (vh(i,J+1,k) - vh(i,J,k))*G%IareaT(i,j+1)) *ishqlarge(I,J,k)
+        vhyCv = 0.5*((CDp%vh(i,J,k) - CDp%vh(i,J-1,k))*G%IareaT(i,j) &
+                + (CDp%vh(i,J+1,k) - CDp%vh(i,J,k))*G%IareaT(i,j+1)) *ishqlarge(I,J,k)
         CS%hvvymt(i,J,k) = CS%h_Cv(i,J,k)*ADp%gradKEv(i,J,k) - vhyCv*v(i,J,k)
       enddo ; enddo
     enddo
@@ -1864,6 +1939,18 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
   CS%id_h_Cv = register_diag_field('ocean_model', 'h_Cv', diag%axesCvL, Time, &
       'h at Cv points', 'meter')
   call safe_alloc_ptr(CS%h_Cv,isd,ied,JsdB,JedB,nz)
+  CS%id_usq = register_diag_field('ocean_model', 'usq', diag%axesCuL, Time, &
+      'usq at Cu points', 'meter')
+  call safe_alloc_ptr(CS%usq,IsdB,IedB,jsd,jed,nz)
+  CS%id_vsq = register_diag_field('ocean_model', 'vsq', diag%axesCvL, Time, &
+      'vsq at Cv points', 'meter')
+  call safe_alloc_ptr(CS%vsq,isd,ied,JsdB,JedB,nz)
+  CS%id_huu_Cu = register_diag_field('ocean_model', 'huu_Cu', diag%axesCuL, Time, &
+      'huu at Cu points', 'meter')
+  call safe_alloc_ptr(CS%huu_Cu,IsdB,IedB,jsd,jed,nz)
+  CS%id_hvv_Cv = register_diag_field('ocean_model', 'hvv_Cv', diag%axesCvL, Time, &
+      'hvv at Cv points', 'meter')
+  call safe_alloc_ptr(CS%hvv_Cv,isd,ied,JsdB,JedB,nz)
   CS%id_huu_T = register_diag_field('ocean_model', 'huu_T', diag%axesTl, Time, &
       'huu at T points', 'meter3 second-1')
   call safe_alloc_ptr(CS%huu_T,isd,ied,jsd,jed,nz)
@@ -1925,7 +2012,15 @@ subroutine MOM_diagnostics_init(MIS, ADp, CDp, Time, G, GV, param_file, diag, CS
   CS%id_v_masked = register_diag_field('ocean_model', 'v_masked', diag%axesCvL, Time, &
       'v_masked at Cv points', 'meter second-1')
   call safe_alloc_ptr(CS%v_masked,isd,ied,JsdB,JedB,nz)
-
+  CS%id_huv_Bu = register_diag_field('ocean_model', 'huv_Bu', diag%axesBL, Time, &
+      'huv_Bu at Cv points', 'meter second-1')
+  call safe_alloc_ptr(CS%huv_Bu,IsdB,IedB,JsdB,JedB,nz)
+  CS%id_huv_Bu1 = register_diag_field('ocean_model', 'huv_Bu1', diag%axesBL, Time, &
+      'huv_Bu1 at Cv points', 'meter second-1')
+  call safe_alloc_ptr(CS%huv_Bu1,IsdB,IedB,JsdB,JedB,nz)
+  CS%id_uv = register_diag_field('ocean_model', 'uv', diag%axesBL, Time, &
+      'uv at Cv points', 'meter second-1')
+  call safe_alloc_ptr(CS%uv,IsdB,IedB,JsdB,JedB,nz)
 
   call set_dependent_diagnostics(MIS, ADp, CDp, G, CS)
 
@@ -2140,7 +2235,9 @@ subroutine MOM_diagnostics_end(CS, ADp)
   if (ASSOCIATED(CS%hdiffv))      deallocate(CS%hdiffv)
 
   if (ASSOCIATED(CS%h_Cu))        deallocate(CS%h_Cu)
+  if (ASSOCIATED(CS%usq))         deallocate(CS%usq)
   if (ASSOCIATED(CS%huu_T))       deallocate(CS%huu_T)
+  if (ASSOCIATED(CS%huu_Cu))      deallocate(CS%huu_Cu)
   if (ASSOCIATED(CS%hv_Cu))       deallocate(CS%hv_Cu)
   if (ASSOCIATED(CS%hw_Cu))       deallocate(CS%hw_Cu)
   if (ASSOCIATED(CS%hwb_Cu))      deallocate(CS%hwb_Cu)
@@ -2151,7 +2248,9 @@ subroutine MOM_diagnostics_end(CS, ADp)
   if (ASSOCIATED(CS%pfu_masked))  deallocate(CS%pfu_masked)
 
   if (ASSOCIATED(CS%h_Cv))        deallocate(CS%h_Cv)
+  if (ASSOCIATED(CS%vsq))         deallocate(CS%vsq)
   if (ASSOCIATED(CS%hvv_T))       deallocate(CS%hvv_T)
+  if (ASSOCIATED(CS%hvv_Cv))      deallocate(CS%hvv_Cv)
   if (ASSOCIATED(CS%hu_Cv))       deallocate(CS%hu_Cv)
   if (ASSOCIATED(CS%hw_Cv))       deallocate(CS%hw_Cv)
   if (ASSOCIATED(CS%hwb_Cv))      deallocate(CS%hwb_Cv)
@@ -2160,6 +2259,9 @@ subroutine MOM_diagnostics_end(CS, ADp)
   if (ASSOCIATED(CS%vh_masked))   deallocate(CS%vh_masked)
   if (ASSOCIATED(CS%v_masked))    deallocate(CS%v_masked)
   if (ASSOCIATED(CS%pfv_masked))  deallocate(CS%pfv_masked)
+  if (ASSOCIATED(CS%huv_Bu))      deallocate(CS%huv_Bu)
+  if (ASSOCIATED(CS%huv_Bu1))     deallocate(CS%huv_Bu1)
+  if (ASSOCIATED(CS%uv))          deallocate(CS%uv)
 
   if (ASSOCIATED(CS%islayerdeep)) deallocate(CS%islayerdeep)
   if (ASSOCIATED(CS%esq))         deallocate(CS%esq)
