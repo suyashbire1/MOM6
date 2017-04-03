@@ -75,8 +75,8 @@ use SCM_CVmix_tests, only: SCM_CVmix_tests_TS_init
 use supercritical_initialization, only : supercritical_set_OBC_data
 use soliton_initialization, only : soliton_initialize_velocity
 use soliton_initialization, only : soliton_initialize_thickness
-use BFB_initialization, only : BFB_initialize_sponges_southonly
-use BFB_initialization, only : BFB_initialize_thickness
+use BFB_initialization, only : BFB_initialize_sponges_southonly, BFB_initialize_sponges_southonly_varlayth
+use BFB_initialization, only : BFB_initialize_thickness, BFB_initialize_thickness_varlayth
 
 use midas_vertmap, only : find_interfaces, tracer_Z_init
 use midas_vertmap, only : determine_temperature
@@ -263,6 +263,7 @@ subroutine MOM_initialize_state(u, v, h, tv, Time, G, GV, PF, dirs, &
          case ("phillips"); call Phillips_initialize_thickness(h, G, GV, PF)
          case ("rossby_front"); call Rossby_front_initialize_thickness(h, G, GV, PF)
          case ("BFB"); call BFB_initialize_thickness(h, G, PF)
+         case ("BFB_vth"); call BFB_initialize_thickness_varlayth(h, G, PF)
          case ("USER"); call user_initialize_thickness(h, G, PF, tv%T)
          case default ; call MOM_error(FATAL,  "MOM_initialize_state: "//&
               "Unrecognized layer thickness configuration "//trim(config))
@@ -434,6 +435,8 @@ subroutine MOM_initialize_state(u, v, h, tv, Time, G, GV, PF, dirs, &
       case ("USER"); call user_initialize_sponges(G, use_temperature, tv, &
                                                PF, sponge_CSp, h)
       case ("BFB"); call BFB_initialize_sponges_southonly(G, use_temperature, tv, &
+                                               PF, sponge_CSp, h)
+      case ("BFB_vth"); call BFB_initialize_sponges_southonly_varlayth(G, use_temperature, tv, &
                                                PF, sponge_CSp, h)
       case ("phillips"); call Phillips_initialize_sponges(G, use_temperature, tv, &
                                                PF, sponge_CSp, h)
