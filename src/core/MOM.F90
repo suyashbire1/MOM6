@@ -23,7 +23,7 @@ use MOM_variables, only : surface
 use MOM_variables, only: thermo_var_ptrs
 
 ! Infrastructure modules
-use MOM_debugging,            only : MOM_debugging_init, hchksum, uchksum, vchksum
+use MOM_debugging,            only : MOM_debugging_init, hchksum, uvchksum
 use MOM_checksum_packages,    only : MOM_thermo_chksum, MOM_state_chksum, MOM_accel_chksum
 use MOM_cpu_clock,            only : cpu_clock_id, cpu_clock_begin, cpu_clock_end
 use MOM_cpu_clock,            only : CLOCK_COMPONENT, CLOCK_SUBCOMPONENT
@@ -153,7 +153,7 @@ type, public :: MOM_control_struct
     vhtr      !< accumulated meridional thickness fluxes to advect tracers (m3 or kg)
   real ALLOCABLE_, dimension(NIMEM_,NJMEM_) :: &
     ave_ssh   !< time-averaged (ave over baroclinic time steps) sea surface height (meter)
-
+  real, pointer, dimension(:,:)   :: Hml => NULL() !< active mixed layer depth, in m
   real, pointer, dimension(:,:,:) :: &
     u_prev => NULL(), &  !< previous value of u stored for diagnostics
     v_prev => NULL()     !< previous value of v stored for diagnostics
@@ -501,6 +501,10 @@ subroutine step_MOM(fluxes, state, Time_start, time_interval, CS)
   real, dimension(SZIB_(CS%G), SZJ_(CS%G), SZK_(CS%G)) :: umo ! Diagnostics
   real, dimension(SZI_(CS%G), SZJB_(CS%G), SZK_(CS%G)) :: vmo ! Diagnostics
 
+  ! Store the layer thicknesses before any changes by the dynamics. This is necessary for remapped
+  ! mass transport diagnostics
+  real, dimension(SZI_(CS%G),SZJ_(CS%G),SZK_(CS%G)) :: h_pre_dyn
+
   real :: tot_wt_ssh, Itot_wt_ssh, I_time_int
   real :: zos_area_mean, volo, ssh_ga
   type(time_type) :: Time_local
@@ -692,8 +696,7 @@ subroutine step_MOM(fluxes, state, Time_start, time_interval, CS)
       ! and set_viscous_BBL is called as a part of the dynamic stepping.
 
       if (CS%debug) then
-        call uchksum(u,"Pre set_viscous_BBL u", G%HI, haloshift=1)
-        call vchksum(v,"Pre set_viscous_BBL v", G%HI, haloshift=1)
+        call uvchksum("Pre set_viscous_BBL [uv]", u, v, G%HI, haloshift=1)
         call hchksum(h*GV%H_to_m,"Pre set_viscous_BBL h", G%HI, haloshift=1)
         if (associated(CS%tv%T)) call hchksum(CS%tv%T, "Pre set_viscous_BBL T", G%HI, haloshift=1)
         if (associated(CS%tv%S)) call hchksum(CS%tv%S, "Pre set_viscous_BBL S", G%HI, haloshift=1)
@@ -726,7 +729,7 @@ subroutine step_MOM(fluxes, state, Time_start, time_interval, CS)
         endif
 
         call cpu_clock_begin(id_clock_diabatic)
-        call diabatic(u, v, h, CS%tv, fluxes, CS%visc, CS%ADp, CS%CDp, &
+        call diabatic(u, v, h, CS%tv, CS%Hml, fluxes, CS%visc, CS%ADp, CS%CDp, &
                       dtdia, G, GV, CS%diabatic_CSp)
         fluxes%fluxes_used = .true.
         call cpu_clock_end(id_clock_diabatic)
@@ -790,11 +793,10 @@ subroutine step_MOM(fluxes, state, Time_start, time_interval, CS)
         call post_diags_TS_vardec(G, CS, dtdia)
 
         if (CS%debug) then
-          call uchksum(u,"Post-dia first u", G%HI, haloshift=2)
-          call vchksum(v,"Post-dia first v", G%HI, haloshift=2)
+          call uvchksum("Post-dia first [uv]", u, v, G%HI, haloshift=2)
           call hchksum(h,"Post-dia first h", G%HI, haloshift=1)
-          call uchksum(CS%uhtr,"Post-dia first uh", G%HI, haloshift=0)
-          call vchksum(CS%vhtr,"Post-dia first vh", G%HI, haloshift=0)
+          call uvchksum("Post-dia first [uv]h", &
+                        CS%uhtr, CS%vhtr, G%HI, haloshift=0)
         ! call MOM_state_chksum("Post-dia first ", u, v, &
         !                       h, CS%uhtr, CS%vhtr, G, GV, haloshift=1)
           if (associated(CS%tv%T)) call hchksum(CS%tv%T, "Post-dia first T", G%HI, haloshift=1)
@@ -898,6 +900,11 @@ subroutine step_MOM(fluxes, state, Time_start, time_interval, CS)
       enddo ; enddo ; enddo
     endif
 
+    ! Store pre-dynamics layer thicknesses so that mass fluxes are remapped correctly
+    do k=1,nz ; do j=jsd,jed ; do i=isd,ied
+      h_pre_dyn(i,j,k) = h(i,j,k)
+    enddo ; enddo ; enddo
+
     if (CS%do_dynamics .and. CS%split) then !--------------------------- start SPLIT
       ! This section uses a split time stepping scheme for the dynamic equations,
       ! basically the stacked shallow water equations with viscosity.
@@ -969,8 +976,8 @@ subroutine step_MOM(fluxes, state, Time_start, time_interval, CS)
     if (CS%mixedlayer_restrat) then
       if (CS%debug) then
         call hchksum(h,"Pre-mixedlayer_restrat h", G%HI, haloshift=1)
-        call uchksum(CS%uhtr,"Pre-mixedlayer_restrat uhtr", G%HI, haloshift=0)
-        call vchksum(CS%vhtr,"Pre-mixedlayer_restrat vhtr", G%HI, haloshift=0)
+        call uvchksum("Pre-mixedlayer_restrat uhtr", &
+                      CS%uhtr, CS%vhtr, G%HI, haloshift=0)
       endif
       call cpu_clock_begin(id_clock_ml_restrat)
       call mixedlayer_restrat(h, CS%uhtr ,CS%vhtr, CS%tv, fluxes, dt, CS%visc%MLD, &
@@ -981,8 +988,8 @@ subroutine step_MOM(fluxes, state, Time_start, time_interval, CS)
       call cpu_clock_end(id_clock_pass)
       if (CS%debug) then
         call hchksum(h,"Post-mixedlayer_restrat h", G%HI, haloshift=1)
-        call uchksum(CS%uhtr,"Post-mixedlayer_restrat uhtr", G%HI, haloshift=0)
-        call vchksum(CS%vhtr,"Post-mixedlayer_restrat vhtr", G%HI, haloshift=0)
+        call uvchksum("Post-mixedlayer_restrat [uv]htr", &
+                      CS%uhtr, CS%vhtr, G%HI, haloshift=0)
       endif
     endif
 
@@ -1008,11 +1015,10 @@ subroutine step_MOM(fluxes, state, Time_start, time_interval, CS)
       call cpu_clock_begin(id_clock_other)
 
       if (CS%debug) then
-        call uchksum(u,"Pre-advection u", G%HI, haloshift=2)
-        call vchksum(v,"Pre-advection v", G%HI, haloshift=2)
+        call uvchksum("Pre-advection [uv]", u, v, G%HI, haloshift=2)
         call hchksum(h*GV%H_to_m,"Pre-advection h", G%HI, haloshift=1)
-        call uchksum(CS%uhtr*GV%H_to_m,"Pre-advection uhtr", G%HI, haloshift=0)
-        call vchksum(CS%vhtr*GV%H_to_m,"Pre-advection vhtr", G%HI, haloshift=0)
+        call uvchksum("Pre-advection uhtr", CS%uhtr*GV%H_to_m, &
+                           CS%vhtr*GV%H_to_m, G%HI, haloshift=0)
       ! call MOM_state_chksum("Pre-advection ", u, v, &
       !                       h, CS%uhtr, CS%vhtr, G, GV, haloshift=1)
           if (associated(CS%tv%T)) call hchksum(CS%tv%T, "Pre-advection T", G%HI, haloshift=1)
@@ -1043,7 +1049,10 @@ subroutine step_MOM(fluxes, state, Time_start, time_interval, CS)
       call calculate_Z_transport(CS%uhtr, CS%vhtr, h, CS%dt_trans, G, GV, &
                                  CS%diag_to_Z_CSp)
       call cpu_clock_end(id_clock_Z_diag)
+
       ! Post mass transports, including SGS
+      ! Build the remap grids using the layer thicknesses from before the dynamics
+      call diag_update_remap_grids(CS%diag, alt_h = h_pre_dyn)
       if (CS%id_umo_2d > 0) then
         umo2d(:,:) = CS%uhtr(:,:,1)
         do k = 2, nz
@@ -1055,7 +1064,7 @@ subroutine step_MOM(fluxes, state, Time_start, time_interval, CS)
       if (CS%id_umo > 0) then
         ! Convert to kg/s. Modifying the array for diagnostics is allowed here since it is set to zero immediately below
         umo(:,:,:) =  CS%uhtr(:,:,:) * ( GV%H_to_kg_m2 / CS%dt_trans )
-        call post_data(CS%id_umo, umo, CS%diag)
+        call post_data(CS%id_umo, umo, CS%diag, alt_h = h_pre_dyn)
       endif
       if (CS%id_vmo_2d > 0) then
         vmo2d(:,:) = CS%vhtr(:,:,1)
@@ -1068,8 +1077,15 @@ subroutine step_MOM(fluxes, state, Time_start, time_interval, CS)
       if (CS%id_vmo > 0) then
         ! Convert to kg/s. Modifying the array for diagnostics is allowed here since it is set to zero immediately below
         vmo(:,:,:) =  CS%vhtr(:,:,:) * ( GV%H_to_kg_m2 / CS%dt_trans )
-        call post_data(CS%id_vmo, vmo, CS%diag)
+        call post_data(CS%id_vmo, vmo, CS%diag, alt_h = h_pre_dyn)
       endif
+
+      if (CS%id_uhtr > 0) call post_data(CS%id_uhtr, CS%uhtr, CS%diag, alt_h = h_pre_dyn)
+      if (CS%id_vhtr > 0) call post_data(CS%id_vhtr, CS%vhtr, CS%diag, alt_h = h_pre_dyn)
+
+      ! Rebuild the remap grids now that we've posted the fields which rely on thicknesses
+      ! from before the dynamics calls
+      call diag_update_remap_grids(CS%diag)
 
       if (CS%id_u_predia > 0) call post_data(CS%id_u_predia, u, CS%diag)
       if (CS%id_v_predia > 0) call post_data(CS%id_v_predia, v, CS%diag)
@@ -1095,11 +1111,10 @@ subroutine step_MOM(fluxes, state, Time_start, time_interval, CS)
         endif
 
         if (CS%debug) then
-          call uchksum(u,"Pre-diabatic u", G%HI, haloshift=2)
-          call vchksum(v,"Pre-diabatic v", G%HI, haloshift=2)
+          call uvchksum("Pre-diabatic [uv]", u, v, G%HI, haloshift=2)
           call hchksum(h*GV%H_to_m,"Pre-diabatic h", G%HI, haloshift=1)
-          call uchksum(CS%uhtr*GV%H_to_m,"Pre-diabatic uh", G%HI, haloshift=0)
-          call vchksum(CS%vhtr*GV%H_to_m,"Pre-diabatic vh", G%HI, haloshift=0)
+          call uvchksum("Pre-diabatic [uv]h", CS%uhtr*GV%H_to_m, &
+                        CS%vhtr*GV%H_to_m, G%HI, haloshift=0)
         ! call MOM_state_chksum("Pre-diabatic ",u, v, h, CS%uhtr, CS%vhtr, G, GV)
           call MOM_thermo_chksum("Pre-diabatic ", CS%tv, G,haloshift=0)
           call check_redundant("Pre-diabatic ", u, v, G)
@@ -1110,7 +1125,7 @@ subroutine step_MOM(fluxes, state, Time_start, time_interval, CS)
           call adjustments_dyn_legacy_split(u, v, h, dt, G, GV, CS%dyn_legacy_split_CSp)
         endif
         call cpu_clock_begin(id_clock_diabatic)
-        call diabatic(u, v, h, CS%tv, fluxes, CS%visc, CS%ADp, CS%CDp, &
+        call diabatic(u, v, h, CS%tv, CS%Hml, fluxes, CS%visc, CS%ADp, CS%CDp, &
                       CS%dt_trans, G, GV, CS%diabatic_CSp)
         fluxes%fluxes_used = .true.
         call cpu_clock_end(id_clock_diabatic)
@@ -1173,11 +1188,10 @@ subroutine step_MOM(fluxes, state, Time_start, time_interval, CS)
         call post_diags_TS_vardec(G, CS, CS%dt_trans)
 
         if (CS%debug) then
-          call uchksum(u,"Post-diabatic u", G%HI, haloshift=2)
-          call vchksum(v,"Post-diabatic v", G%HI, haloshift=2)
+          call uvchksum("Post-diabatic u", u, v, G%HI, haloshift=2)
           call hchksum(h*GV%H_to_m,"Post-diabatic h", G%HI, haloshift=1)
-          call uchksum(CS%uhtr*GV%H_to_m,"Post-diabatic uh", G%HI, haloshift=0)
-          call vchksum(CS%vhtr*GV%H_to_m,"Post-diabatic vh", G%HI, haloshift=0)
+          call uvchksum("Post-diabatic [uv]h", CS%uhtr*GV%H_to_m, &
+                        CS%vhtr*GV%H_to_m, G%HI, haloshift=0)
         ! call MOM_state_chksum("Post-diabatic ", u, v, &
         !                       h, CS%uhtr, CS%vhtr, G, GV, haloshift=1)
           if (associated(CS%tv%T)) call hchksum(CS%tv%T, "Post-diabatic T", G%HI, haloshift=1)
@@ -1275,9 +1289,6 @@ subroutine step_MOM(fluxes, state, Time_start, time_interval, CS)
       if (CS%id_Sady_2d   > 0) call post_data(CS%id_Sady_2d,   CS%S_ady_2d,   CS%diag)
       if (CS%id_Sdiffx_2d > 0) call post_data(CS%id_Sdiffx_2d, CS%S_diffx_2d, CS%diag)
       if (CS%id_Sdiffy_2d > 0) call post_data(CS%id_Sdiffy_2d, CS%S_diffy_2d, CS%diag)
-
-      if (CS%id_uhtr > 0) call post_data(CS%id_uhtr, CS%uhtr, CS%diag)
-      if (CS%id_vhtr > 0) call post_data(CS%id_vhtr, CS%vhtr, CS%diag)
 
       call post_diags_TS_tendency(G,GV,CS,CS%dt_trans)
 
@@ -2128,9 +2139,12 @@ subroutine initialize_MOM(Time, param_file, dirs, CS, Time_in, offline_tracer_mo
     allocate(CS%tv%salt_deficit(isd:ied,jsd:jed)) ; CS%tv%salt_deficit(:,:)=0.0
   endif
 
+  if (CS%bulkmixedlayer .or. CS%use_temperature) then
+     allocate(CS%Hml(isd:ied,jsd:jed)) ; CS%Hml(:,:) = 0.0
+  endif
+
   if (CS%bulkmixedlayer) then
     GV%nkml = nkml ; GV%nk_rho_varies = nkml + nkbl
-    allocate(CS%tv%Hml(isd:ied,jsd:jed)) ; CS%tv%Hml(:,:) = 0.0
   else
     GV%nkml = 0 ; GV%nk_rho_varies = 0
   endif
@@ -2289,8 +2303,8 @@ subroutine initialize_MOM(Time, param_file, dirs, CS, Time_in, offline_tracer_mo
     ! \todo This block exists for legacy reasons and we should phase it out of
     ! all examples.
     if (CS%debug) then
-      call uchksum(CS%u,"Pre ALE adjust init cond u", G%HI, haloshift=1)
-      call vchksum(CS%v,"Pre ALE adjust init cond v", G%HI, haloshift=1)
+      call uvchksum("Pre ALE adjust init cond [uv]", &
+                    CS%u, CS%v, G%HI, haloshift=1)
       call hchksum(CS%h*GV%H_to_m,"Pre ALE adjust init cond h", G%HI, haloshift=1)
     endif
     call callTree_waypoint("Calling adjustGridForIntegrity() to remap initial conditions (initialize_MOM)")
@@ -2323,8 +2337,7 @@ subroutine initialize_MOM(Time, param_file, dirs, CS, Time_in, offline_tracer_mo
     call cpu_clock_end(id_clock_pass_init)
 
     if (CS%debug) then
-      call uchksum(CS%u,"Post ALE adjust init cond u", G%HI, haloshift=1)
-      call vchksum(CS%v,"Post ALE adjust init cond v", G%HI, haloshift=1)
+      call uvchksum("Post ALE adjust init cond [uv]", CS%u, CS%v, G%HI, haloshift=1)
       call hchksum(CS%h*GV%H_to_m, "Post ALE adjust init cond h", G%HI, haloshift=1)
     endif
   endif
@@ -2472,7 +2485,7 @@ subroutine initialize_MOM(Time, param_file, dirs, CS, Time_in, offline_tracer_mo
   if(present(offline_tracer_mode)) offline_tracer_mode=CS%offline_tracer_mode
 
   if(CS%offline_tracer_mode) then
-    call offline_transport_init(param_file, CS%offline_CSp, CS%diabatic_CSp%diabatic_aux_CSp, G, GV)
+    call offline_transport_init(param_file, CS%offline_CSp, CS%diabatic_CSp, G, GV)
     CS%offline_CSp%debug = CS%debug
     if (mod(first_direction,2)==0) then
       CS%offline_CSp%x_before_y = .true.
@@ -3264,7 +3277,7 @@ subroutine set_restart_fields(GV, param_file, CS)
   type(param_file_type),    intent(in) :: param_file    !< opened file for parsing to get parameters
   type(MOM_control_struct), intent(in) :: CS            !< control structure set up by inialize_MOM
   ! Local variables
-  logical :: use_ice_shelf ! Needed to determine whether to add tv%Hml to restarts
+  logical :: use_ice_shelf ! Needed to determine whether to add CS%Hml to restarts
   type(vardesc) :: vd
   character(len=48) :: thickness_units, flux_units
 
@@ -3304,9 +3317,9 @@ subroutine set_restart_fields(GV, param_file, CS)
   call register_restart_field(CS%ave_ssh, vd, .false., CS%restart_CSp)
 
   ! hML is needed when using the ice shelf module
-  if (use_ice_shelf .and. associated(CS%tv%Hml)) then
+  if (use_ice_shelf .and. associated(CS%Hml)) then
      vd = var_desc("hML","meter","Mixed layer thickness",'h','1')
-     call register_restart_field(CS%tv%Hml, vd, .false., CS%restart_CSp)
+     call register_restart_field(CS%Hml, vd, .false., CS%restart_CSp)
   endif
 
 end subroutine set_restart_fields
@@ -3368,7 +3381,7 @@ subroutine calculate_surface_state(state, u, v, h, ssh, G, GV, CS, p_atm)
     state%u => u(:,:,1)
     state%v => v(:,:,1)
     nullify(state%sfc_density)
-    if (associated(CS%tv%Hml)) state%Hml => CS%tv%Hml
+    if (associated(CS%Hml)) state%Hml => CS%Hml
   else
     if (CS%use_temperature) then
       if (.not.associated(state%SST)) then
@@ -3651,7 +3664,7 @@ subroutine MOM_end(CS)
   endif
   if (associated(CS%tv%frazil)) deallocate(CS%tv%frazil)
   if (associated(CS%tv%salt_deficit)) deallocate(CS%tv%salt_deficit)
-  if (associated(CS%tv%Hml)) deallocate(CS%tv%Hml)
+  if (associated(CS%Hml)) deallocate(CS%Hml)
 
   call tracer_advect_end(CS%tracer_adv_CSp)
   call tracer_hor_diff_end(CS%tracer_diff_CSp)
