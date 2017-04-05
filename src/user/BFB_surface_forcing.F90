@@ -70,9 +70,10 @@ type, public :: BFB_surface_forcing_CS ; private
                              ! forcing ramp
   real :: SST_n              ! SST at the northern edge of the linear
                              ! forcing ramp
-  real :: lfrslat              ! Southern latitude where the linear forcing ramp
+  real :: T_bot              ! Temperaure of the bottom layer
+  real :: lfrslat            ! Southern latitude where the linear forcing ramp
                              ! begins
-  real :: lfrnlat              ! Northern latitude where the linear forcing ramp
+  real :: lfrnlat            ! Northern latitude where the linear forcing ramp
                              ! ends
   real :: drho_dt            ! Rate of change of density with temperature.
                              ! Note that temperature is being used as a dummy
@@ -225,7 +226,7 @@ subroutine BFB_buoyancy_forcing(state, fluxes, day, dt, G, CS)
                     (G%geoLatT(i,j) - CS%lfrslat) + CS%SST_s
         end if
 
-        density_restore = Temp_restore*CS%drho_dt + CS%Rho0
+        density_restore = (Temp_restore - CS%T_bot)*CS%drho_dt + CS%Rho0
 
         fluxes%buoy(i,j) = G%mask2dT(i,j) * buoy_rest_const * &
                           (density_restore - state%sfc_density(i,j))
@@ -252,7 +253,7 @@ subroutine BFB_surface_forcing_init(Time, G, param_file, diag, CS)
   type(ocean_grid_type),                      intent(in) :: G
   type(param_file_type),                      intent(in) :: param_file
   type(diag_ctrl), target,                    intent(in) :: diag
-  type(BFB_surface_forcing_CS), pointer    :: CS
+  type(BFB_surface_forcing_CS), pointer                  :: CS
 ! Arguments: Time - The current model time.
 !  (in)      G - The ocean's grid structure.
 !  (in)      param_file - A structure indicating the open file to parse for
@@ -300,6 +301,8 @@ subroutine BFB_surface_forcing_init(Time, G, param_file, diag, CS)
   call get_param(param_file, mod, "SST_N", CS%SST_n, &
                  "SST at the northern edge of the linear forcing ramp.", &
                  units="C", default = 10.0)
+  call get_param(param_file, mod, "T_BOT", CS%T_bot, &
+                 "Bottom Temp", units="C", default=5.0)
   call get_param(param_file, mod, "DRHO_DT", CS%drho_dt, &
                  "The rate of change of density with temperature.", &
                  units="kg m-3 K-1", default = -0.2)

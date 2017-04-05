@@ -84,8 +84,8 @@ subroutine BFB_set_coord(Rlay, g_prime, GV, param_file, eqn_of_state)
   call get_param(param_file, mod, "T_BOT", T_bot, &
                  "Bottom Temp", units="C", default=5.0)
 
-  rho_top = GV%rho0 + drho_dt*SST_s
-  rho_bot = GV%rho0 + drho_dt*T_bot
+  rho_top = GV%rho0 + drho_dt*(SST_s-T_bot)
+  rho_bot = GV%rho0 + drho_dt*(T_bot-T_bot)
   nz = GV%ke
 
   !call MOM_error(FATAL, &
@@ -265,7 +265,6 @@ subroutine BFB_initialize_sponges_southonly_varlayth(G, use_temperature, tv, par
     ! This section is used for uniform thickness initialization
     do k = 1,nz; eta(i,j,k) = -H0(k); enddo
     eta(i,j,nz+1) = -G%max_depth
-    write(*,*) eta 
 
     if (G%bathyT(i,j) > min_depth) then
       Idamp(i,j) = damp/86400.0
