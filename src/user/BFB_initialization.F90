@@ -325,6 +325,8 @@ subroutine BFB_initialize_thickness_varlayth(h, G, param_file)
   is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec ; nz = G%ke
   isd = G%isd ; ied = G%ied ; jsd = G%jsd ; jed = G%jed
 
+  call get_param(param_file, mod, "HMIN", hmin, &
+                 "Initial thickness of thinnest layer", units="m")
   eta(:,:,:) = 0.0
   hmax = (pi*G%max_depth - real(nz)*hmin*(pi-2.0))/2/real(nz)
   do k=1,nz ; H0(k) = 2*nz*(hmin-hmax)/pi*(cos((k-1)*pi/2/nz)-1.0) + (k-1)*hmin; enddo
