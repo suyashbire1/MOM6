@@ -248,7 +248,6 @@ type, public :: diagnostics_CS ; private
 
   ! for group halo pass
   type(group_pass_type) :: pass_KE_uv
-  type(group_pass_type) :: pass_uhvh
   type(group_pass_type) :: pass_e
   type(group_pass_type) :: pass_diapyc_vel
 
@@ -1159,12 +1158,6 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
       call create_group_pass(CS%pass_diapyc_vel, CDp%diapyc_vel, G%Domain, To_West+To_South) 
       call do_group_pass(CS%pass_diapyc_vel, G%domain) 
   endif
-  if(ASSOCIATED(CS%huuxpt) .OR. ASSOCIATED(CS%huvymt) .OR. & 
-    ASSOCIATED(CS%huvxpt) .OR. ASSOCIATED(CS%hvvymt)) then 
-      call create_group_pass(CS%pass_uhvh, CDp%uh, CDp%vh, G%Domain) 
-      call do_group_pass(CS%pass_uhvh, G%domain) 
-  endif
-
   !hmintol = 2.0*GV%Angstrom_z
   hmintol = 1e-3   ! 1 mm
   do k = 1,nz
