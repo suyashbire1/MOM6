@@ -815,7 +815,8 @@ subroutine MOM_forcing_chksum(mesg, fluxes, G, haloshift)
   ! counts, there must be no redundant points, so all variables use is..ie
   ! and js...je as their extent.
   if (associated(fluxes%taux) .and. associated(fluxes%tauy)) &
-    call uvchksum(mesg//" fluxes%tau[xy]", fluxes%taux, fluxes%tauy, G%HI, haloshift=1)
+    call uvchksum(mesg//" fluxes%tau[xy]", fluxes%taux, fluxes%tauy, G%HI, &
+                  haloshift=hshift, symmetric=.true.)
   if (associated(fluxes%ustar)) &
     call hchksum(fluxes%ustar, mesg//" fluxes%ustar",G%HI,haloshift=hshift)
   if (associated(fluxes%buoy)) &
@@ -1561,7 +1562,7 @@ subroutine forcing_accumulate(flux_tmp, fluxes, dt, G, wt2)
   type(forcing),         intent(in)    :: flux_tmp
   type(forcing),         intent(inout) :: fluxes
   real,                  intent(in)    :: dt
-  type(ocean_grid_type), intent(inout) :: G
+  type(ocean_grid_type), intent(inout) :: G    !< The ocean's grid structure
   real,                  intent(out)   :: wt2
 
   ! This subroutine copies mechancal forcing from flux_tmp to fluxes and

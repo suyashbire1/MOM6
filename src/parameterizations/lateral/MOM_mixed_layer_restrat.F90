@@ -373,7 +373,10 @@ subroutine mixedlayer_restrat_general(h, uhtr, vhtr, tv, fluxes, dt, MLD_in, G, 
         elseif (a(k)*uDml(I) < 0.0) then
           if (-a(k)*uDml(I) > h_avail(i+1,j,k)) uDml(I) = -h_avail(i+1,j,k) / a(k)
         endif
+      enddo
+      do k=1,nz
         ! Transport for slow-filtered MLD
+        hAtVel = 0.5*(h(i,j,k) + h(i+1,j,k))
         b(k) = PSI(zpb)                     ! Psi(z/MLD) for upper interface
         zpb = zpb - (hAtVel * IhTot_slow)   ! z/H for lower interface
         b(k) = b(k) - PSI(zpb)              ! Transport profile
@@ -427,7 +430,7 @@ subroutine mixedlayer_restrat_general(h, uhtr, vhtr, tv, fluxes, dt, MLD_in, G, 
       IhTot = 2.0 / ((htot_fast(i,j) + htot_fast(i,j+1)) + h_neglect)
       IhTot_slow = 2.0 / ((htot_slow(i,j) + htot_slow(i,j+1)) + h_neglect)
       zpa = 0.0 ; zpb = 0.0
-      ! a(k) relates the sublayer transport to uDml with a linear profile.
+      ! a(k) relates the sublayer transport to vDml with a linear profile.
       ! The sum of a(k) through the mixed layers must be 0.
       do k=1,nz
         hAtVel = 0.5*(h(i,j,k) + h(i,j+1,k))
@@ -440,21 +443,24 @@ subroutine mixedlayer_restrat_general(h, uhtr, vhtr, tv, fluxes, dt, MLD_in, G, 
         elseif (a(k)*vDml(i) < 0.0) then
           if (-a(k)*vDml(i) > h_avail(i,j+1,k)) vDml(i) = -h_avail(i,j+1,k) / a(k)
         endif
+      enddo
+      do k=1,nz
         ! Transport for slow-filtered MLD
+        hAtVel = 0.5*(h(i,j,k) + h(i,j+1,k))
         b(k) = PSI(zpb)                     ! Psi(z/MLD) for upper interface
         zpb = zpb - (hAtVel * IhTot_slow)   ! z/H for lower interface
         b(k) = b(k) - PSI(zpb)              ! Transport profile
         ! Limit magnitude (vDml_slow) if it would violate CFL when added to vDml
-        if (b(k)*vDml_slow(I) > 0.0) then
-          if (b(k)*vDml_slow(I) > h_avail(i,j,k) - a(k)*vDml(I)) &
-             vDml_slow(I) = max( 0., h_avail(i,j,k) - a(k)*vDml(I) ) / b(k)
-        elseif (b(k)*vDml_slow(I) < 0.0) then
-          if (-b(k)*vDml_slow(I) > h_avail(i,j+1,k) + a(k)*vDml(I)) &
-             vDml_slow(I) = -max( 0., h_avail(i,j+1,k) + a(k)*vDml(I) ) / b(k)
+        if (b(k)*vDml_slow(i) > 0.0) then
+          if (b(k)*vDml_slow(i) > h_avail(i,j,k) - a(k)*vDml(i)) &
+             vDml_slow(i) = max( 0., h_avail(i,j,k) - a(k)*vDml(i) ) / b(k)
+        elseif (b(k)*vDml_slow(i) < 0.0) then
+          if (-b(k)*vDml_slow(i) > h_avail(i,j+1,k) + a(k)*vDml(i)) &
+             vDml_slow(i) = -max( 0., h_avail(i,j+1,k) + a(k)*vDml(i) ) / b(k)
         endif
       enddo
       do k=1,nz
-        vhml(i,J,k) = a(k)*vDml(i) + b(k)*vDml_slow(I)
+        vhml(i,J,k) = a(k)*vDml(i) + b(k)*vDml_slow(i)
         vhtr(i,J,k) = vhtr(i,J,k) + vhml(i,J,k)*dt
       enddo
     endif
@@ -462,6 +468,13 @@ subroutine mixedlayer_restrat_general(h, uhtr, vhtr, tv, fluxes, dt, MLD_in, G, 
     vtimescale_diag(i,J) = timescale
     vDml_diag(i,J) = vDml(i)
   enddo ; enddo
+
+!$OMP do
+  do j=js,je ; do k=1,nz ; do i=is,ie
+    h(i,j,k) = h(i,j,k) - dt*G%IareaT(i,j) * &
+        ((uhml(I,j,k) - uhml(I-1,j,k)) + (vhml(i,J,k) - vhml(i,J-1,k)))
+  enddo ; enddo ; enddo
+!$OMP end parallel
 
   ! Offer diagnostic fields for averaging.
   if (query_averaging_enabled(CS%diag)) then
@@ -489,14 +502,6 @@ subroutine mixedlayer_restrat_general(h, uhtr, vhtr, tv, fluxes, dt, MLD_in, G, 
       call post_data(CS%id_vml, vDml_diag, CS%diag)
     endif
   endif
-
-!$OMP do
-  do j=js,je ; do k=1,nz ; do i=is,ie
-    h(i,j,k) = h(i,j,k) - dt*G%IareaT(i,j) * &
-        ((uhml(I,j,k) - uhml(I-1,j,k)) + (vhml(i,J,k) - vhml(i,J-1,k)))
-  enddo ; enddo ; enddo
-!$OMP end parallel
-
   ! Whenever thickness changes let the diag manager know, target grids
   ! for vertical remapping may need to be regenerated.
   ! This needs to happen after the H update and before the next post_data.
