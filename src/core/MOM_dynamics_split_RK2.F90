@@ -18,6 +18,7 @@ use MOM_diag_mediator,     only : register_diag_field, register_static_field
 use MOM_diag_mediator,     only : set_diag_mediator_grid, diag_ctrl, diag_update_remap_grids
 use MOM_domains,           only : MOM_domains_init
 use MOM_domains,           only : To_South, To_West, To_All, CGRID_NE, SCALAR_PAIR
+use MOM_domains,           only : To_North, To_East, Omit_Corners
 use MOM_domains,           only : create_group_pass, do_group_pass, group_pass_type
 use MOM_domains,           only : start_group_pass, complete_group_pass
 use MOM_debugging,         only : hchksum, uvchksum
@@ -35,7 +36,9 @@ use MOM_time_manager,      only : operator(-), operator(>), operator(*), operato
 use MOM_ALE,                   only : ALE_CS
 use MOM_barotropic,            only : barotropic_init, btstep, btcalc, bt_mass_source
 use MOM_barotropic,            only : register_barotropic_restarts, set_dtbt, barotropic_CS
+use MOM_boundary_update,       only : update_OBC_data, update_OBC_CS
 use MOM_continuity,            only : continuity, continuity_init, continuity_CS
+use MOM_continuity,            only : continuity_stencil
 use MOM_CoriolisAdv,           only : CorAdCalc, CoriolisAdv_init, CoriolisAdv_CS
 use MOM_diabatic_driver,       only : diabatic, diabatic_driver_init, diabatic_CS
 use MOM_debugging,             only : check_redundant
@@ -47,7 +50,6 @@ use MOM_lateral_mixing_coeffs, only : VarMix_CS
 use MOM_MEKE_types,            only : MEKE_type
 use MOM_open_boundary,         only : ocean_OBC_type
 use MOM_open_boundary,         only : radiation_open_bdry_conds
-use MOM_boundary_update,       only : update_OBC_data
 use MOM_PressureForce,         only : PressureForce, PressureForce_init, PressureForce_CS
 use MOM_set_visc,              only : set_viscous_BBL, set_viscous_ML, set_visc_CS
 use MOM_tidal_forcing,         only : tidal_forcing_init, tidal_forcing_CS
@@ -167,16 +169,17 @@ type, public :: MOM_dyn_split_RK2_CS ; private
      !! condition type that specifies whether, where, and  what open boundary
      !! conditions are used.  If no open BCs are used, this pointer stays
      !! nullified.  Flather OBCs use open boundary_CS as well.
+  type(update_OBC_CS),    pointer :: update_OBC_CSp => NULL()
 
   ! This is a copy of the pointer in the top-level control structure.
   type(ALE_CS), pointer :: ALE_CSp => NULL()
 
   ! for group halo pass
   type(group_pass_type) :: pass_kv_bbl_thick
-  type(group_pass_type) :: pass_Ray_uv, pass_eta_PF_eta
+  type(group_pass_type) :: pass_Ray_uv, pass_eta
   type(group_pass_type) :: pass_visc_rem, pass_uvp
-  type(group_pass_type) :: pass_hp_uv, pass_eta_PF
-  type(group_pass_type) :: pass_huv, pass_uv
+  type(group_pass_type) :: pass_hp_uv
+  type(group_pass_type) :: pass_uv
   type(group_pass_type) :: pass_h, pass_av_uvh
 
 end type MOM_dyn_split_RK2_CS
@@ -257,7 +260,6 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
 
   real, dimension(SZIB_(G),SZJ_(G),SZK_(G)) :: u_old_rad_OBC
   real, dimension(SZI_(G),SZJB_(G),SZK_(G)) :: v_old_rad_OBC
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G))  :: h_old_rad_OBC
     ! u_old_rad_OBC and v_old_rad_OBC are the starting velocities, which are
     ! saved for use in the Flather open boundary condition code, both in m s-1.
 
@@ -284,6 +286,7 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   logical :: showCallTree
 
   integer :: i, j, k, is, ie, js, je, Isq, Ieq, Jsq, Jeq, nz
+  integer :: cont_stencil
   is  = G%isc  ; ie  = G%iec  ; js  = G%jsc  ; je  = G%jec ; nz = G%ke
   Isq = G%IscB ; Ieq = G%IecB ; Jsq = G%JscB ; Jeq = G%JecB
   u_av => CS%u_av ; v_av => CS%v_av ; h_av => CS%h_av ; eta => CS%eta
@@ -292,7 +295,7 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   showCallTree = callTree_showQuery()
   if (showCallTree) call callTree_enter("step_MOM_dyn_split_RK2(), MOM_dynamics_split_RK2.F90")
 
-!$OMP parallel do default(none) shared(nz,G,up,vp,hp,h)
+  !$OMP parallel do default(shared)
   do k = 1, nz
     do j=G%jsd,G%jed   ; do i=G%isdB,G%iedB ;  up(i,j,k) = 0.0 ; enddo ; enddo
     do j=G%jsdB,G%jedB ; do i=G%isd,G%ied   ;  vp(i,j,k) = 0.0 ; enddo ; enddo
@@ -319,13 +322,10 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
 
   if (associated(CS%OBC)) then
     do k=1,nz ; do j=js-1,je+1 ; do I=is-2,ie+1
-      u_old_rad_OBC(I,j,k) = u(I,j,k)
+      u_old_rad_OBC(I,j,k) = u(I,j,k)  !### Should be u_av(I,j,k)?
     enddo ; enddo ; enddo
     do k=1,nz ; do J=js-2,je+1 ; do i=is-1,ie+1
-      v_old_rad_OBC(i,J,k) = v(i,J,k)
-    enddo ; enddo ; enddo
-    do k=1,nz ; do j=js-1,je+1 ; do i=is-1,ie+1
-      h_old_rad_OBC(i,j,k) = h(i,j,k)
+      v_old_rad_OBC(i,J,k) = v(i,J,k)  !### Should be u_av(I,j,k)?
     enddo ; enddo ; enddo
   endif
 
@@ -340,45 +340,43 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   !--- begin set up for group halo pass
   call cpu_clock_begin(id_clock_pass)
   do_pass_Ray_uv = .FALSE.
-  if (visc%calc_bbl .AND. associated(visc%Ray_u) .and. associated(visc%Ray_v)) then
+  if (.not.G%Domain%symmetric .and. visc%calc_bbl .AND. &
+      associated(visc%Ray_u) .and. associated(visc%Ray_v)) then
     call create_group_pass(CS%pass_Ray_uv, visc%Ray_u, visc%Ray_v, G%Domain, &
-          To_All+SCALAR_PAIR, CGRID_NE)
+          To_North+To_East+SCALAR_PAIR+Omit_corners, CGRID_NE, halo=1)
     do_pass_Ray_uv = .TRUE.
   endif
   do_pass_kv_bbl_thick = .FALSE.
-  if (visc%calc_bbl) then
+  if (.not.G%Domain%symmetric .and. visc%calc_bbl) then
     if (associated(visc%bbl_thick_u) .and. associated(visc%bbl_thick_v)) then
       call create_group_pass(CS%pass_kv_bbl_thick, visc%bbl_thick_u, visc%bbl_thick_v, &
-                             G%Domain, To_All+SCALAR_PAIR, CGRID_NE)
+                             G%Domain, To_North+To_East+SCALAR_PAIR+Omit_corners, &
+                             CGRID_NE, halo=1)
       do_pass_kv_bbl_thick = .TRUE.
     endif
     if (associated(visc%kv_bbl_u) .and. associated(visc%kv_bbl_v)) then
       call create_group_pass(CS%pass_kv_bbl_thick, visc%kv_bbl_u, visc%kv_bbl_v, &
-                             G%Domain, To_All+SCALAR_PAIR, CGRID_NE)
+                             G%Domain, To_North+To_East+SCALAR_PAIR+Omit_corners, &
+                             CGRID_NE, halo=1)
       do_pass_kv_bbl_thick = .TRUE.
     endif
   endif
-  call create_group_pass(CS%pass_eta_PF_eta, CS%eta_PF, G%Domain)
-  call create_group_pass(CS%pass_eta_PF_eta, eta, G%Domain)
+
+  cont_stencil = continuity_stencil(CS%continuity_CSp)
+  !### Apart from circle_OBCs halo for eta could be 1, but halo>=3 is required
+  !### to match circle_OBCs solutions. Why?
+  call create_group_pass(CS%pass_eta, eta, G%Domain) !### , halo=1)
   call create_group_pass(CS%pass_visc_rem, CS%visc_rem_u, CS%visc_rem_v, G%Domain, &
-                         To_All+SCALAR_PAIR, CGRID_NE)
-  call create_group_pass(CS%pass_uvp, up, vp, G%Domain)
-  call create_group_pass(CS%pass_hp_uv, hp, G%Domain)
-  call create_group_pass(CS%pass_hp_uv, u_av, v_av, G%Domain)
-  call create_group_pass(CS%pass_hp_uv, uh(:,:,:), vh(:,:,:), G%Domain)
+                         To_All+SCALAR_PAIR, CGRID_NE, halo=max(1,cont_stencil))
+  call create_group_pass(CS%pass_uvp, up, vp, G%Domain, halo=max(1,cont_stencil))
+  call create_group_pass(CS%pass_hp_uv, hp, G%Domain, halo=2)
+  call create_group_pass(CS%pass_hp_uv, u_av, v_av, G%Domain, halo=2)
+  call create_group_pass(CS%pass_hp_uv, uh(:,:,:), vh(:,:,:), G%Domain, halo=2)
 
-  if (CS%begw /= 0.0 ) then
-    call create_group_pass(CS%pass_eta_PF, CS%eta_PF, G%Domain)
-  endif
-
-  if (BT_cont_BT_thick) then
-    call create_group_pass(CS%pass_huv, CS%BT_cont%h_u, CS%BT_cont%h_v, G%Domain, &
-                           To_All+SCALAR_PAIR, CGRID_NE)
-  endif
-  call create_group_pass(CS%pass_uv, u, v, G%Domain)
-  call create_group_pass(CS%pass_h, h, G%Domain)
-  call create_group_pass(CS%pass_av_uvh, u_av, v_av, G%Domain)
-  call create_group_pass(CS%pass_av_uvh, uh(:,:,:), vh(:,:,:), G%Domain)
+  call create_group_pass(CS%pass_uv, u, v, G%Domain, halo=max(2,cont_stencil))
+  call create_group_pass(CS%pass_h, h, G%Domain, halo=max(2,cont_stencil))
+  call create_group_pass(CS%pass_av_uvh, u_av, v_av, G%Domain, halo=2)
+  call create_group_pass(CS%pass_av_uvh, uh(:,:,:), vh(:,:,:), G%Domain, halo=2)
   call cpu_clock_end(id_clock_pass)
   !--- end set up for group halo pass
 
@@ -411,13 +409,9 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   call cpu_clock_begin(id_clock_pres)
   call PressureForce(h, tv, CS%PFu, CS%PFv, G, GV, CS%PressureForce_CSp, &
                      CS%ALE_CSp, p_surf, CS%pbce, CS%eta_PF)
-  if (CS%debug) then
-    call uvchksum("After PressureForce CS%PFu", CS%PFu, CS%PFv, G%HI,haloshift=0)
-  endif
-
   if (dyn_p_surf) then
     Pa_to_eta = 1.0 / GV%H_to_Pa
-!$OMP parallel do default(none) shared(Isq,Ieq,Jsq,Jeq,eta_PF_start,CS,Pa_to_eta,p_surf_begin,p_surf_end)
+    !$OMP parallel do default(shared)
     do j=Jsq,Jeq+1 ; do i=Isq,Ieq+1
       eta_PF_start(i,j) = CS%eta_PF(i,j) - Pa_to_eta * &
                           (p_surf_begin(i,j) - p_surf_end(i,j))
@@ -428,12 +422,12 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   if (showCallTree) call callTree_wayPoint("done with PressureForce (step_MOM_dyn_split_RK2)")
 
   if (associated(CS%OBC)) then; if (CS%OBC%update_OBC) then
-    call update_OBC_data(CS%OBC, G, GV, tv, h, Time_local)
+    call update_OBC_data(CS%OBC, G, GV, tv, h, CS%update_OBC_CSp, Time_local)
   endif; endif
 
   if (G%nonblocking_updates) then
     call cpu_clock_begin(id_clock_pass)
-    call start_group_pass(CS%pass_eta_PF_eta, G%Domain)
+    call start_group_pass(CS%pass_eta, G%Domain)
     call cpu_clock_end(id_clock_pass)
   endif
 
@@ -446,7 +440,7 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
 
 ! u_bc_accel = CAu + PFu + diffu(u[n-1])
   call cpu_clock_begin(id_clock_btforce)
-!$OMP parallel do default(none) shared(is,ie,js,je,Isq,Ieq,Jsq,Jeq,nz,u_bc_accel,v_bc_accel,CS)
+  !$OMP parallel do default(shared)
   do k=1,nz
     do j=js,je ; do I=Isq,Ieq
       u_bc_accel(I,j,k) = (CS%Cau(I,j,k) + CS%PFu(I,j,k)) + CS%diffu(I,j,k)
@@ -458,6 +452,8 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   call cpu_clock_end(id_clock_btforce)
 
   if (CS%debug) then
+    call MOM_accel_chksum("pre-btstep accel", CS%CAu, CS%CAv, CS%PFu, CS%PFv, &
+                          CS%diffu, CS%diffv, G, GV, CS%pbce, u_bc_accel, v_bc_accel)
     call check_redundant("pre-btstep CS%Ca ", CS%Cau, CS%Cav, G)
     call check_redundant("pre-btstep CS%PF ", CS%PFu, CS%PFv, G)
     call check_redundant("pre-btstep CS%diff ", CS%diffu, CS%diffv, G)
@@ -472,13 +468,12 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
       ! visc%calc_bbl is set to .false. now that the message passing is completed.
       visc%calc_bbl = .false.
     endif
-    call complete_group_pass(CS%pass_eta_PF_eta, G%Domain)
+    call complete_group_pass(CS%pass_eta, G%Domain)
     call cpu_clock_end(id_clock_pass)
   endif
 
   call cpu_clock_begin(id_clock_vertvisc)
-!$OMP parallel do default(none) shared(is,ie,js,je,Isq,Ieq,Jsq,Jeq,nz,up,G,u,dt, &
-!$OMP                                  u_bc_accel,vp,v,v_bc_accel)
+  !$OMP parallel do default(shared)
   do k=1,nz
     do j=js,je ; do I=Isq,Ieq
       up(I,j,k) = G%mask2dCu(I,j) * (u(I,j,k) + dt * u_bc_accel(I,j,k))
@@ -496,7 +491,7 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   if (CS%debug) then
     call uvchksum("before vertvisc: up", up, vp, G%HI, haloshift=0)
   endif
-  call vertvisc_coef(up, vp, h, fluxes, visc, dt, G, GV, CS%vertvisc_CSp)
+  call vertvisc_coef(up, vp, h, fluxes, visc, dt, G, GV, CS%vertvisc_CSp, CS%OBC)
   call vertvisc_remnant(visc, CS%visc_rem_u, CS%visc_rem_v, dt, G, GV, CS%vertvisc_CSp)
   call cpu_clock_end(id_clock_vertvisc)
   if (showCallTree) call callTree_wayPoint("done with vertvisc_coef (step_MOM_dyn_split_RK2)")
@@ -505,7 +500,7 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   if (G%nonblocking_updates) then
     call start_group_pass(CS%pass_visc_rem, G%Domain)
   else
-    call do_group_pass(CS%pass_eta_PF_eta, G%Domain)
+    call do_group_pass(CS%pass_eta, G%Domain)
     call do_group_pass(CS%pass_visc_rem, G%Domain)
   endif
   call cpu_clock_end(id_clock_pass)
@@ -513,7 +508,7 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   call cpu_clock_begin(id_clock_btcalc)
   ! Calculate the relative layer weights for determining barotropic quantities.
   if (.not.BT_cont_BT_thick) &
-    call btcalc(h, G, GV, CS%barotropic_CSp)
+    call btcalc(h, G, GV, CS%barotropic_CSp, OBC=CS%OBC)
   call bt_mass_source(h, eta, fluxes, .true., dt_therm, dt_since_flux, &
                       G, GV, CS%barotropic_CSp)
   call cpu_clock_end(id_clock_btcalc)
@@ -532,10 +527,8 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
                     visc_rem_v=CS%visc_rem_v, BT_cont=CS%BT_cont)
     call cpu_clock_end(id_clock_continuity)
     if (BT_cont_BT_thick) then
-      call cpu_clock_begin(id_clock_pass)
-      call do_group_pass(CS%pass_huv, G%Domain)
-      call cpu_clock_end(id_clock_pass)
-      call btcalc(h, G, GV, CS%barotropic_CSp, CS%BT_cont%h_u, CS%BT_cont%h_v)
+      call btcalc(h, G, GV, CS%barotropic_CSp, CS%BT_cont%h_u, CS%BT_cont%h_v, &
+                  OBC=CS%OBC)
     endif
     if (showCallTree) call callTree_wayPoint("done with continuity[BT_cont] (step_MOM_dyn_split_RK2)")
   endif
@@ -562,9 +555,8 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
 ! up = u + dt_pred*( u_bc_accel + u_accel_bt )
   dt_pred = dt * CS%be
   call cpu_clock_begin(id_clock_mom_update)
-!$OMP parallel do default(none) shared(is,ie,js,je,Isq,Ieq,Jsq,Jeq,nz,vp,G,v_init, &
-!$OMP                                  dt_pred,v_bc_accel,CS,up,u_init,u_bc_accel)
 
+  !$OMP parallel do default(shared)
   do k=1,nz
     do J=Jsq,Jeq ; do i=is,ie
       vp(i,J,k) = G%mask2dCv(i,J) * (v_init(i,J,k) + dt_pred * &
@@ -596,7 +588,8 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   if (CS%debug) then
     call uvchksum("0 before vertvisc: [uv]p", up, vp, G%HI,haloshift=0)
   endif
-  call vertvisc_coef(up, vp, h, fluxes, visc, dt_pred, G, GV, CS%vertvisc_CSp)
+  call vertvisc_coef(up, vp, h, fluxes, visc, dt_pred, G, GV, CS%vertvisc_CSp, &
+                     CS%OBC)
   call vertvisc(up, vp, h, fluxes, visc, dt_pred, CS%OBC, CS%ADp, CS%CDp, G, &
                 GV, CS%vertvisc_CSp, CS%taux_bot, CS%tauy_bot)
   if (showCallTree) call callTree_wayPoint("done with vertvisc (step_MOM_dyn_split_RK2)")
@@ -633,8 +626,7 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
     call do_group_pass(CS%pass_hp_uv, G%Domain)
     call cpu_clock_end(id_clock_pass)
 
-    call radiation_open_bdry_conds(CS%OBC, u_av, u_old_rad_OBC, v_av, &
-             v_old_rad_OBC, hp, h_old_rad_OBC, G, dt)
+    call radiation_open_bdry_conds(CS%OBC, u_av, u_old_rad_OBC, v_av, v_old_rad_OBC, G, dt_pred)
   endif
 
   call cpu_clock_begin(id_clock_pass)
@@ -645,7 +637,7 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   call cpu_clock_end(id_clock_pass)
 
   ! h_av = (h + hp)/2
-!$OMP parallel do default(none) shared(is,ie,js,je,nz,h_av,h,hp)
+  !$OMP parallel do default(shared)
   do k=1,nz ; do j=js-2,je+2 ; do i=is-2,ie+2
     h_av(i,j,k) = 0.5*(h(i,j,k) + hp(i,j,k))
   enddo ; enddo ; enddo
@@ -666,7 +658,7 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
     ! hp <- (1-begw)*h_in + begw*hp
     ! Back up hp to the value it would have had after a time-step of
     ! begw*dt.  hp is not used again until recalculated by continuity.
-!$OMP parallel do default(none) shared(is,ie,js,je,nz,hp,CS,h)
+    !$OMP parallel do default(shared)
     do k=1,nz ; do j=js-1,je+1 ; do i=is-1,ie+1
       hp(i,j,k) = (1.0-CS%begw)*h(i,j,k) + CS%begw*hp(i,j,k)
     enddo ; enddo ; enddo
@@ -678,15 +670,8 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
                        CS%PressureForce_CSp, CS%ALE_CSp, &
                        p_surf, CS%pbce, CS%eta_PF)
     call cpu_clock_end(id_clock_pres)
-    call cpu_clock_begin(id_clock_pass)
-    call do_group_pass(CS%pass_eta_PF, G%Domain)
-    call cpu_clock_end(id_clock_pass)
     if (showCallTree) call callTree_wayPoint("done with PressureForce[hp=(1-b).h+b.h] (step_MOM_dyn_split_RK2)")
   endif
-
-  if (associated(CS%OBC)) then; if (CS%OBC%update_OBC) then
-    call update_OBC_data(CS%OBC, G, GV, tv, h, Time_local)
-  endif; endif
 
   if (G%nonblocking_updates) then
     call cpu_clock_begin(id_clock_pass)
@@ -695,10 +680,8 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   endif
 
   if (BT_cont_BT_thick) then
-    call cpu_clock_begin(id_clock_pass)
-    call do_group_pass(CS%pass_huv, G%Domain)
-    call cpu_clock_end(id_clock_pass)
-    call btcalc(h, G, GV, CS%barotropic_CSp, CS%BT_cont%h_u, CS%BT_cont%h_v)
+    call btcalc(h, G, GV, CS%barotropic_CSp, CS%BT_cont%h_u, CS%BT_cont%h_v, &
+                OBC=CS%OBC)
     if (showCallTree) call callTree_wayPoint("done with btcalc[BT_cont_BT_thick] (step_MOM_dyn_split_RK2)")
   endif
 
@@ -729,8 +712,7 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
 
 ! u_bc_accel = CAu + PFu + diffu(u[n-1])
   call cpu_clock_begin(id_clock_btforce)
-!$OMP parallel do default(none) shared(is,ie,js,je,Isq,Ieq,Jsq,Jeq,nz,CS, &
-!$OMP                                  u_bc_accel,v_bc_accel)
+  !$OMP parallel do default(shared)
   do k=1,nz
     do j=js,je ; do I=Isq,Ieq
       u_bc_accel(I,j,k) = (CS%Cau(I,j,k) + CS%PFu(I,j,k)) + CS%diffu(I,j,k)
@@ -742,6 +724,8 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   call cpu_clock_end(id_clock_btforce)
 
   if (CS%debug) then
+    call MOM_accel_chksum("corr pre-btstep accel", CS%CAu, CS%CAv, CS%PFu, CS%PFv, &
+                          CS%diffu, CS%diffv, G, GV, CS%pbce, u_bc_accel, v_bc_accel)
     call check_redundant("corr pre-btstep CS%Ca ", CS%Cau, CS%Cav, G)
     call check_redundant("corr pre-btstep CS%PF ", CS%PFu, CS%PFv, G)
     call check_redundant("corr pre-btstep CS%diff ", CS%diffu, CS%diffv, G)
@@ -775,8 +759,7 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
 
   ! u = u + dt*( u_bc_accel + u_accel_bt )
   call cpu_clock_begin(id_clock_mom_update)
-!$OMP parallel do default(none) shared(is,ie,js,je,Isq,Ieq,Jsq,Jeq,nz,u,G,u_init, &
-!$OMP                                  CS,dt,u_bc_accel,v,v_init,v_bc_accel)
+  !$OMP parallel do default(shared)
   do k=1,nz
     do j=js,je ; do I=Isq,Ieq
       u(I,j,k) = G%mask2dCu(I,j) * (u_init(I,j,k) + dt * &
@@ -802,7 +785,7 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   ! u <- u + dt d/dz visc d/dz u
   ! u_av <- u_av + dt d/dz visc d/dz u_av
   call cpu_clock_begin(id_clock_vertvisc)
-  call vertvisc_coef(u, v, h, fluxes, visc, dt, G, GV, CS%vertvisc_CSp)
+  call vertvisc_coef(u, v, h, fluxes, visc, dt, G, GV, CS%vertvisc_CSp, CS%OBC)
   call vertvisc(u, v, h, fluxes, visc, dt, CS%OBC, CS%ADp, CS%CDp, G, GV, &
                 CS%vertvisc_CSp, CS%taux_bot, CS%tauy_bot)
   if (G%nonblocking_updates) then
@@ -815,7 +798,7 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   if (showCallTree) call callTree_wayPoint("done with vertvisc (step_MOM_dyn_split_RK2)")
 
 ! Later, h_av = (h_in + h_out)/2, but for now use h_av to store h_in.
-!$OMP parallel do default(none) shared(is,ie,js,je,nz,h_av,h)
+  !$OMP parallel do default(shared)
   do k=1,nz ; do j=js-2,je+2 ; do i=is-2,ie+2
     h_av(i,j,k) = h(i,j,k)
   enddo ; enddo ; enddo
@@ -854,12 +837,11 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
   call cpu_clock_end(id_clock_pass)
 
   if (associated(CS%OBC)) then
-    call radiation_open_bdry_conds(CS%OBC, u, u_old_rad_OBC, v, &
-             v_old_rad_OBC, h, h_old_rad_OBC, G, dt)
+    call radiation_open_bdry_conds(CS%OBC, u, u_old_rad_OBC, v, v_old_rad_OBC, G, dt)
   endif
 
 ! h_av = (h_in + h_out)/2 . Going in to this line, h_av = h_in.
-!$OMP parallel do default(none) shared(is,ie,js,je,nz,h_av,h)
+  !$OMP parallel do default(shared)
   do k=1,nz ; do j=js-2,je+2 ; do i=is-2,ie+2
     h_av(i,j,k) = 0.5*(h_av(i,j,k) + h(i,j,k))
   enddo ; enddo ; enddo
@@ -869,7 +851,7 @@ subroutine step_MOM_dyn_split_RK2(u, v, h, tv, visc, &
     call complete_group_pass(CS%pass_av_uvh, G%Domain)
     call cpu_clock_end(id_clock_pass)
   endif
-!$OMP parallel do default(none) shared(is,ie,js,je,Isq,Ieq,Jsq,Jeq,nz,uhtr,uh,dt,vhtr,vh)
+  !$OMP parallel do default(shared)
   do k=1,nz
     do j=js-2,je+2 ; do I=Isq-2,Ieq+2
       uhtr(I,j,k) = uhtr(I,j,k) + uh(I,j,k)*dt
@@ -984,7 +966,8 @@ end subroutine register_restarts_dyn_split_RK2
 !! dynamic core, including diagnostics and the cpu clocks.
 subroutine initialize_dyn_split_RK2(u, v, h, uh, vh, eta, Time, G, GV, param_file, &
                       diag, CS, restart_CS, dt, Accel_diag, Cont_diag, MIS, &
-                      VarMix, MEKE, OBC, ALE_CSp, setVisc_CSp, visc, dirs, ntrunc)
+                      VarMix, MEKE, OBC, update_OBC_CSp, ALE_CSp, setVisc_CSp, &
+                      visc, dirs, ntrunc)
   type(ocean_grid_type),                     intent(inout) :: G           !< ocean grid structure
   type(verticalGrid_type),                   intent(in)    :: GV          !< ocean vertical grid structure
   real, dimension(SZIB_(G),SZJ_(G),SZK_(G)), intent(inout) :: u           !< zonal velocity (m/s)
@@ -1005,12 +988,13 @@ subroutine initialize_dyn_split_RK2(u, v, h, uh, vh, eta, Time, G, GV, param_fil
   type(VarMix_CS),                           pointer       :: VarMix      !< points to spatially variable viscosities
   type(MEKE_type),                           pointer       :: MEKE        !< points to mesoscale eddy kinetic energy fields
   type(ocean_OBC_type),                      pointer       :: OBC         !< points to OBC related fields
+  type(update_OBC_CS),                       pointer       :: update_OBC_CSp !< points to OBC update related fields
   type(ALE_CS),                              pointer       :: ALE_CSp     !< points to ALE control structure
   type(set_visc_CS),                         pointer       :: setVisc_CSp !< points to the set_visc control structure.
   type(vertvisc_type),                       intent(inout) :: visc        !< vertical viscosities, bottom drag, and related
   type(directories),                         intent(in)    :: dirs        !< contains directory paths
   integer, target,                           intent(inout) :: ntrunc      !< A target for the variable that records the number of times
-                                                                        !! the velocity is truncated (this should be 0).
+                                                                          !! the velocity is truncated (this should be 0).
 
   real, dimension(SZI_(G),SZJ_(G),SZK_(G)) :: h_tmp
   character(len=40) :: mod = "MOM_dynamics_split_RK2" ! This module's name.
@@ -1121,6 +1105,7 @@ subroutine initialize_dyn_split_RK2(u, v, h, uh, vh, eta, Time, G, GV, param_fil
 
   if (associated(ALE_CSp)) CS%ALE_CSp => ALE_CSp
   if (associated(OBC)) CS%OBC => OBC
+  if (associated(update_OBC_CSp)) CS%update_OBC_CSp => update_OBC_CSp
 
   if (.not. query_initialized(CS%eta,"sfc",restart_CS))  then
     ! Estimate eta based on the layer thicknesses - h.  With the Boussinesq
@@ -1167,9 +1152,9 @@ subroutine initialize_dyn_split_RK2(u, v, h, uh, vh, eta, Time, G, GV, param_fil
   endif
 
   call cpu_clock_begin(id_clock_pass_init)
-  call create_group_pass(pass_av_h_uvh, CS%u_av,CS%v_av, G%Domain)
-  call create_group_pass(pass_av_h_uvh, CS%h_av, G%Domain)
-  call create_group_pass(pass_av_h_uvh, uh, vh, G%Domain)
+  call create_group_pass(pass_av_h_uvh, CS%u_av, CS%v_av, G%Domain, halo=2)
+  call create_group_pass(pass_av_h_uvh, CS%h_av, G%Domain, halo=2)
+  call create_group_pass(pass_av_h_uvh, uh, vh, G%Domain, halo=2)
   call do_group_pass(pass_av_h_uvh, G%Domain)
   call cpu_clock_end(id_clock_pass_init)
 

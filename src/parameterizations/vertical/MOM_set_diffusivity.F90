@@ -370,11 +370,13 @@ contains
 
 subroutine set_diffusivity(u, v, h, u_h, v_h, tv, fluxes, optics, visc, dt, &
                            G, GV, CS, Kd, Kd_int)
-  type(ocean_grid_type),                  intent(in)    :: G
-  type(verticalGrid_type),                intent(in)    :: GV
-  real, dimension(SZIB_(G),SZJ_(G),SZK_(G)), intent(in) :: u
-  real, dimension(SZI_(G),SZJB_(G),SZK_(G)), intent(in) :: v
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(in) :: h, u_h, v_h
+  type(ocean_grid_type),                  intent(in)    :: G    !< The ocean's grid structure
+  type(verticalGrid_type),                intent(in)    :: GV   !< The ocean's vertical grid structure
+  real, dimension(SZIB_(G),SZJ_(G),SZK_(G)), intent(in) :: u    !< The zonal velocity, in m s-1
+  real, dimension(SZI_(G),SZJB_(G),SZK_(G)), intent(in) :: v    !< The meridional velocity, in m s-1
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(in) :: h    !< Layer thicknesses, in H (usually m or kg m-2)
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(in) :: u_h
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(in) :: v_h
   type(thermo_var_ptrs),                  intent(inout) :: tv  ! out is for tv%TempxPmE
   type(forcing),                          intent(in)    :: fluxes
   type(optics_type),                      pointer       :: optics
@@ -807,14 +809,14 @@ subroutine set_diffusivity(u, v, h, u_h, v_h, tv, fluxes, optics, visc, dt, &
     if (CS%useKappaShear) call hchksum(visc%Kd_turb,"Turbulent Kd",G%HI,haloshift=0)
     if (associated(visc%kv_bbl_u) .and. associated(visc%kv_bbl_v)) then
       call uvchksum("BBL Kv_bbl_[uv]", visc%kv_bbl_u, visc%kv_bbl_v, &
-                    G%HI,haloshift=1)
+                    G%HI, 0, symmetric=.true.)
     endif
     if (associated(visc%bbl_thick_u) .and. associated(visc%bbl_thick_v)) then
       call uvchksum("BBL bbl_thick_[uv]", visc%bbl_thick_u, &
-                    visc%bbl_thick_v, G%HI,haloshift=1)
+                    visc%bbl_thick_v, G%HI, 0, symmetric=.true.)
     endif
     if (associated(visc%Ray_u) .and. associated(visc%Ray_v)) then
-      call uvchksum("Ray_[uv]", visc%Ray_u, visc%Ray_v, G%HI)
+      call uvchksum("Ray_[uv]", visc%Ray_u, visc%Ray_v, G%HI, 0, symmetric=.true.)
     endif
   endif
 
@@ -954,9 +956,9 @@ end subroutine set_diffusivity
 
 subroutine find_TKE_to_Kd(h, tv, dRho_int, N2_lay, j, dt, G, GV, CS, &
                           TKE_to_Kd, maxTKE, kb)
-  type(ocean_grid_type),                   intent(in)    :: G
-  type(verticalGrid_type),                 intent(in)    :: GV
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)), intent(in)   :: h
+  type(ocean_grid_type),                   intent(in)    :: G    !< The ocean's grid structure
+  type(verticalGrid_type),                 intent(in)    :: GV   !< The ocean's vertical grid structure
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)), intent(in)   :: h    !< Layer thicknesses, in H (usually m or kg m-2)
   type(thermo_var_ptrs),                   intent(in)    :: tv
   real, dimension(SZI_(G),SZK_(G)+1),      intent(in)    :: dRho_int
   real, dimension(SZI_(G),SZK_(G)),        intent(in)    :: N2_lay
@@ -1145,9 +1147,9 @@ end subroutine find_TKE_to_Kd
 
 subroutine find_N2(h, tv, T_f, S_f, fluxes, j, G, GV, CS, dRho_int, &
                    N2_lay, N2_int, N2_bot)
-  type(ocean_grid_type),                    intent(in)   :: G
-  type(verticalGrid_type),                  intent(in)   :: GV
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)), intent(in)   :: h
+  type(ocean_grid_type),                    intent(in)   :: G    !< The ocean's grid structure
+  type(verticalGrid_type),                  intent(in)   :: GV   !< The ocean's vertical grid structure
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)), intent(in)   :: h    !< Layer thicknesses, in H (usually m or kg m-2)
   type(thermo_var_ptrs),                    intent(in)   :: tv
   real, dimension(SZI_(G),SZJ_(G),SZK_(G)), intent(in)   :: T_f, S_f
   type(forcing),                            intent(in)   :: fluxes
@@ -1299,10 +1301,10 @@ end subroutine find_N2
 
 
 subroutine double_diffusion(tv, h, T_f, S_f, j, G, GV, CS, Kd_T_dd, Kd_S_dd)
-  type(ocean_grid_type),                    intent(in)  :: G
-  type(verticalGrid_type),                  intent(in)  :: GV
+  type(ocean_grid_type),                    intent(in)  :: G    !< The ocean's grid structure
+  type(verticalGrid_type),                  intent(in)  :: GV   !< The ocean's vertical grid structure
   type(thermo_var_ptrs),                    intent(in)  :: tv
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)), intent(in)  :: h
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)), intent(in)  :: h    !< Layer thicknesses, in H (usually m or kg m-2)
   real, dimension(SZI_(G),SZJ_(G),SZK_(G)), intent(in)  :: T_f, S_f
   integer,                                  intent(in)  :: j
   type(set_diffusivity_CS),                 pointer     :: CS
@@ -1392,11 +1394,11 @@ end subroutine double_diffusion
 
 subroutine add_drag_diffusivity(h, u, v, tv, fluxes, visc, j, TKE_to_Kd, &
                                 maxTKE, kb, G, GV, CS, Kd, Kd_int, Kd_BBL)
-  type(ocean_grid_type),                     intent(in)    :: G
-  type(verticalGrid_type),                   intent(in)    :: GV
-  real, dimension(SZIB_(G),SZJ_(G),SZK_(G)), intent(in)    :: u
-  real, dimension(SZI_(G),SZJB_(G),SZK_(G)), intent(in)    :: v
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(in)    :: h
+  type(ocean_grid_type),                     intent(in)    :: G    !< The ocean's grid structure
+  type(verticalGrid_type),                   intent(in)    :: GV   !< The ocean's vertical grid structure
+  real, dimension(SZIB_(G),SZJ_(G),SZK_(G)), intent(in)    :: u    !< The zonal velocity, in m s-1
+  real, dimension(SZI_(G),SZJB_(G),SZK_(G)), intent(in)    :: v    !< The meridional velocity, in m s-1
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(in)    :: h    !< Layer thicknesses, in H (usually m or kg m-2)
   type(thermo_var_ptrs),                     intent(in)    :: tv
   type(forcing),                             intent(in)    :: fluxes
   type(vertvisc_type),                       intent(in)    :: visc
@@ -1761,9 +1763,9 @@ subroutine add_LOTW_BBL_diffusivity(h, u, v, tv, fluxes, visc, j, N2_int, &
 end subroutine add_LOTW_BBL_diffusivity
 
 subroutine add_MLrad_diffusivity(h, fluxes, j, G, GV, CS, Kd, TKE_to_Kd, Kd_int)
-  type(ocean_grid_type),                    intent(in)    :: G
-  type(verticalGrid_type),                  intent(in)    :: GV
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)), intent(in)    :: h
+  type(ocean_grid_type),                    intent(in)    :: G    !< The ocean's grid structure
+  type(verticalGrid_type),                  intent(in)    :: GV   !< The ocean's vertical grid structure
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)), intent(in)    :: h    !< Layer thicknesses, in H (usually m or kg m-2)
   type(forcing),                            intent(in)    :: fluxes
   integer,                                  intent(in)    :: j
   type(set_diffusivity_CS),                 pointer       :: CS
@@ -1879,9 +1881,9 @@ end subroutine add_MLrad_diffusivity
 
 subroutine add_int_tide_diffusivity(h, N2_bot, j, TKE_to_Kd, max_TKE, G, GV, CS, &
                                     dd, N2_lay, Kd, Kd_int )
-  type(ocean_grid_type),                    intent(in)    :: G
-  type(verticalGrid_type),                  intent(in)    :: GV
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)), intent(in)    :: h
+  type(ocean_grid_type),                    intent(in)    :: G    !< The ocean's grid structure
+  type(verticalGrid_type),                  intent(in)    :: GV   !< The ocean's vertical grid structure
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)), intent(in)    :: h    !< Layer thicknesses, in H (usually m or kg m-2)
   real, dimension(SZI_(G)),                 intent(in)    :: N2_bot
   real, dimension(SZI_(G),SZK_(G)),         intent(in)    :: N2_lay
   integer,                                  intent(in)    :: j
@@ -2263,11 +2265,11 @@ subroutine add_int_tide_diffusivity(h, N2_bot, j, TKE_to_Kd, max_TKE, G, GV, CS,
 end subroutine add_int_tide_diffusivity
 
 subroutine set_BBL_TKE(u, v, h, fluxes, visc, G, GV, CS)
-  type(ocean_grid_type),                     intent(in)    :: G
-  type(verticalGrid_type),                   intent(in)    :: GV
-  real, dimension(SZIB_(G),SZJ_(G),SZK_(G)), intent(in)    :: u
-  real, dimension(SZI_(G),SZJB_(G),SZK_(G)), intent(in)    :: v
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(in)    :: h
+  type(ocean_grid_type),                     intent(in)    :: G    !< The ocean's grid structure
+  type(verticalGrid_type),                   intent(in)    :: GV   !< The ocean's vertical grid structure
+  real, dimension(SZIB_(G),SZJ_(G),SZK_(G)), intent(in)    :: u    !< The zonal velocity, in m s-1
+  real, dimension(SZI_(G),SZJB_(G),SZK_(G)), intent(in)    :: v    !< The meridional velocity, in m s-1
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(in)    :: h    !< Layer thicknesses, in H (usually m or kg m-2)
   type(forcing),                             intent(in)    :: fluxes
   type(vertvisc_type),                       intent(inout) :: visc
   type(set_diffusivity_CS),                  pointer       :: CS
@@ -2394,9 +2396,9 @@ subroutine set_BBL_TKE(u, v, h, fluxes, visc, G, GV, CS)
 end subroutine set_BBL_TKE
 
 subroutine set_density_ratios(h, tv, kb, G, GV, CS, j, ds_dsp1, rho_0)
-  type(ocean_grid_type),                 intent(in)    :: G
-  type(verticalGrid_type),               intent(in)    :: GV
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)), intent(in) :: h
+  type(ocean_grid_type),                 intent(in)    :: G    !< The ocean's grid structure
+  type(verticalGrid_type),               intent(in)    :: GV   !< The ocean's vertical grid structure
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)), intent(in) :: h    !< Layer thicknesses, in H (usually m or kg m-2)
   type(thermo_var_ptrs),                 intent(in)    :: tv
   integer, dimension(SZI_(G)),            intent(in)   :: kb
   type(set_diffusivity_CS),              pointer       :: CS
@@ -2502,9 +2504,9 @@ end subroutine set_density_ratios
 
 subroutine set_diffusivity_init(Time, G, GV, param_file, diag, CS, diag_to_Z_CSp, int_tide_CSp)
   type(time_type),          intent(in)    :: Time
-  type(ocean_grid_type),    intent(inout) :: G
-  type(verticalGrid_type),  intent(in)    :: GV
-  type(param_file_type),    intent(in)    :: param_file
+  type(ocean_grid_type),    intent(inout) :: G    !< The ocean's grid structure
+  type(verticalGrid_type),  intent(in)    :: GV   !< The ocean's vertical grid structure
+  type(param_file_type),    intent(in)    :: param_file !< A structure to parse for run-time parameters
   type(diag_ctrl), target,  intent(inout) :: diag
   type(set_diffusivity_CS), pointer       :: CS
   type(diag_to_Z_CS),       pointer       :: diag_to_Z_CSp
