@@ -125,7 +125,7 @@ subroutine BFB_initialize_sponges_southonly(G, use_temperature, tv, param_file, 
 
   real :: H0(SZK_(G))
   real :: min_depth, D_aby
-  real :: damp, e_dense, damp_new, slat, wlon, lenlat, lenlon, nlat
+  real :: damp, e_dense, slat, wlon, lenlat, lenlon, nlat
   character(len=40)  :: mod = "BFB_initialize_sponges_southonly" ! This subroutine's name.
   integer :: i, j, k, is, ie, js, je, isd, ied, jsd, jed, nz
 
@@ -161,7 +161,7 @@ subroutine BFB_initialize_sponges_southonly(G, use_temperature, tv, param_file, 
   do i=is,ie; do j=js,je
     if (G%geoLatT(i,j) < slat+2.0) then ; damp = 1.0
     elseif (G%geoLatT(i,j) < slat+4.0) then
-       damp_new = 1.0*(slat+4.0-G%geoLatT(i,j))/2.0
+       damp = 1.0*(slat+4.0-G%geoLatT(i,j))/2.0
     else ; damp = 0.0
     endif
 
