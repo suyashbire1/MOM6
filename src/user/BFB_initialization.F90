@@ -219,7 +219,7 @@ subroutine BFB_initialize_sponges_southonly_varlayth(G, use_temperature, tv, par
 
   real :: H0(SZK_(G))
   real :: min_depth, D_aby, hmin, hmax
-  real :: damp, e_dense, damp_new, slat, wlon, lenlat, lenlon, nlat
+  real :: damp, e_dense, slat, wlon, lenlat, lenlon, nlat
   real, parameter :: pi = 4.0*atan(1.0)
   character(len=40)  :: mod = "BFB_initialize_sponges_southonly_varlayth" ! This subroutine's name.
   integer :: i, j, k, is, ie, js, je, isd, ied, jsd, jed, nz
