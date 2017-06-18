@@ -47,7 +47,7 @@ use MOM_variables, only : surface
 
 implicit none ; private
 
-public BFB_buoyancy_forcing, BFB_surface_forcing_init
+public BFB_wind_forcing, BFB_buoyancy_forcing, BFB_surface_forcing_init
 
 type, public :: BFB_surface_forcing_CS ; private
   !   This control structure should be used to store any run-time variables
@@ -64,8 +64,6 @@ type, public :: BFB_surface_forcing_CS ; private
                              ! approximation, in kg m-3.
   real :: G_Earth            !   The gravitational acceleration in m s-2.
   real :: Flux_const         !   The restoring rate at the surface, in m s-1.
-  real :: gust_const         !   A constant unresolved background gustiness
-                             ! that contributes to ustar, in Pa.
   real :: SST_s              ! SST at the southern edge of the linear
                              ! forcing ramp
   real :: SST_n              ! SST at the northern edge of the linear
@@ -79,12 +77,75 @@ type, public :: BFB_surface_forcing_CS ; private
                              ! Note that temperature is being used as a dummy
                              ! variable here. All temperatures are converted
                              ! into density.
+  real :: wfwextent
+  real :: wfnextent
+  real :: wfsextent
+  real :: tauy0
 
   type(diag_ctrl), pointer :: diag ! A structure that is used to regulate the
                              ! timing of diagnostic output.
 end type BFB_surface_forcing_CS
 
 contains
+
+subroutine BFB_wind_forcing(state, fluxes, day, G, CS)
+  type(surface),                 intent(inout) :: state
+  type(forcing),                 intent(inout) :: fluxes
+  type(time_type),               intent(in)    :: day
+  type(ocean_grid_type),         intent(inout) :: G    !< The ocean's grid structure
+  type(BFB_surface_forcing_CS),  pointer       :: CS
+
+!   This subroutine sets the surface wind stresses, fluxes%taux and fluxes%tauy.
+! These are the stresses in the direction of the model grid (i.e. the same
+! direction as the u- and v- velocities.)  They are both in Pa.
+!   In addition, this subroutine can be used to set the surface friction
+! velocity, fluxes%ustar, in m s-1. This is needed with a bulk mixed layer.
+!
+! Arguments: state - A structure containing fields that describe the
+!                    surface state of the ocean.
+!  (out)     fluxes - A structure containing pointers to any possible
+!                     forcing fields.  Unused fields have NULL ptrs.
+!  (in)      day - Time of the fluxes.
+!  (in)      G - The ocean's grid structure.
+!  (in)      CS - A pointer to the control structure returned by a previous
+!                 call to user_surface_forcing_init
+
+  integer :: i, j, is, ie, js, je, Isq, Ieq, Jsq, Jeq
+  integer :: isd, ied, jsd, jed, IsdB, IedB, JsdB, JedB
+
+  !   When modifying the code, comment out this error message.  It is here
+  ! so that the original (unmodified) version is not accidentally used.
+  ! call MOM_error(FATAL, "User_wind_surface_forcing: " // &
+  !    "User forcing routine called without modification." )
+
+  is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec
+  Isq = G%IscB ; Ieq = G%IecB ; Jsq = G%JscB ; Jeq = G%JecB
+  isd = G%isd ; ied = G%ied ; jsd = G%jsd ; jed = G%jed
+  IsdB = G%IsdB ; IedB = G%IedB ; JsdB = G%JsdB ; JedB = G%JedB
+
+  ! Allocate the forcing arrays, if necessary.
+  call allocate_forcing_type(G, fluxes, stress=.true., ustar=.true.)
+
+  !  Set the surface wind stresses, in units of Pa.  A positive taux
+  !  accelerates the ocean to the (pseudo-)east.
+
+  !  The i-loop extends to is-1 so that taux can be used later in the
+  ! calculation of ustar - otherwise the lower bound would be Isq.
+  do j=js,je ; do I=is-1,Ieq
+    fluxes%taux(I,j) = G%mask2dCu(I,j) * 0.0  ! Change this to the desired expression.
+  enddo ; enddo
+  do J=js-1,Jeq ; do i=is,ie
+    fluxes%tauy(i,J) = G%mask2dCv(i,J) * 0.0
+    if (G%geoLonCv(i,j) > CS%wfwextent) then
+      if (G%geoLatCv(i,j) > CS%wfsextent) then
+        if (G%geoLatCv(i,j) < CS%wfnextent) then
+          fluxes%tauy(i,J) = G%mask2dCv(i,J) * CS%tauy0
+        end if
+      end if
+    end if
+  enddo ; enddo
+
+end subroutine BFB_wind_forcing
 
 subroutine BFB_buoyancy_forcing(state, fluxes, day, dt, G, CS)
   type(surface),                 intent(inout) :: state
@@ -306,9 +367,18 @@ subroutine BFB_surface_forcing_init(Time, G, param_file, diag, CS)
   call get_param(param_file, mod, "DRHO_DT", CS%drho_dt, &
                  "The rate of change of density with temperature.", &
                  units="kg m-3 K-1", default = -0.2)
-  call get_param(param_file, mod, "GUST_CONST", CS%gust_const, &
-                 "The background gustiness in the winds.", units="Pa", &
-                 default=0.02)
+  call get_param(param_file, mod, "WIND_FORCING_WESTLIM", CS%wfwextent, &
+                 "The western edge of the meridional wind forcing.", units="degrees", &
+                 default=-5.0)
+  call get_param(param_file, mod, "WIND_FORCING_SOUTHLIM", CS%wfsextent, &
+                 "The southern edge of the meridional wind forcing.", units="degrees", &
+                 default=20.0)
+  call get_param(param_file, mod, "WIND_FORCING_NORTHLIM", CS%wfnextent, &
+                 "The northern edge of the meridional wind forcing.", units="degrees", &
+                 default=40.0)
+  call get_param(param_file, mod, "TAUY0", CS%tauy0, &
+                 "Meridional wind stress", units="Pa", &
+                 default=-0.05)
 
   call get_param(param_file, mod, "RESTOREBUOY", CS%restorebuoy, &
                  "If true, the buoyancy fluxes drive the model back \n"//&

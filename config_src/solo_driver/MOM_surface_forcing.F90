@@ -101,7 +101,7 @@ use SCM_CVmix_tests,         only : SCM_CVmix_tests_surface_forcing_init
 use SCM_CVmix_tests,         only : SCM_CVmix_tests_wind_forcing
 use SCM_CVmix_tests,         only : SCM_CVmix_tests_buoyancy_forcing
 use SCM_CVmix_tests,         only : SCM_CVmix_tests_CS
-use BFB_surface_forcing,    only : BFB_buoyancy_forcing
+use BFB_surface_forcing,    only : BFB_buoyancy_forcing, BFB_wind_forcing
 use BFB_surface_forcing,    only : BFB_surface_forcing_init, BFB_surface_forcing_CS
 
 use data_override_mod, only : data_override_init, data_override
@@ -277,6 +277,8 @@ subroutine set_forcing(state, fluxes, day_start, day_interval, G, CS)
       call SCM_idealized_hurricane_wind_forcing(state, fluxes, day_center, G, CS%SCM_idealized_hurricane_CSp)
     elseif (trim(CS%wind_config) == "SCM_CVmix_tests") then
       call SCM_CVmix_tests_wind_forcing(state, fluxes, day_center, G, CS%SCM_CVmix_tests_CSp)
+    elseif (trim(CS%wind_config) == "BFB") then
+      call BFB_wind_forcing(state, fluxes, day_center, G, CS%BFB_forcing_CSp)
     elseif (trim(CS%wind_config) == "USER") then
       call USER_wind_forcing(state, fluxes, day_center, G, CS%user_forcing_CSp)
     elseif (CS%variable_winds .and. .not.CS%first_call_set_forcing) then
@@ -1713,7 +1715,7 @@ subroutine surface_forcing_init(Time, G, param_file, diag, CS, tracer_flow_CSp)
   call get_param(param_file, mod, "WIND_CONFIG", CS%wind_config, &
                  "The character string that indicates how wind forcing \n"//&
                  "is specified. Valid options include (file), (2gyre), \n"//&
-                 "(1gyre), (gyres), (zero), and (USER).", fail_if_missing=.true.)
+                 "(1gyre), (gyres), (zero), (BFB), and (USER).", fail_if_missing=.true.)
   if (trim(CS%wind_config) == "file") then
     call get_param(param_file, mod, "WIND_FILE", CS%wind_file, &
                  "The file in which the wind stresses are found in \n"//&
@@ -1831,7 +1833,7 @@ subroutine surface_forcing_init(Time, G, param_file, diag, CS, tracer_flow_CSp)
 
   if (trim(CS%wind_config) == "USER" .or. trim(CS%buoy_config) == "USER" ) then
     call USER_surface_forcing_init(Time, G, param_file, diag, CS%user_forcing_CSp)
-  elseif (trim(CS%buoy_config) == "BFB" ) then
+  elseif (trim(CS%wind_config) == "BFB" .or. trim(CS%buoy_config) == "BFB" ) then
     call BFB_surface_forcing_init(Time, G, param_file, diag, CS%BFB_forcing_CSp)
   elseif (trim(CS%wind_config) == "MESO" .or. trim(CS%buoy_config) == "MESO" ) then
     call MESO_surface_forcing_init(Time, G, param_file, diag, CS%MESO_forcing_CSp)
