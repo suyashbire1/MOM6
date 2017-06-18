@@ -255,7 +255,7 @@ subroutine BFB_initialize_sponges_southonly_varlayth(G, use_temperature, tv, par
   do i=is,ie; do j=js,je
     if (G%geoLatT(i,j) < slat+2.0) then ; damp = 1.0
     elseif (G%geoLatT(i,j) < slat+4.0) then
-       damp_new = 1.0*(slat+4.0-G%geoLatT(i,j))/2.0
+       damp = 1.0*(slat+4.0-G%geoLatT(i,j))/2.0
     else ; damp = 0.0
     endif
 
