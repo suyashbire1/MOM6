@@ -101,8 +101,9 @@ use SCM_CVmix_tests,         only : SCM_CVmix_tests_surface_forcing_init
 use SCM_CVmix_tests,         only : SCM_CVmix_tests_wind_forcing
 use SCM_CVmix_tests,         only : SCM_CVmix_tests_buoyancy_forcing
 use SCM_CVmix_tests,         only : SCM_CVmix_tests_CS
-use BFB_surface_forcing,    only : BFB_buoyancy_forcing, BFB_wind_forcing
-use BFB_surface_forcing,    only : BFB_surface_forcing_init, BFB_surface_forcing_CS
+use BFB_surface_forcing,     only : BFB_buoyancy_forcing
+use BFB_surface_forcing,     only : BFB_wind_forcing, BFB_wind_forcing_const
+use BFB_surface_forcing,     only : BFB_surface_forcing_init, BFB_surface_forcing_CS
 
 use data_override_mod, only : data_override_init, data_override
 
@@ -279,6 +280,8 @@ subroutine set_forcing(state, fluxes, day_start, day_interval, G, CS)
       call SCM_CVmix_tests_wind_forcing(state, fluxes, day_center, G, CS%SCM_CVmix_tests_CSp)
     elseif (trim(CS%wind_config) == "BFB") then
       call BFB_wind_forcing(state, fluxes, day_center, G, CS%BFB_forcing_CSp)
+    elseif (trim(CS%wind_config) == "BFB_const") then
+      call BFB_wind_forcing_const(state, fluxes, day_center, G, CS%BFB_forcing_CSp)
     elseif (trim(CS%wind_config) == "USER") then
       call USER_wind_forcing(state, fluxes, day_center, G, CS%user_forcing_CSp)
     elseif (CS%variable_winds .and. .not.CS%first_call_set_forcing) then

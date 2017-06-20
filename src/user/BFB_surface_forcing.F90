@@ -47,7 +47,7 @@ use MOM_variables, only : surface
 
 implicit none ; private
 
-public BFB_wind_forcing, BFB_buoyancy_forcing, BFB_surface_forcing_init
+public BFB_wind_forcing, BFB_wind_forcing_const, BFB_buoyancy_forcing, BFB_surface_forcing_init
 
 type, public :: BFB_surface_forcing_CS ; private
   !   This control structure should be used to store any run-time variables
@@ -146,6 +146,58 @@ subroutine BFB_wind_forcing(state, fluxes, day, G, CS)
   enddo ; enddo
 
 end subroutine BFB_wind_forcing
+
+subroutine BFB_wind_forcing_const(state, fluxes, day, G, CS)
+  type(surface),                 intent(inout) :: state
+  type(forcing),                 intent(inout) :: fluxes
+  type(time_type),               intent(in)    :: day
+  type(ocean_grid_type),         intent(inout) :: G    !< The ocean's grid structure
+  type(BFB_surface_forcing_CS),  pointer       :: CS
+
+!   This subroutine sets the surface wind stresses, fluxes%taux and fluxes%tauy.
+! These are the stresses in the direction of the model grid (i.e. the same
+! direction as the u- and v- velocities.)  They are both in Pa.
+!   In addition, this subroutine can be used to set the surface friction
+! velocity, fluxes%ustar, in m s-1. This is needed with a bulk mixed layer.
+!
+! Arguments: state - A structure containing fields that describe the
+!                    surface state of the ocean.
+!  (out)     fluxes - A structure containing pointers to any possible
+!                     forcing fields.  Unused fields have NULL ptrs.
+!  (in)      day - Time of the fluxes.
+!  (in)      G - The ocean's grid structure.
+!  (in)      CS - A pointer to the control structure returned by a previous
+!                 call to user_surface_forcing_init
+
+  integer :: i, j, is, ie, js, je, Isq, Ieq, Jsq, Jeq
+  integer :: isd, ied, jsd, jed, IsdB, IedB, JsdB, JedB
+
+  !   When modifying the code, comment out this error message.  It is here
+  ! so that the original (unmodified) version is not accidentally used.
+  ! call MOM_error(FATAL, "User_wind_surface_forcing: " // &
+  !    "User forcing routine called without modification." )
+
+  is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec
+  Isq = G%IscB ; Ieq = G%IecB ; Jsq = G%JscB ; Jeq = G%JecB
+  isd = G%isd ; ied = G%ied ; jsd = G%jsd ; jed = G%jed
+  IsdB = G%IsdB ; IedB = G%IedB ; JsdB = G%JsdB ; JedB = G%JedB
+
+  ! Allocate the forcing arrays, if necessary.
+  call allocate_forcing_type(G, fluxes, stress=.true., ustar=.true.)
+
+  !  Set the surface wind stresses, in units of Pa.  A positive taux
+  !  accelerates the ocean to the (pseudo-)east.
+
+  !  The i-loop extends to is-1 so that taux can be used later in the
+  ! calculation of ustar - otherwise the lower bound would be Isq.
+  do j=js,je ; do I=is-1,Ieq
+    fluxes%taux(I,j) = G%mask2dCu(I,j) * 0.0  ! Change this to the desired expression.
+  enddo ; enddo
+  do J=js-1,Jeq ; do i=is,ie
+    fluxes%tauy(i,J) = G%mask2dCv(i,J) * CS%tauy0
+  enddo ; enddo
+
+end subroutine BFB_wind_forcing_const
 
 subroutine BFB_buoyancy_forcing(state, fluxes, day, dt, G, CS)
   type(surface),                 intent(inout) :: state
