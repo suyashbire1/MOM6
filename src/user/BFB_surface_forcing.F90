@@ -124,17 +124,17 @@ subroutine BFB_wind_forcing(state, fluxes, day, G, CS)
   IsdB = G%IsdB ; IedB = G%IedB ; JsdB = G%JsdB ; JedB = G%JedB
 
   ! Allocate the forcing arrays, if necessary.
-  call allocate_forcing_type(G, fluxes, stress=.true., ustar=.true.)
+  ! call allocate_forcing_type(G, fluxes, stress=.true., ustar=.true.)
 
   !  Set the surface wind stresses, in units of Pa.  A positive taux
   !  accelerates the ocean to the (pseudo-)east.
 
   !  The i-loop extends to is-1 so that taux can be used later in the
   ! calculation of ustar - otherwise the lower bound would be Isq.
-  do j=js,je ; do I=is-1,Ieq
+  do j=js,je ; do I=isq,Ieq
     fluxes%taux(I,j) = G%mask2dCu(I,j) * 0.0  ! Change this to the desired expression.
   enddo ; enddo
-  do J=js-1,Jeq ; do i=is,ie
+  do J=jsq,Jeq ; do i=is,ie
     fluxes%tauy(i,J) = G%mask2dCv(i,J) * 0.0
     if (G%geoLonCv(i,j) > CS%wfwextent) then
       if (G%geoLatCv(i,j) > CS%wfsextent) then
@@ -183,17 +183,17 @@ subroutine BFB_wind_forcing_const(state, fluxes, day, G, CS)
   IsdB = G%IsdB ; IedB = G%IedB ; JsdB = G%JsdB ; JedB = G%JedB
 
   ! Allocate the forcing arrays, if necessary.
-  call allocate_forcing_type(G, fluxes, stress=.true., ustar=.true.)
+  ! call allocate_forcing_type(G, fluxes, stress=.true., ustar=.true.)
 
   !  Set the surface wind stresses, in units of Pa.  A positive taux
   !  accelerates the ocean to the (pseudo-)east.
 
   !  The i-loop extends to is-1 so that taux can be used later in the
   ! calculation of ustar - otherwise the lower bound would be Isq.
-  do j=js,je ; do I=is-1,Ieq
+  do j=js,je ; do I=isq,Ieq
     fluxes%taux(I,j) = G%mask2dCu(I,j) * 0.0  ! Change this to the desired expression.
   enddo ; enddo
-  do J=js-1,Jeq ; do i=is,ie
+  do J=jsq,Jeq ; do i=is,ie
     fluxes%tauy(i,J) = G%mask2dCv(i,J) * CS%tauy0
   enddo ; enddo
 
