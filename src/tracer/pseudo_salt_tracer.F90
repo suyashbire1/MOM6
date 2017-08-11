@@ -147,7 +147,7 @@ function register_pseudo_salt_tracer(HI, GV, param_file, CS, tr_Reg, restart_CS)
 
 ! This include declares and sets the variable "version".
 #include "version_variable.h"
-  character(len=40)  :: mod = "pseudo_salt_tracer" ! This module's name.
+  character(len=40)  :: mdl = "pseudo_salt_tracer" ! This module's name.
   character(len=200) :: inputdir ! The directory where the input files are.
   character(len=48)  :: var_name ! The variable's name.
   character(len=3)   :: name_tag ! String for creating identifying pseudo_salt
@@ -164,7 +164,7 @@ function register_pseudo_salt_tracer(HI, GV, param_file, CS, tr_Reg, restart_CS)
   allocate(CS)
 
   ! Read all relevant parameters and write them to the model log.
-  call log_version(param_file, mod, version, "")
+  call log_version(param_file, mdl, version, "")
 
   CS%ntr = NTR_MAX
   allocate(CS%tr(isd:ied,jsd:jed,nz,CS%ntr)) ; CS%tr(:,:,:,:) = 0.0
@@ -174,7 +174,7 @@ function register_pseudo_salt_tracer(HI, GV, param_file, CS, tr_Reg, restart_CS)
     ! This is needed to force the compiler not to do a copy in the registration
     ! calls.  Curses on the designers and implementers of Fortran90.
     CS%tr_desc(m) = var_desc(trim("pseudo_salt_diff"), "kg", &
-        "Difference between pseudo salt passive tracer and salt tracer", caller=mod)
+        "Difference between pseudo salt passive tracer and salt tracer", caller=mdl)
     tr_ptr => CS%tr(:,:,:,m)
     call query_vardesc(CS%tr_desc(m), name=var_name, caller="register_pseudo_salt_tracer")
     ! Register the tracer for the restart file.
@@ -210,7 +210,7 @@ subroutine initialize_pseudo_salt_tracer(restart, day, G, GV, h, diag, OBC, CS, 
   type(pseudo_salt_tracer_CS),          pointer    :: CS
   type(sponge_CS),                    pointer    :: sponge_CSp
   type(diag_to_Z_CS),                 pointer    :: diag_to_Z_CSp
-  type(thermo_var_ptrs),              intent(in) :: tv
+  type(thermo_var_ptrs),              intent(in) :: tv   !< A structure pointing to various thermodynamic variables
 !   This subroutine initializes the CS%ntr tracer fields in tr(:,:,:,:)
 ! and it sets up the tracer output.
 
@@ -311,9 +311,9 @@ subroutine pseudo_salt_tracer_column_physics(h_old, h_new, ea, eb, fluxes, dt, G
   type(verticalGrid_type),            intent(in) :: GV   !< The ocean's vertical grid structure
   real, dimension(SZI_(G),SZJ_(G),SZK_(G)), intent(in) :: h_old, h_new, ea, eb
   type(forcing),                      intent(in) :: fluxes
-  real,                               intent(in) :: dt
+  real,                               intent(in) :: dt   !< The amount of time covered by this call, in s
   type(pseudo_salt_tracer_CS),                pointer    :: CS
-  type(thermo_var_ptrs),              intent(in) :: tv
+  type(thermo_var_ptrs),              intent(in) :: tv   !< A structure pointing to various thermodynamic variables
   logical,                            intent(in) :: debug
   real,                             optional,intent(in)  :: evap_CFL_limit
   real,                             optional,intent(in)  :: minimum_forcing_depth

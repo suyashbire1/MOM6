@@ -45,7 +45,7 @@ subroutine continuity(u, v, hin, h, uh, vh, dt, G, GV, CS, uhbt, vhbt, OBC, &
   type(verticalGrid_type), intent(in)                      :: GV  !< Vertical grid structure.
   real, dimension(SZIB_(G),SZJ_(G),SZK_(G)), intent(in)    :: u   !< Zonal velocity, in m/s.
   real, dimension(SZI_(G),SZJB_(G),SZK_(G)), intent(in)    :: v   !< Meridional velocity, in m/s.
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(in)    :: hin !< Initial layer thickness, in m or kg/m2.
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(inout) :: hin !< Initial layer thickness, in m or kg/m2.
   real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(inout) :: h   !< Final layer thickness, in m or kg/m2.
   real, dimension(SZIB_(G),SZJ_(G),SZK_(G)), intent(out)   :: uh  !< Volume flux through zonal faces =
                                                                   !! u*h*dy, in m3/s.
@@ -118,7 +118,7 @@ subroutine continuity_init(Time, G, GV, param_file, diag, CS)
   type(continuity_CS),     pointer       :: CS         !< Control structure for mom_continuity.
 ! This include declares and sets the variable "version".
 #include "version_variable.h"
-  character(len=40)  :: mod = "MOM_continuity" ! This module's name.
+  character(len=40)  :: mdl = "MOM_continuity" ! This module's name.
   character(len=20)  :: tmpstr
 
   if (associated(CS)) then
@@ -128,8 +128,8 @@ subroutine continuity_init(Time, G, GV, param_file, diag, CS)
   allocate(CS)
 
   ! Read all relevant parameters and write them to the model log.
-  call log_version(param_file, mod, version, "")
-  call get_param(param_file, mod, "CONTINUITY_SCHEME", tmpstr, &
+  call log_version(param_file, mdl, version, "")
+  call get_param(param_file, mdl, "CONTINUITY_SCHEME", tmpstr, &
                  "CONTINUITY_SCHEME selects the discretization for the \n"//&
                  "continuity solver. The only valid value currently is: \n"//&
                  "\t PPM - use a positive-definite (or monotonic) \n"//&
