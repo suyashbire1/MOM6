@@ -62,7 +62,7 @@ type, public :: OBC_segment_data_type
   integer                         :: nk_src     !< Number of vertical levels in the source data
   real, dimension(:,:,:), pointer :: dz_src=>NULL()     !< vertical grid cell spacing of the incoming segment data (m)
   real, dimension(:,:,:), pointer :: buffer_dst=>NULL() !< buffer src data remapped to the target vertical grid
-  real, dimension(:,:), pointer   :: bt_vel=>NULL() !< barotropic velocity (m s-1)
+  real, dimension(:,:), pointer   :: bt_vel=>NULL()     !< barotropic velocity (m s-1)
   real                            :: value              !< constant value if fid is equal to -1
 end type OBC_segment_data_type
 
@@ -74,6 +74,7 @@ type, public :: OBC_segment_type
   logical :: oblique        !< Oblique waves supported at radiation boundary.
   logical :: nudged         !< Optional supplement to radiation boundary.
   logical :: specified      !< Boundary fixed to external value.
+  logical :: open           !< Boundary is open for continuity solver.
   logical :: gradient       !< Zero gradient at boundary.
   logical :: values_needed  !< Whether or not external OBC fields are needed.
   integer :: direction      !< Boundary faces one of the four directions.
@@ -173,9 +174,8 @@ type, public :: ocean_OBC_type
                    !! velocity (or speed of characteristics), in m s-1.  The
                    !! default value is 10 m s-1.
   logical :: OBC_pe !< Is there an open boundary on this tile?
-  character(len=200) :: OBC_user_config
-  type(remapping_CS), pointer         :: remap_CS   ! ALE remapping control structure for segments only
-  type(OBC_registry_type),       pointer :: OBC_Reg                => NULL()
+  type(remapping_CS),      pointer :: remap_CS   !< ALE remapping control structure for segments only
+  type(OBC_registry_type), pointer :: OBC_Reg => NULL()  !< Registry type for boundaries
 end type ocean_OBC_type
 
 !> Control structure for open boundaries that read from files.
@@ -193,13 +193,13 @@ end type OBC_struct_type
 type, public :: OBC_registry_type
   integer               :: nobc = 0          !< number of registered open boundary types.
   type(OBC_struct_type) :: OB(MAX_FIELDS_)   !< array of registered boundary types.
-  logical               :: locked = .false.  !< New tracers may be registered if locked=.false.
+  logical               :: locked = .false.  !< New OBC types may be registered if locked=.false.
                                              !! When locked=.true.,no more boundaries can be registered.
 end type OBC_registry_type
 
 integer :: id_clock_pass
 
-character(len=40)  :: mod = "MOM_open_boundary" ! This module's name.
+character(len=40)  :: mdl = "MOM_open_boundary" ! This module's name.
 ! This include declares and sets the variable "version".
 #include "version_variable.h"
 
@@ -224,51 +224,51 @@ subroutine open_boundary_config(G, param_file, OBC)
 
   allocate(OBC)
 
-  call log_version(param_file, mod, version, "Controls where open boundaries are located, what "//&
+  call log_version(param_file, mdl, version, "Controls where open boundaries are located, what "//&
                  "kind of boundary condition to impose, and what data to apply, if any.")
-  call get_param(param_file, mod, "OBC_NUMBER_OF_SEGMENTS", OBC%number_of_segments, &
+  call get_param(param_file, mdl, "OBC_NUMBER_OF_SEGMENTS", OBC%number_of_segments, &
                  "The number of open boundary segments.", &
                  default=0)
-  call get_param(param_file, mod, "G_EARTH", OBC%g_Earth, &
+  call get_param(param_file, mdl, "G_EARTH", OBC%g_Earth, &
                  "The gravitational acceleration of the Earth.", &
                  units="m s-2", default = 9.80)
-  call get_param(param_file, mod, "OBC_USER_CONFIG", config1, &
+  call get_param(param_file, mdl, "OBC_USER_CONFIG", config1, &
                  "A string that sets how the open boundary conditions are \n"//&
                  " configured: \n", default="none", do_not_log=.true.)
-  call get_param(param_file, mod, "NK", OBC%ke, &
+  call get_param(param_file, mdl, "NK", OBC%ke, &
                  "The number of model layers", default=0, do_not_log=.true.)
 
   if (config1 .ne. "none") OBC%user_BCs_set_globally = .true.
   ! It's in state initialization...
 !  if (config1 .eq. "tidal_bay") OBC%update_OBC = .true.
 
-  call get_param(param_file, mod, "EXTEND_OBC_SEGMENTS", OBC%extend_segments, &
+  call get_param(param_file, mdl, "EXTEND_OBC_SEGMENTS", OBC%extend_segments, &
                    "If true, extend OBC segments. This option is used to recover\n"//&
                    "legacy solutions dependent on an incomplete implementaion of OBCs.\n"//&
                    "This option will be obsoleted in the future.", default=.false.)
 
   if (OBC%number_of_segments > 0) then
-    call get_param(param_file, mod, "OBC_ZERO_VORTICITY", OBC%zero_vorticity, &
+    call get_param(param_file, mdl, "OBC_ZERO_VORTICITY", OBC%zero_vorticity, &
          "If true, sets relative vorticity to zero on open boundaries.", &
          default=.false.)
-    call get_param(param_file, mod, "OBC_FREESLIP_VORTICITY", OBC%freeslip_vorticity, &
+    call get_param(param_file, mdl, "OBC_FREESLIP_VORTICITY", OBC%freeslip_vorticity, &
          "If true, sets the normal gradient of tangential velocity to\n"// &
          "zero in the relative vorticity on open boundaries. This cannot\n"// &
          "be true if OBC_ZERO_VORTICITY is True.", default=.false.)
     if (OBC%zero_vorticity .and. OBC%freeslip_vorticity) call MOM_error(FATAL, &
          "MOM_open_boundary.F90, open_boundary_config: "//&
          "Only one of OBC_ZERO_VORTICITY and OBC_FREESLIP_VORTICITY can be True at once.")
-    call get_param(param_file, mod, "OBC_ZERO_STRAIN", OBC%zero_strain, &
+    call get_param(param_file, mdl, "OBC_ZERO_STRAIN", OBC%zero_strain, &
          "If true, sets the strain used in the stress tensor to zero on open boundaries.", &
          default=.false.)
-    call get_param(param_file, mod, "OBC_FREESLIP_STRAIN", OBC%freeslip_strain, &
+    call get_param(param_file, mdl, "OBC_FREESLIP_STRAIN", OBC%freeslip_strain, &
          "If true, sets the normal gradient of tangential velocity to\n"// &
          "zero in the strain use in the stress tensor on open boundaries. This cannot\n"// &
          "be true if OBC_ZERO_STRAIN is True.", default=.false.)
     if (OBC%zero_strain .and. OBC%freeslip_strain) call MOM_error(FATAL, &
          "MOM_open_boundary.F90, open_boundary_config: "//&
          "Only one of OBC_ZERO_STRAIN and OBC_FREESLIP_STRAIN can be True at once.")
-    call get_param(param_file, mod, "OBC_ZERO_BIHARMONIC", OBC%zero_biharmonic, &
+    call get_param(param_file, mdl, "OBC_ZERO_BIHARMONIC", OBC%zero_biharmonic, &
          "If true, zeros the Laplacian of flow on open boundaries in the biharmonic\n"//&
          "viscosity term.", default=.false.)
     ! Allocate everything
@@ -280,6 +280,7 @@ subroutine open_boundary_config(G, param_file, OBC)
       OBC%segment(l)%oblique = .false.
       OBC%segment(l)%nudged = .false.
       OBC%segment(l)%specified = .false.
+      OBC%segment(l)%open = .false.
       OBC%segment(l)%gradient = .false.
       OBC%segment(l)%values_needed = .false.
       OBC%segment(l)%direction = OBC_NONE
@@ -294,7 +295,7 @@ subroutine open_boundary_config(G, param_file, OBC)
 
     do l = 1, OBC%number_of_segments
       write(segment_param_str(1:15),"('OBC_SEGMENT_',i3.3)") l
-      call get_param(param_file, mod, segment_param_str, segment_str, &
+      call get_param(param_file, mdl, segment_param_str, segment_str, &
            "Documentation needs to be dynamic?????", &
            fail_if_missing=.true.)
       segment_str = remove_spaces(segment_str)
@@ -359,23 +360,23 @@ subroutine initialize_segment_data(G, OBC, PF)
   ! param file so that I can use it later in step_MOM in order to finish
   ! initializing segments on the first step.
 
-  call get_param(PF, mod, "INPUTDIR", inputdir, default=".")
+  call get_param(PF, mdl, "INPUTDIR", inputdir, default=".")
   inputdir = slasher(inputdir)
 
-  call get_param(PF, mod, "REMAPPING_SCHEME", remappingScheme, &
+  call get_param(PF, mdl, "REMAPPING_SCHEME", remappingScheme, &
           "This sets the reconstruction scheme used\n"//&
           "for vertical remapping for all variables.\n"//&
           "It can be one of the following schemes:\n"//&
           trim(remappingSchemesDoc), default=remappingDefaultScheme,do_not_log=.true.)
-  call get_param(PF, mod, "FATAL_CHECK_RECONSTRUCTIONS", check_reconstruction, &
+  call get_param(PF, mdl, "FATAL_CHECK_RECONSTRUCTIONS", check_reconstruction, &
           "If true, cell-by-cell reconstructions are checked for\n"//&
           "consistency and if non-monotonicity or an inconsistency is\n"//&
           "detected then a FATAL error is issued.", default=.false.,do_not_log=.true.)
-  call get_param(PF, mod, "FATAL_CHECK_REMAPPING", check_remapping, &
+  call get_param(PF, mdl, "FATAL_CHECK_REMAPPING", check_remapping, &
           "If true, the results of remapping are checked for\n"//&
           "conservation and new extrema and if an inconsistency is\n"//&
           "detected then a FATAL error is issued.", default=.false.,do_not_log=.true.)
-  call get_param(PF, mod, "REMAP_BOUND_INTERMEDIATE_VALUES", force_bounds_in_subcell, &
+  call get_param(PF, mdl, "REMAP_BOUND_INTERMEDIATE_VALUES", force_bounds_in_subcell, &
           "If true, the values on the intermediate grid used for remapping\n"//&
           "are forced to be bounded, which might not be the case due to\n"//&
           "round off.", default=.false.,do_not_log=.true.)
@@ -401,7 +402,7 @@ subroutine initialize_segment_data(G, OBC, PF)
 
     write(segnam,"('OBC_SEGMENT_',i3.3,'_DATA')") n
     write(suffix,"('_segment_',i3.3)") n
-    call get_param(PF, mod, segnam, segstr)
+    call get_param(PF, mdl, segnam, segstr)
 
     call parse_segment_data_str(trim(segstr), fields=fields, num_fields=num_fields)
     if (num_fields == 0) then
@@ -567,7 +568,7 @@ subroutine setup_u_point_obc(OBC, G, segment_str, l_seg)
   integer,                 intent(in) :: l_seg !< which segment is this?
   ! Local variables
   integer :: I_obc, Js_obc, Je_obc ! Position of segment in global index space
-  integer :: j, this_kind, a_loop
+  integer :: j, a_loop
   character(len=32) :: action_str(5)
 
   ! This returns the global indices for the segment
@@ -578,8 +579,6 @@ subroutine setup_u_point_obc(OBC, G, segment_str, l_seg)
   I_obc = I_obc - G%idg_offset ! Convert to local tile indices on this tile
   Js_obc = Js_obc - G%jdg_offset ! Convert to local tile indices on this tile
   Je_obc = Je_obc - G%jdg_offset ! Convert to local tile indices on this tile
-
-  this_kind = OBC_NONE
 
   ! Hack to extend segment by one point
   if (OBC%extend_segments) then
@@ -603,15 +602,17 @@ subroutine setup_u_point_obc(OBC, G, segment_str, l_seg)
     if (len_trim(action_str(a_loop)) == 0) then
       cycle
     elseif (trim(action_str(a_loop)) == 'FLATHER') then
-      this_kind = OBC_FLATHER
       OBC%segment(l_seg)%Flather = .true.
+      OBC%segment(l_seg)%open = .true.
       OBC%Flather_u_BCs_exist_globally = .true.
       OBC%open_u_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'ORLANSKI') then
       OBC%segment(l_seg)%radiation = .true.
+      OBC%segment(l_seg)%open = .true.
       OBC%open_u_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'OBLIQUE') then
       OBC%segment(l_seg)%oblique = .true.
+      OBC%segment(l_seg)%open = .true.
       OBC%oblique_BCs_exist_globally = .true.
       OBC%open_u_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'NUDGED') then
@@ -621,9 +622,9 @@ subroutine setup_u_point_obc(OBC, G, segment_str, l_seg)
       OBC%nudged_u_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'GRADIENT') then
       OBC%segment(l_seg)%gradient = .true.
+      OBC%segment(l_seg)%open = .true.
       OBC%open_u_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'LEGACY') then
-      this_kind = OBC_FLATHER
       OBC%segment(l_seg)%Flather = .true.
       OBC%segment(l_seg)%radiation = .true.
       OBC%Flather_u_BCs_exist_globally = .true.
@@ -670,7 +671,7 @@ subroutine setup_v_point_obc(OBC, G, segment_str, l_seg)
   integer,                 intent(in) :: l_seg !< which segment is this?
   ! Local variables
   integer :: J_obc, Is_obc, Ie_obc ! Position of segment in global index space
-  integer :: i, this_kind, a_loop
+  integer :: i, a_loop
   character(len=32) :: action_str(5)
 
   ! This returns the global indices for the segment
@@ -681,7 +682,6 @@ subroutine setup_v_point_obc(OBC, G, segment_str, l_seg)
   J_obc = J_obc - G%jdg_offset ! Convert to local tile indices on this tile
   Is_obc = Is_obc - G%idg_offset ! Convert to local tile indices on this tile
   Ie_obc = Ie_obc - G%idg_offset ! Convert to local tile indices on this tile
-  this_kind = OBC_NONE
 
   ! Hack to extend segment by one point
   if (OBC%extend_segments) then
@@ -705,15 +705,17 @@ subroutine setup_v_point_obc(OBC, G, segment_str, l_seg)
     if (len_trim(action_str(a_loop)) == 0) then
       cycle
     elseif (trim(action_str(a_loop)) == 'FLATHER') then
-      this_kind = OBC_FLATHER
       OBC%segment(l_seg)%Flather = .true.
+      OBC%segment(l_seg)%open = .true.
       OBC%Flather_v_BCs_exist_globally = .true.
       OBC%open_v_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'ORLANSKI') then
       OBC%segment(l_seg)%radiation = .true.
+      OBC%segment(l_seg)%open = .true.
       OBC%open_v_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'OBLIQUE') then
       OBC%segment(l_seg)%oblique = .true.
+      OBC%segment(l_seg)%open = .true.
       OBC%oblique_BCs_exist_globally = .true.
       OBC%open_v_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'NUDGED') then
@@ -723,9 +725,9 @@ subroutine setup_v_point_obc(OBC, G, segment_str, l_seg)
       OBC%nudged_v_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'GRADIENT') then
       OBC%segment(l_seg)%gradient = .true.
+      OBC%segment(l_seg)%open = .true.
       OBC%open_v_BCs_exist_globally = .true.
     elseif (trim(action_str(a_loop)) == 'LEGACY') then
-      this_kind = OBC_FLATHER
       OBC%segment(l_seg)%radiation = .true.
       OBC%segment(l_seg)%Flather = .true.
       OBC%Flather_v_BCs_exist_globally = .true.
@@ -950,19 +952,19 @@ subroutine open_boundary_init(G, param_file, OBC)
   if (.not.associated(OBC)) return
 
   if ( OBC%Flather_u_BCs_exist_globally .or. OBC%Flather_v_BCs_exist_globally ) then
-    call get_param(param_file, mod, "OBC_RADIATION_MAX", OBC%rx_max, &
+    call get_param(param_file, mdl, "OBC_RADIATION_MAX", OBC%rx_max, &
                    "The maximum magnitude of the baroclinic radiation \n"//&
                    "velocity (or speed of characteristics).  This is only \n"//&
                    "used if one of the open boundary segments is using Orlanski.", &
                    units="m s-1", default=10.0)
-    call get_param(param_file, mod, "OBC_RAD_VEL_WT", OBC%gamma_uv, &
+    call get_param(param_file, mdl, "OBC_RAD_VEL_WT", OBC%gamma_uv, &
                    "The relative weighting for the baroclinic radiation \n"//&
                    "velocities (or speed of characteristics) at the new \n"//&
                    "time level (1) or the running mean (0) for velocities. \n"//&
                    "Valid values range from 0 to 1. This is only used if \n"//&
                    "one of the open boundary segments is using Orlanski.", &
                    units="nondim",  default=0.3)
-    call get_param(param_file, mod, "OBC_RAD_THICK_WT", OBC%gamma_h, &
+    call get_param(param_file, mdl, "OBC_RAD_THICK_WT", OBC%gamma_h, &
                    "The relative weighting for the baroclinic radiation \n"//&
                    "velocities (or speed of characteristics) at the new \n"//&
                    "time level (1) or the running mean (0) for thicknesses. \n"//&
@@ -1524,7 +1526,7 @@ subroutine set_tracer_data(OBC, tv, h, G, PF, tracer_Reg)
   integer :: isd_off, jsd_off
   integer :: IsdB, IedB, JsdB, JedB
   type(OBC_segment_type), pointer :: segment ! pointer to segment type list
-  character(len=40)  :: mod = "set_tracer_data" ! This subroutine's name.
+  character(len=40)  :: mdl = "set_tracer_data" ! This subroutine's name.
   character(len=200) :: filename, OBC_file, inputdir ! Strings for file/path
 
   real :: temp_u(G%domain%niglobal+1,G%domain%njglobal)
@@ -1670,7 +1672,7 @@ subroutine allocate_OBC_segment_data(OBC, segment)
   ! Local variables
   integer :: isd, ied, jsd, jed
   integer :: IsdB, IedB, JsdB, JedB
-  character(len=40)  :: mod = "allocate_OBC_segment_data" ! This subroutine's name.
+  character(len=40)  :: mdl = "allocate_OBC_segment_data" ! This subroutine's name.
 
   isd = segment%HI%isd ; ied = segment%HI%ied
   jsd = segment%HI%jsd ; jed = segment%HI%jed
@@ -1800,20 +1802,21 @@ subroutine open_boundary_test_extern_h(G, OBC, h)
 
 end subroutine open_boundary_test_extern_h
 
+!> Update the OBC values on the segments.
 subroutine update_OBC_segment_data(G, GV, OBC, tv, h, Time)
-  type(ocean_grid_type),                     intent(in)    :: G   !< Ocean grid structure
-  type(verticalGrid_type),                   intent(in)    :: GV  !<  Ocean vertical grid structure
-  type(ocean_OBC_type),                      pointer       :: OBC !< Open boundary structure
-  type(thermo_var_ptrs),                     intent(in)    :: tv  !< Thermodynamics structure
-  real, dimension(SZI_(G),SZJ_(G), SZK_(G)), intent(inout) :: h   !< Thickness
-! real, dimension(SZI_(G),SZJ_(G), SZK_(G)), intent(inout) :: e   !< Layer interface height
-! real, dimension(SZI_(G),SZJ_(G))         , intent(inout) :: eta !< Thickness
-  type(time_type),                           intent(in)    :: Time
+  type(ocean_grid_type),                     intent(in)    :: G    !< Ocean grid structure
+  type(verticalGrid_type),                   intent(in)    :: GV   !<  Ocean vertical grid structure
+  type(ocean_OBC_type),                      pointer       :: OBC  !< Open boundary structure
+  type(thermo_var_ptrs),                     intent(in)    :: tv   !< Thermodynamics structure
+  real, dimension(SZI_(G),SZJ_(G), SZK_(G)), intent(inout) :: h    !< Thickness
+! real, dimension(SZI_(G),SZJ_(G), SZK_(G)), intent(inout) :: e    !< Layer interface height
+! real, dimension(SZI_(G),SZJ_(G))         , intent(inout) :: eta  !< Thickness
+  type(time_type),                           intent(in)    :: Time !< Time
   ! Local variables
 
   integer :: i, j, k, is, ie, js, je, isd, ied, jsd, jed
   integer :: IsdB, IedB, JsdB, JedB, n, m, nz
-  character(len=40)  :: mod = "set_OBC_segment_data" ! This subroutine's name.
+  character(len=40)  :: mdl = "set_OBC_segment_data" ! This subroutine's name.
   character(len=200) :: filename, OBC_file, inputdir ! Strings for file/path
   type(OBC_segment_type), pointer :: segment
   integer, dimension(4) :: siz,siz2
@@ -1854,26 +1857,6 @@ subroutine update_OBC_segment_data(G, GV, OBC, tv, h, Time)
       is_obc=is_obc+1
     endif
 
-!    do j=jsd,jed ; do I=isd,ied-1
-!      if (segment%direction == OBC_DIRECTION_E .and. OBC%segnum_u(I,j) /= OBC_NONE ) then
-!        do k=1,nz
-!          tv%T(i+1,j,k) = tv%T(i,j,k) ; tv%S(i+1,j,k) = tv%S(i,j,k); h(i+1,j,k) = h(i,j,k)
-!        enddo
-!      else if (segment%direction == OBC_DIRECTION_W .and. OBC%segnum_u(I,j) /= OBC_NONE ) then
-!        tv%T(i,j,k) = tv%T(i+1,j,k) ; tv%S(i,j,k) = tv%S(i+1,j,k); h(i,j,k) = h(i+1,j,k)
-!      endif
-!    enddo ; enddo
-
-!    do j=jsd,jed-1 ; do I=isd,ied-1
-!      if (segment%direction == OBC_DIRECTION_N .and. OBC%segnum_v(I,j) /= OBC_NONE ) then
-!        do k=1,nz
-!          tv%T(i,j+1,k) = tv%T(i,j,k) ; tv%S(i,j+1,k) = tv%S(i,j,k); h(i,j+1,k) = h(i,j,k)
-!        enddo
-!      else if (segment%direction == OBC_DIRECTION_S .and. OBC%segnum_v(I,j) /= OBC_NONE ) then
-!        tv%T(i,j,k) = tv%T(i,j+1,k) ; tv%S(i,j,k) = tv%S(i,j+1,k); h(i,j,k) = h(i,j+1,k)
-!      endif
-!    enddo ; enddo
-
 ! Calculate auxiliary fields at staggered locations.
 ! Segment indices are on q points:
 !
@@ -1889,10 +1872,6 @@ subroutine update_OBC_segment_data(G, GV, OBC, tv, h, Time)
       if (segment%direction == OBC_DIRECTION_W) ishift=1
       I=segment%HI%IscB
       do j=segment%HI%jsd,segment%HI%jed
-!        i2 =  segment%Is_obc + i - 1
-!        j2 =  segment%Js_obc + j - 1
-!        if ((i2 .gt. ied .or. i2 .lt. isd) .or. (j2 .gt. jed .or. j2 .lt. jsd)) cycle
-!        if (OBC%segnum_u(i2,j2) /= n) cycle
         segment%Cg(I,j) = sqrt(GV%g_prime(1)*G%bathyT(i+ishift,j))
  !       if (GV%Boussinesq) then
         segment%Htot(I,j) = G%bathyT(i+ishift,j)*GV%m_to_H! + eta(i+ishift,j)
@@ -2056,14 +2035,14 @@ subroutine OBC_registry_init(param_file, Reg)
   integer, save :: init_calls = 0
 
 #include "version_variable.h"
-  character(len=40)  :: mod = "MOM_open_boundary" ! This module's name.
+  character(len=40)  :: mdl = "MOM_open_boundary" ! This module's name.
   character(len=256) :: mesg    ! Message for error messages.
 
   if (.not.associated(Reg)) then ; allocate(Reg)
   else ; return ; endif
 
   ! Read all relevant parameters and write them to the model log.
-! call log_version(param_file, mod, version, "")
+! call log_version(param_file, mdl,s version, "")
 
   init_calls = init_calls + 1
   if (init_calls > 1) then

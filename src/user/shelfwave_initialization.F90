@@ -33,7 +33,7 @@ implicit none ; private
 
 #include <MOM_memory.h>
 
-character(len=40) :: mod = "shelfwave_initialization" ! This module's name.
+character(len=40) :: mdl = "shelfwave_initialization" ! This module's name.
 
 ! -----------------------------------------------------------------------------
 ! The following routines are visible to the outside world
@@ -44,8 +44,8 @@ public register_shelfwave_OBC, shelfwave_OBC_end
 
 !> Control structure for shelfwave open boundaries.
 type, public :: shelfwave_OBC_CS ; private
-  real :: Lx = 20.0         !< Long-shore length scale of bathymetry.
-  real :: Ly = 10.0         !< Cross-shore length scale.
+  real :: Lx = 100.0        !< Long-shore length scale of bathymetry.
+  real :: Ly = 50.0         !< Cross-shore length scale.
   real :: f0 = 1.e-4        !< Coriolis parameter.
   real :: jj = 1            !< Cross-shore wave mode.
   real :: kk                !< Parameter.
@@ -78,18 +78,18 @@ function register_shelfwave_OBC(param_file, CS, OBC_Reg)
 
   ! Register the tracer for horizontal advection & diffusion.
   call register_OBC(casename, param_file, OBC_Reg)
-  call get_param(param_file,mod,"F_0",CS%f0, &
+  call get_param(param_file, mdl,"F_0",CS%f0, &
                  do_not_log=.true.)
-  call get_param(param_file,mod,"LENLAT",len_lat, &
+  call get_param(param_file, mdl,"LENLAT",len_lat, &
                  do_not_log=.true.)
-  call get_param(param_file,mod,"SHELFWAVE_X_WAVELENGTH",CS%Lx, &
+  call get_param(param_file, mdl,"SHELFWAVE_X_WAVELENGTH",CS%Lx, &
                  "Length scale of shelfwave in x-direction.",&
                  units="Same as x,y", default=100.)
-  call get_param(param_file,mod,"SHELFWAVE_Y_LENGTH_SCALE",CS%Ly, &
+  call get_param(param_file, mdl,"SHELFWAVE_Y_LENGTH_SCALE",CS%Ly, &
                  "Length scale of exponential dropoff of topography\n"//&
                  "in the y-direction.", &
-                 units="Same as x,y", default=10.)
-  call get_param(param_file,mod,"SHELFWAVE_Y_MODE",CS%jj, &
+                 units="Same as x,y", default=50.)
+  call get_param(param_file, mdl,"SHELFWAVE_Y_MODE",CS%jj, &
                  "Cross-shore wave mode.",               &
                  units="nondim", default=1.)
   CS%alpha = 1. / CS%Ly
@@ -123,9 +123,9 @@ subroutine shelfwave_initialize_topography ( D, G, param_file, max_depth )
   integer   :: i, j
   real      :: y, rLy, Ly, H0
 
-  call get_param(param_file,mod,"SHELFWAVE_Y_LENGTH_SCALE",Ly, &
-                 default=10., do_not_log=.true.)
-  call get_param(param_file,mod,"MINIMUM_DEPTH",H0, &
+  call get_param(param_file, mdl,"SHELFWAVE_Y_LENGTH_SCALE",Ly, &
+                 default=50., do_not_log=.true.)
+  call get_param(param_file, mdl,"MINIMUM_DEPTH",H0, &
                  default=10., do_not_log=.true.)
 
   rLy = 0. ; if (Ly>0.) rLy = 1. / Ly
@@ -153,7 +153,7 @@ subroutine shelfwave_set_OBC_data(OBC, CS, G, h, Time)
   real :: my_amp, time_sec
   real :: cos_wt, cos_ky, sin_wt, sin_ky, omega, alpha
   real :: x, y, jj, kk, ll
-  character(len=40)  :: mod = "shelfwave_set_OBC_data" ! This subroutine's name.
+  character(len=40)  :: mdl = "shelfwave_set_OBC_data" ! This subroutine's name.
   integer :: i, j, k, is, ie, js, je, isd, ied, jsd, jed, n
   integer :: IsdB, IedB, JsdB, JedB
   type(OBC_segment_type), pointer :: segment
@@ -179,8 +179,8 @@ subroutine shelfwave_set_OBC_data(OBC, CS, G, h, Time)
     IsdB = segment%HI%IsdB ; IedB = segment%HI%IedB
     jsd = segment%HI%jsd ; jed = segment%HI%jed
     do j=jsd,jed ; do I=IsdB,IedB
-      x = G%geoLonCu(i,j) - G%west_lon
-      y = G%geoLatCu(i,j) - G%south_lat
+      x = G%geoLonCu(I,j) - G%west_lon
+      y = G%geoLatCu(I,j) - G%south_lat
       sin_wt = sin(ll*x - omega*time_sec)
       cos_wt = cos(ll*x - omega*time_sec)
       sin_ky = sin(kk * y)
