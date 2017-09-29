@@ -1,5 +1,7 @@
 module MOM_diffConvection
 
+! This file is part of MOM6. See LICENSE.md for the license.
+
 use MOM_diag_mediator, only : time_type, diag_ctrl, safe_alloc_ptr, post_data
 use MOM_diag_mediator, only : query_averaging_enabled, register_diag_field
 use MOM_error_handler, only : MOM_error, MOM_mesg, FATAL, WARNING, is_root_PE
@@ -39,15 +41,15 @@ logical, parameter :: verbose = .False.
 contains
 
 logical function diffConvection_init(paramFile, G, diag, Time, CS)
-! Initialize the CVmix KPP module and set up diagnostics
-! Returns True if module is to be used, otherwise returns False.
+!< Initialize the CVmix KPP module and set up diagnostics
+!! Returns True if module is to be used, otherwise returns False.
 
 ! Arguments
-  type(param_file_type),   intent(in)    :: paramFile ! File parser
-  type(ocean_grid_type),   intent(in)    :: G         ! Ocean grid
-  type(diag_ctrl), target, intent(in)    :: diag      ! Diagnostics
-  type(time_type),         intent(in)    :: Time      ! Time
-  type(diffConvection_CS), pointer       :: CS        ! Control structure
+  type(param_file_type),   intent(in)    :: paramFile !< File parser
+  type(ocean_grid_type),   intent(in)    :: G         !< Ocean grid
+  type(diag_ctrl), target, intent(in)    :: diag      !< Diagnostics
+  type(time_type),         intent(in)    :: Time      !< Time
+  type(diffConvection_CS), pointer       :: CS        !< Control structure
 ! Local variables
 #include "version_variable.h"
   character(len=40) :: mdl = 'MOM_diffConvection' ! This module's name.
@@ -96,18 +98,18 @@ end function diffConvection_init
 
 
 subroutine diffConvection_calculate(CS, G, GV, h, Temp, Salt, EOS, Kd_int)
-! Calculates diffusivity and non-local transport for KPP parameterization
+!< Calculates diffusivity and non-local transport for KPP parameterization
 
 ! Arguments
-  type(diffConvection_CS),                   pointer       :: CS    ! Control structure
-  type(ocean_grid_type),                     intent(in)    :: G     ! Ocean grid
-  type(verticalGrid_type),                   intent(in)    :: GV    ! Ocean vertical grid
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(in)    :: h     ! Layer/level thicknesses (units of H)
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(in)    :: Temp  ! Pot. temperature (degrees C)
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(in)    :: Salt  ! Salinity (ppt)
-  type(EOS_type),                            pointer       :: EOS   ! Equation of state
-  real, dimension(SZI_(G),SZJ_(G),SZK_(G)+1), intent(inout) :: Kd_int ! (in) Vertical diffusivity on interfaces (m2/s)
-                                                                 ! (out) Modified vertical diffusivity (m2/s)
+  type(diffConvection_CS),                   pointer       :: CS    !< Control structure
+  type(ocean_grid_type),                     intent(in)    :: G     !< Ocean grid
+  type(verticalGrid_type),                   intent(in)    :: GV    !< Ocean vertical grid
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(in)    :: h     !< Layer/level thicknesses (units of H)
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(in)    :: Temp  !< Pot. temperature (degrees C)
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  intent(in)    :: Salt  !< Salinity (ppt)
+  type(EOS_type),                            pointer       :: EOS   !< Equation of state
+  real, dimension(SZI_(G),SZJ_(G),SZK_(G)+1), intent(inout) :: Kd_int !< (in) Vertical diffusivity on interfaces (m2/s)
+                                                                 !! (out) Modified vertical diffusivity (m2/s)
 ! Local variables
   integer :: i, j, k
   real, dimension( G%ke+1 ) :: N2_1d ! Brunt-Vaisala frequency squared, at interfaces (1/s2)

@@ -1,23 +1,6 @@
 module MOM_sum_output
-!***********************************************************************
-!*                   GNU General Public License                        *
-!* This file is a part of MOM.                                         *
-!*                                                                     *
-!* MOM is free software; you can redistribute it and/or modify it and  *
-!* are expected to follow the terms of the GNU General Public License  *
-!* as published by the Free Software Foundation; either version 2 of   *
-!* the License, or (at your option) any later version.                 *
-!*                                                                     *
-!* MOM is distributed in the hope that it will be useful, but WITHOUT  *
-!* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY  *
-!* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public    *
-!* License for more details.                                           *
-!*                                                                     *
-!* For the full text of the GNU General Public License,                *
-!* write to: Free Software Foundation, Inc.,                           *
-!*           675 Mass Ave, Cambridge, MA 02139, USA.                   *
-!* or see:   http://www.gnu.org/licenses/gpl.html                      *
-!***********************************************************************
+
+! This file is part of MOM6. See LICENSE.md for the license.
 
 !********+*********+*********+*********+*********+*********+*********+**
 !*                                                                     *
@@ -66,6 +49,8 @@ use MOM_interface_heights, only : find_eta
 use MOM_io, only : create_file, fieldtype, flush_file, open_file, reopen_file, get_filename_appendix
 use MOM_io, only : file_exists, slasher, vardesc, var_desc, write_field
 use MOM_io, only : APPEND_FILE, ASCII_FILE, SINGLE_FILE, WRITEONLY_FILE
+use MOM_open_boundary, only : ocean_OBC_type, OBC_segment_type
+use MOM_open_boundary, only : OBC_DIRECTION_E, OBC_DIRECTION_W, OBC_DIRECTION_N, OBC_DIRECTION_S
 use MOM_time_manager, only : time_type, get_time, get_date, set_time, operator(>), operator(-)
 use MOM_time_manager, only : get_calendar_type, NO_CALENDAR
 use MOM_tracer_flow_control, only : tracer_flow_control_CS, call_tracer_stocks
@@ -301,7 +286,7 @@ end subroutine MOM_sum_output_end
 !>  This subroutine calculates and writes the total model energy, the
 !! energy and mass of each layer, and other globally integrated
 !! physical quantities.
-subroutine write_energy(u, v, h, tv, day, n, G, GV, CS, tracer_CSp)
+subroutine write_energy(u, v, h, tv, day, n, G, GV, CS, tracer_CSp, OBC)
   type(ocean_grid_type),                     intent(in)    :: G   !< The ocean's grid structure.
   type(verticalGrid_type),                   intent(in)    :: GV  !< The ocean's vertical grid
                                                                   !! structure.
@@ -318,25 +303,8 @@ subroutine write_energy(u, v, h, tv, day, n, G, GV, CS, tracer_CSp)
   type(Sum_output_CS),                       pointer       :: CS  !< The control structure returned
                                                                   !! by a previous call to
                                                                   !! MOM_sum_output_init.
-  type(tracer_flow_control_CS),    optional, pointer       :: tracer_CSp
-
-
-!  This subroutine calculates and writes the total model energy, the
-! energy and mass of each layer, and other globally integrated
-! physical quantities.
-
-! Arguments: u - Zonal velocity, in m s-1.
-!  (in)      v - Meridional velocity, in m s-1.
-!  (in)      h - Layer thickness, in m.
-!  (in)      tv - A structure containing pointers to any available
-!                 thermodynamic fields, including potential temperature and
-!                 salinity or mixed layer density. Absent fields have NULL ptrs.
-!  (in/out)  day - The current model time.
-!  (in)      n - The time step number of the current execution.
-!  (in)      G - The ocean's grid structure.
-!  (in)      GV - The ocean's vertical grid structure.
-!  (in)      CS - The control structure returned by a previous call to
-!                 MOM_sum_output_init.
+  type(tracer_flow_control_CS),    optional, pointer       :: tracer_CSp !< tracer constrol structure.
+  type(ocean_OBC_type),            optional, pointer       :: OBC !< Open boundaries control structure.
 
   real :: eta(SZI_(G),SZJ_(G),SZK_(G)+1) ! The height of interfaces, in m.
   real :: areaTm(SZI_(G),SZJ_(G)) ! A masked version of areaT, in m2.
@@ -405,7 +373,7 @@ subroutine write_energy(u, v, h, tv, day, n, G, GV, CS, tracer_CSp)
   real :: H_to_m, H_to_kg_m2  ! Local copies of unit conversion factors.
   integer :: num_nc_fields  ! The number of fields that will actually go into
                             ! the NetCDF file.
-  integer :: i, j, k, is, ie, js, je, nz, m, Isq, Ieq, Jsq, Jeq
+  integer :: i, j, k, is, ie, js, je, ns, nz, m, Isq, Ieq, Jsq, Jeq
   integer :: l, lbelow, labove   ! indices of deep_area_vol, used to find
                                  ! H.  lbelow & labove are lower & upper
                                  ! limits for l in the search for lH.
@@ -426,6 +394,8 @@ subroutine write_energy(u, v, h, tv, day, n, G, GV, CS, tracer_CSp)
   real, allocatable :: toten_PE(:)
   integer :: pe_num
   integer :: iyear, imonth, iday, ihour, iminute, isecond, itick ! For call to get_date()
+  logical :: local_open_BC
+  type(OBC_segment_type), pointer :: segment
 
  ! A description for output of each of the fields.
   type(vardesc) :: vars(NUM_FIELDS+MAX_FIELDS_)
@@ -452,6 +422,11 @@ subroutine write_energy(u, v, h, tv, day, n, G, GV, CS, tracer_CSp)
     vars(17) = var_desc("Heat_anom","Joules","Anomalous Total Heat Change",'1','1')
   endif
 
+  local_open_BC = .false.
+  if (present(OBC)) then ; if (associated(OBC)) then
+    local_open_BC = (OBC%open_u_BCs_exist_globally .or. OBC%open_v_BCs_exist_globally)
+  endif ; endif
+
   is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec ; nz = G%ke
   Isq = G%IscB ; Ieq = G%IecB ; Jsq = G%JscB ; Jeq = G%JecB
   H_to_m = GV%H_to_m ; H_to_kg_m2 = GV%H_to_kg_m2
@@ -468,6 +443,35 @@ subroutine write_energy(u, v, h, tv, day, n, G, GV, CS, tracer_CSp)
     do k=1,nz ; do j=js,je ; do i=is,ie
       tmp1(i,j,k) = h(i,j,k) * (H_to_kg_m2*areaTm(i,j))
     enddo ; enddo ; enddo
+
+    ! This block avoids using the points beyond an open boundary condition
+    ! in the accumulation of mass, but perhaps it would be unnecessary if there
+    ! were a more judicious use of masks in the loops 4 or 7 lines above.
+    if (local_open_BC) then
+      do ns=1, OBC%number_of_segments
+        segment => OBC%segment(ns)
+        if (.not. segment%on_pe .or. segment%specified) cycle
+        I=segment%HI%IsdB ; J=segment%HI%JsdB
+        if (segment%direction == OBC_DIRECTION_E) then
+          do k=1,nz ; do j=segment%HI%jsd,segment%HI%jed
+            tmp1(i+1,j,k) = 0.0
+          enddo ; enddo
+        elseif (segment%direction == OBC_DIRECTION_W) then
+          do k=1,nz ; do j=segment%HI%jsd,segment%HI%jed
+            tmp1(i,j,k) = 0.0
+          enddo ; enddo
+        elseif (segment%direction == OBC_DIRECTION_N) then
+          do k=1,nz ; do i=segment%HI%isd,segment%HI%ied
+            tmp1(i,j+1,k) = 0.0
+          enddo ; enddo
+        elseif (segment%direction == OBC_DIRECTION_S) then
+          do k=1,nz ; do i=segment%HI%isd,segment%HI%ied
+            tmp1(i,j,k) = 0.0
+          enddo ; enddo
+        endif
+      enddo
+    endif
+
     mass_tot = reproducing_sum(tmp1, sums=mass_lay, EFP_sum=mass_EFP)
     do k=1,nz ; vol_lay(k) = (H_to_m/H_to_kg_m2)*mass_lay(k) ; enddo
   else
@@ -620,7 +624,7 @@ subroutine write_energy(u, v, h, tv, day, n, G, GV, CS, tracer_CSp)
         hbelow = 0.0
         do k=nz,1,-1
           hbelow = hbelow + h(i,j,k) * H_to_m
-          hint = (H_0APE(K) + hbelow - G%bathyT(i,j))
+          hint = H_0APE(K) + (hbelow - G%bathyT(i,j))
           hbot = H_0APE(K) - G%bathyT(i,j)
           hbot = (hbot + ABS(hbot)) * 0.5
           PE_pt(i,j,K) = 0.5 * areaTm(i,j) * (GV%Rho0*GV%g_prime(K)) * &

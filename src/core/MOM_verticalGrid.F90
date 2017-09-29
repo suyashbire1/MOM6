@@ -1,24 +1,6 @@
 module MOM_verticalGrid
 
-!***********************************************************************
-!*                   GNU General Public License                        *
-!* This file is a part of MOM.                                         *
-!*                                                                     *
-!* MOM is free software; you can redistribute it and/or modify it and  *
-!* are expected to follow the terms of the GNU General Public License  *
-!* as published by the Free Software Foundation; either version 2 of   *
-!* the License, or (at your option) any later version.                 *
-!*                                                                     *
-!* MOM is distributed in the hope that it will be useful, but WITHOUT  *
-!* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY  *
-!* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public    *
-!* License for more details.                                           *
-!*                                                                     *
-!* For the full text of the GNU General Public License,                *
-!* write to: Free Software Foundation, Inc.,                           *
-!*           675 Mass Ave, Cambridge, MA 02139, USA.                   *
-!* or see:   http://www.gnu.org/licenses/gpl.html                      *
-!***********************************************************************
+! This file is part of MOM6. See LICENSE.md for the license.
 
 use MOM_error_handler, only : MOM_error, MOM_mesg, FATAL
 use MOM_file_parser, only : get_param, log_param, log_version, param_file_type
@@ -142,7 +124,7 @@ subroutine verticalGridInit( param_file, GV )
     GV%H_to_kg_m2 = GV%Rho0 * GV%H_to_m
     GV%kg_m2_to_H = 1.0 / GV%H_to_kg_m2
     GV%m_to_H = 1.0 / GV%H_to_m
-    GV%Angstrom = GV%Angstrom_z
+    GV%Angstrom = GV%m_to_H * GV%Angstrom_z
   else
     GV%kg_m2_to_H = 1.0 / GV%H_to_kg_m2
     GV%m_to_H = GV%Rho0 * GV%kg_m2_to_H

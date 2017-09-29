@@ -1,24 +1,6 @@
 module MOM_checksum_packages
 
-!***********************************************************************
-!*                   GNU General Public License                        *
-!* This file is a part of MOM.                                         *
-!*                                                                     *
-!* MOM is free software; you can redistribute it and/or modify it and  *
-!* are expected to follow the terms of the GNU General Public License  *
-!* as published by the Free Software Foundation; either version 2 of   *
-!* the License, or (at your option) any later version.                 *
-!*                                                                     *
-!* MOM is distributed in the hope that it will be useful, but WITHOUT  *
-!* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY  *
-!* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public    *
-!* License for more details.                                           *
-!*                                                                     *
-!* For the full text of the GNU General Public License,                *
-!* write to: Free Software Foundation, Inc.,                           *
-!*           675 Mass Ave, Cambridge, MA 02139, USA.                   *
-!* or see:   http://www.gnu.org/licenses/gpl.html                      *
-!***********************************************************************
+! This file is part of MOM6. See LICENSE.md for the license.
 
 !   This module provdes a several routines that do check-sums of groups
 ! of variables in the various dynamic solver routines.
@@ -182,8 +164,7 @@ subroutine MOM_accel_chksum(mesg, CAu, CAv, PFu, PFv, diffu, diffv, G, GV, pbce,
   real, dimension(SZI_(G),SZJ_(G),SZK_(G)),  &
                   optional, intent(in) :: pbce !< The baroclinic pressure anomaly in each layer
                                                !! due to free surface height anomalies, in
-                                               !! m s-2.pbce points to a space with nz layers
-                                               !! or NULL.                                                                            !! NULL.
+                                               !! m2 s-2 H-1.                                                                         !! NULL.
   real, dimension(SZIB_(G),SZJ_(G),SZK_(G)), &
                   optional, intent(in) :: u_accel_bt !< The zonal acceleration from terms in the
                                                      !! barotropic solver,in m s-2.
@@ -209,7 +190,7 @@ subroutine MOM_accel_chksum(mesg, CAu, CAv, PFu, PFv, diffu, diffv, G, GV, pbce,
 !  (in)      G - The ocean's grid structure.
 !  (in)      GV - The ocean's vertical grid structure.
 !  (in)      pbce - the baroclinic pressure anomaly in each layer
-!                   due to free surface height anomalies, in m s-2.
+!                   due to free surface height anomalies, in m2 s-2 H-1.
 !                   pbce points to a space with nz layers or NULL.
 !  (in)      u_accel_bt - The zonal acceleration from terms in the barotropic
 !                         solver, in m s-2.
@@ -228,7 +209,7 @@ subroutine MOM_accel_chksum(mesg, CAu, CAv, PFu, PFv, diffu, diffv, G, GV, pbce,
   call uvchksum(mesg//" PF[uv]", PFu, PFv, G%HI, haloshift=0, symmetric=sym)
   call uvchksum(mesg//" diffu", diffu, diffv, G%HI,haloshift=0, symmetric=sym)
   if (present(pbce)) &
-    call hchksum(pbce, mesg//" pbce",G%HI,haloshift=0, scale=GV%H_to_m)
+    call hchksum(pbce, mesg//" pbce",G%HI,haloshift=0, scale=GV%m_to_H)
   if (present(u_accel_bt) .and. present(v_accel_bt)) &
     call uvchksum(mesg//" [uv]_accel_bt", u_accel_bt, v_accel_bt, G%HI,haloshift=0, symmetric=sym)
 end subroutine MOM_accel_chksum
