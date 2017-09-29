@@ -1841,7 +1841,8 @@ subroutine surface_forcing_init(Time, G, param_file, diag, CS, tracer_flow_CSp)
 
   if (trim(CS%wind_config) == "USER" .or. trim(CS%buoy_config) == "USER" ) then
     call USER_surface_forcing_init(Time, G, param_file, diag, CS%user_forcing_CSp)
-  elseif (trim(CS%wind_config) == "BFB" .or. trim(CS%buoy_config) == "BFB" ) then
+  elseif (trim(CS%wind_config) == "BFB_const" .or. trim(CS%wind_config) == "BFB" .or. trim(CS%buoy_config) == "BFB" ) then
+    call BFB_surface_forcing_init(Time, G, param_file, diag, CS%BFB_forcing_CSp)
     call BFB_surface_forcing_init(Time, G, param_file, diag, CS%BFB_forcing_CSp)
   elseif (trim(CS%wind_config) == "MESO" .or. trim(CS%buoy_config) == "MESO" ) then
     call MESO_surface_forcing_init(Time, G, param_file, diag, CS%MESO_forcing_CSp)
