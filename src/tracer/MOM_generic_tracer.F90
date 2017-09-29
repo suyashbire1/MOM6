@@ -1,22 +1,7 @@
-!***********************************************************************
-!*                   GNU General Public License                        *
-!* This file is a part of MOM.                                         *
-!*                                                                     *
-!* MOM is free software; you can redistribute it and/or modify it and  *
-!* are expected to follow the terms of the GNU General Public License  *
-!* as published by the Free Software Foundation; either version 2 of   *
-!* the License, or (at your option) any later version.                 *
-!*                                                                     *
-!* MOM is distributed in the hope that it will be useful, but WITHOUT  *
-!* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY  *
-!* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public    *
-!* License for more details.                                           *
-!*                                                                     *
-!* For the full text of the GNU General Public License,                *
-!* write to: Free Software Foundation, Inc.,                           *
-!*           675 Mass Ave, Cambridge, MA 02139, USA.                   *
-!* or see:   http://www.gnu.org/licenses/gpl.html                      *
-!***********************************************************************
+module MOM_generic_tracer
+
+! This file is part of MOM6. See LICENSE.md for the license.
+
 !----------------------------------------------------------------
 ! <CONTACT EMAIL="Niki.Zadeh@noaa.gov"> Niki Zadeh
 ! </CONTACT>
@@ -30,8 +15,6 @@
 !----------------------------------------------------------------
 
 #include <MOM_memory.h>
-
-module MOM_generic_tracer
 
 #ifdef _USE_GENERIC_TRACER
 #include <fms_platform.h>
@@ -923,7 +906,8 @@ contains
   end subroutine MOM_generic_tracer_surface_state
 
 !ALL PE subroutine on Ocean!  Due to otpm design the fluxes should be initialized like this on ALL PE's!
-  subroutine MOM_generic_flux_init
+  subroutine MOM_generic_flux_init(verbosity)
+    integer, intent(in), optional :: verbosity  !< A 0-9 integer indicating a level of verbosity.
 
     integer :: ind
     character(len=fm_string_len)   :: g_tracer_name,longname, package,units,old_package,file_in,file_out
@@ -945,7 +929,7 @@ contains
     g_tracer=>g_tracer_list
     do
 
-       call g_tracer_flux_init(g_tracer)
+       call g_tracer_flux_init(g_tracer) !, verbosity=verbosity) !### Add this after ocean shared is updated.
 
        !traverse the linked list till hit NULL
        call g_tracer_get_next(g_tracer, g_tracer_next)

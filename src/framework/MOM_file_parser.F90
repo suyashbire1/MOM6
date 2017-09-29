@@ -1,23 +1,6 @@
 module MOM_file_parser
-!***********************************************************************
-!*                   GNU General Public License                        *
-!* This file is a part of MOM.                                         *
-!*                                                                     *
-!* MOM is free software; you can redistribute it and/or modify it and  *
-!* are expected to follow the terms of the GNU General Public License  *
-!* as published by the Free Software Foundation; either version 2 of   *
-!* the License, or (at your option) any later version.                 *
-!*                                                                     *
-!* MOM is distributed in the hope that it will be useful, but WITHOUT  *
-!* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY  *
-!* or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public    *
-!* License for more details.                                           *
-!*                                                                     *
-!* For the full text of the GNU General Public License,                *
-!* write to: Free Software Foundation, Inc.,                           *
-!*           675 Mass Ave, Cambridge, MA 02139, USA.                   *
-!* or see:   http://www.gnu.org/licenses/gpl.html                      *
-!***********************************************************************
+
+! This file is part of MOM6. See LICENSE.md for the license.
 
 !********+*********+*********+*********+*********+*********+*********+**
 !*                                                                     *
@@ -275,6 +258,9 @@ subroutine close_param_file(CS, quiet_close, component)
 
   if (present(quiet_close)) then ; if (quiet_close) then
     do i = 1, CS%nfiles
+      if (all_PEs_read .or. is_root_pe()) close(CS%iounit(i))
+      call MOM_mesg("close_param_file: "// trim(CS%filename(i))// &
+                    " has been closed successfully.", 5)
       CS%iounit(i) = -1
       CS%filename(i) = ''
       CS%NetCDF_file(i) = .false.
@@ -322,14 +308,9 @@ subroutine close_param_file(CS, quiet_close, component)
 
   num_unused = 0
   do i = 1, CS%nfiles
-    ! only root pe has the file open
-    if (all_PEs_read .or. is_root_pe()) close(CS%iounit(i))
-    call MOM_mesg("close_param_file: "// trim(CS%filename(i))// &
-                 " has been closed successfully.", 5)
-
-    ! Check for unused lines.
     if (is_root_pe() .and. (CS%report_unused .or. &
                             CS%unused_params_fatal)) then
+      ! Check for unused lines.
       do n=1,CS%param_data(i)%num_lines
         if (.not.CS%param_data(i)%line_used(n)) then
           num_unused = num_unused + 1
@@ -340,6 +321,9 @@ subroutine close_param_file(CS, quiet_close, component)
       enddo
     endif
 
+    if (all_PEs_read .or. is_root_pe()) close(CS%iounit(i))
+    call MOM_mesg("close_param_file: "// trim(CS%filename(i))// &
+                  " has been closed successfully.", 5)
     CS%iounit(i) = -1
     CS%filename(i) = ''
     CS%NetCDF_file(i) = .false.
