@@ -296,17 +296,13 @@ subroutine set_forcing(sfc_state, forces, fluxes, day_start, day_interval, G, CS
     elseif (trim(CS%wind_config) == "SCM_ideal_hurr") then
       call SCM_idealized_hurricane_wind_forcing(sfc_state, forces, day_center, G, CS%SCM_idealized_hurricane_CSp)
     elseif (trim(CS%wind_config) == "SCM_CVmix_tests") then
-<<<<<<< HEAD
-      call SCM_CVmix_tests_wind_forcing(state, fluxes, day_center, G, CS%SCM_CVmix_tests_CSp)
-    elseif (trim(CS%wind_config) == "BFB") then
-      call BFB_wind_forcing(state, fluxes, day_center, G, CS%BFB_forcing_CSp)
-    elseif (trim(CS%wind_config) == "BFB_const") then
-      call BFB_wind_forcing_const(state, fluxes, day_center, G, CS%BFB_forcing_CSp)
-    elseif (trim(CS%wind_config) == "BFB_tapered") then
-      call BFB_wind_forcing_tapered(state, fluxes, day_center, G, CS%BFB_forcing_CSp)
-=======
       call SCM_CVmix_tests_wind_forcing(sfc_state, forces, day_center, G, CS%SCM_CVmix_tests_CSp)
->>>>>>> dev/master
+    elseif (trim(CS%wind_config) == "BFB") then
+      call BFB_wind_forcing(sfc_state, forces, day_center, G, CS%BFB_forcing_CSp)
+    elseif (trim(CS%wind_config) == "BFB_const") then
+      call BFB_wind_forcing_const(sfc_state, forces, day_center, G, CS%BFB_forcing_CSp)
+    elseif (trim(CS%wind_config) == "BFB_tapered") then
+      call BFB_wind_forcing_tapered(sfc_state, forces, day_center, G, CS%BFB_forcing_CSp)
     elseif (trim(CS%wind_config) == "USER") then
       call USER_wind_forcing(sfc_state, forces, day_center, G, CS%user_forcing_CSp)
     elseif (CS%variable_winds .and. .not.CS%first_call_set_forcing) then

@@ -20,7 +20,8 @@ use MOM_diag_mediator, only : register_diag_field, diag_ctrl
 use MOM_domains, only : pass_var, pass_vector, AGRID
 use MOM_error_handler, only : MOM_error, FATAL, WARNING, is_root_pe
 use MOM_file_parser, only : get_param, param_file_type, log_version
-use MOM_forcing_type, only : forcing, allocate_forcing_type
+use MOM_forcing_type, only : forcing, mech_forcing
+use MOM_forcing_type, only : allocate_forcing_type, allocate_mech_forcing
 use MOM_grid, only : ocean_grid_type
 use MOM_io, only : file_exists, read_data
 use MOM_time_manager, only : time_type, operator(+), operator(/), get_time
@@ -73,24 +74,24 @@ end type BFB_surface_forcing_CS
 
 contains
 
-subroutine BFB_wind_forcing(state, fluxes, day, G, CS)
+subroutine BFB_wind_forcing(state, forces, day, G, CS)
   type(surface),                 intent(inout) :: state
-  type(forcing),                 intent(inout) :: fluxes
+  type(mech_forcing),                 intent(inout) :: forces
   type(time_type),               intent(in)    :: day
   type(ocean_grid_type),         intent(inout) :: G    !< The ocean's grid structure
   type(BFB_surface_forcing_CS),  pointer       :: CS
 
-!   This subroutine sets the surface wind stresses, fluxes%taux and fluxes%tauy.
+!   This subroutine sets the surface wind stresses, forces%taux and forces%tauy.
 ! These are the stresses in the direction of the model grid (i.e. the same
 ! direction as the u- and v- velocities.)  They are both in Pa.
 !   In addition, this subroutine can be used to set the surface friction
-! velocity, fluxes%ustar, in m s-1. This is needed with a bulk mixed layer.
+! velocity, forces%ustar, in m s-1. This is needed with a bulk mixed layer.
 !
 ! Arguments: state - A structure containing fields that describe the
 !                    surface state of the ocean.
-!  (out)     fluxes - A structure containing pointers to any possible
+!  (out)     forces - A structure containing pointers to any possible
 !                     forcing fields.  Unused fields have NULL ptrs.
-!  (in)      day - Time of the fluxes.
+!  (in)      day - Time of the forces.
 !  (in)      G - The ocean's grid structure.
 !  (in)      CS - A pointer to the control structure returned by a previous
 !                 call to user_surface_forcing_init
@@ -109,7 +110,7 @@ subroutine BFB_wind_forcing(state, fluxes, day, G, CS)
   IsdB = G%IsdB ; IedB = G%IedB ; JsdB = G%JsdB ; JedB = G%JedB
 
   ! Allocate the forcing arrays, if necessary.
-  ! call allocate_forcing_type(G, fluxes, stress=.true., ustar=.true.)
+  ! call allocate_forcing_type(G, forces, stress=.true., ustar=.true.)
 
   !  Set the surface wind stresses, in units of Pa.  A positive taux
   !  accelerates the ocean to the (pseudo-)east.
@@ -117,14 +118,14 @@ subroutine BFB_wind_forcing(state, fluxes, day, G, CS)
   !  The i-loop extends to is-1 so that taux can be used later in the
   ! calculation of ustar - otherwise the lower bound would be Isq.
   do j=js,je ; do I=isq,Ieq
-    fluxes%taux(I,j) = G%mask2dCu(I,j) * 0.0  ! Change this to the desired expression.
+    forces%taux(I,j) = G%mask2dCu(I,j) * 0.0  ! Change this to the desired expression.
   enddo ; enddo
   do J=jsq,Jeq ; do i=is,ie
-    fluxes%tauy(i,J) = G%mask2dCv(i,J) * 0.0
+    forces%tauy(i,J) = G%mask2dCv(i,J) * 0.0
     if (G%geoLonCv(i,j) > CS%wfwextent) then
       if (G%geoLatCv(i,j) > CS%wfsextent) then
         if (G%geoLatCv(i,j) < CS%wfnextent) then
-          fluxes%tauy(i,J) = G%mask2dCv(i,J) * CS%tauy0
+          forces%tauy(i,J) = G%mask2dCv(i,J) * CS%tauy0
         end if
       end if
     end if
@@ -132,24 +133,24 @@ subroutine BFB_wind_forcing(state, fluxes, day, G, CS)
 
 end subroutine BFB_wind_forcing
 
-subroutine BFB_wind_forcing_tapered(state, fluxes, day, G, CS)
+subroutine BFB_wind_forcing_tapered(state, forces, day, G, CS)
   type(surface),                 intent(inout) :: state
-  type(forcing),                 intent(inout) :: fluxes
+  type(mech_forcing),                 intent(inout) :: forces
   type(time_type),               intent(in)    :: day
   type(ocean_grid_type),         intent(inout) :: G    !< The ocean's grid structure
   type(BFB_surface_forcing_CS),  pointer       :: CS
 
-!   This subroutine sets the surface wind stresses, fluxes%taux and fluxes%tauy.
+!   This subroutine sets the surface wind stresses, forces%taux and forces%tauy.
 ! These are the stresses in the direction of the model grid (i.e. the same
 ! direction as the u- and v- velocities.)  They are both in Pa.
 !   In addition, this subroutine can be used to set the surface friction
-! velocity, fluxes%ustar, in m s-1. This is needed with a bulk mixed layer.
+! velocity, forces%ustar, in m s-1. This is needed with a bulk mixed layer.
 !
 ! Arguments: state - A structure containing fields that describe the
 !                    surface state of the ocean.
-!  (out)     fluxes - A structure containing pointers to any possible
+!  (out)     forces - A structure containing pointers to any possible
 !                     forcing fields.  Unused fields have NULL ptrs.
-!  (in)      day - Time of the fluxes.
+!  (in)      day - Time of the forces.
 !  (in)      G - The ocean's grid structure.
 !  (in)      CS - A pointer to the control structure returned by a previous
 !                 call to user_surface_forcing_init
@@ -170,7 +171,7 @@ subroutine BFB_wind_forcing_tapered(state, fluxes, day, G, CS)
   IsdB = G%IsdB ; IedB = G%IedB ; JsdB = G%JsdB ; JedB = G%JedB
 
   ! Allocate the forcing arrays, if necessary.
-  ! call allocate_forcing_type(G, fluxes, stress=.true., ustar=.true.)
+  ! call allocate_forcing_type(G, forces, stress=.true., ustar=.true.)
 
   !  Set the surface wind stresses, in units of Pa.  A positive taux
   !  accelerates the ocean to the (pseudo-)east.
@@ -178,60 +179,60 @@ subroutine BFB_wind_forcing_tapered(state, fluxes, day, G, CS)
   !  The i-loop extends to is-1 so that taux can be used later in the
   ! calculation of ustar - otherwise the lower bound would be Isq.
   do j=js,je ; do I=isq,Ieq
-    fluxes%taux(I,j) = G%mask2dCu(I,j) * 0.0  ! Change this to the desired expression.
+    forces%taux(I,j) = G%mask2dCu(I,j) * 0.0  ! Change this to the desired expression.
   enddo ; enddo
   do J=jsq,Jeq ; do i=is,ie
-    fluxes%tauy(i,J) = G%mask2dCv(i,J) * 0.0
+    forces%tauy(i,J) = G%mask2dCv(i,J) * 0.0
     if (G%geoLonCv(i,j) > CS%wfwextent) then
       if ((G%geoLatCv(i,j) > CS%wfsextent) .and. (G%geoLatCv(i,j) < CS%wfnextent)) then
-          fluxes%tauy(i,J) = G%mask2dCv(i,J) * CS%tauy0
+          forces%tauy(i,J) = G%mask2dCv(i,J) * CS%tauy0
       else if ((G%geoLatCv(i,j) > (CS%wfsextent - CS%wframplen)) .and. (G%geoLatCv(i,j) < CS%wfsextent)) then
-          fluxes%tauy(i,J) = G%mask2dCv(i,J) * CS%tauy0 * (G%geoLatCv(i,j)&
+          forces%tauy(i,J) = G%mask2dCv(i,J) * CS%tauy0 * (G%geoLatCv(i,j)&
                & - CS%wfsextent + CS%wframplen)*Iwframplen
       else if ((G%geoLatCv(i,j) < (CS%wfnextent + CS%wframplen)) .and. (G%geoLatCv(i,j) > CS%wfnextent)) then
-          fluxes%tauy(i,J) = - G%mask2dCv(i,J) * CS%tauy0 * (G%geoLatCv(i,j)&
+          forces%tauy(i,J) = - G%mask2dCv(i,J) * CS%tauy0 * (G%geoLatCv(i,j)&
                & - CS%wfnextent - CS%wframplen)*Iwframplen
       end if
     elseif (G%geoLonCv(i,j) > (CS%wfwextent - CS%wframplen)) then
       if ((G%geoLatCv(i,j) > CS%wfsextent) .and. (G%geoLatCv(i,j) < CS%wfnextent)) then
-          fluxes%tauy(i,J) = G%mask2dCv(i,J) * CS%tauy0 * (G%geoLonCv(i,j)&
+          forces%tauy(i,J) = G%mask2dCv(i,J) * CS%tauy0 * (G%geoLonCv(i,j)&
                & - CS%wfwextent + CS%wframplen)*Iwframplen
       elseif ((G%geoLatCv(i,j) > (CS%wfsextent - CS%wframplen)) .and. (G%geoLatCv(i,j) < CS%wfsextent)) then
           meridramp = G%mask2dCv(i,J) * CS%tauy0 * (G%geoLatCv(i,j)&
                & - CS%wfsextent + CS%wframplen)*Iwframplen
           zonalramp = G%mask2dCv(i,J) * CS%tauy0 * (G%geoLonCv(i,j)&
                & - CS%wfwextent + CS%wframplen)*Iwframplen
-          fluxes%tauy(i,J) = max(meridramp, zonalramp)
+          forces%tauy(i,J) = max(meridramp, zonalramp)
       elseif ((G%geoLatCv(i,j) < (CS%wfnextent + CS%wframplen)) .and. (G%geoLatCv(i,j) > CS%wfnextent)) then
           meridramp = - G%mask2dCv(i,J) * CS%tauy0 * (G%geoLatCv(i,j)&
                & - CS%wfnextent - CS%wframplen)*Iwframplen
           zonalramp = G%mask2dCv(i,J) * CS%tauy0 * (G%geoLonCv(i,j)&
                & - CS%wfwextent + CS%wframplen)*Iwframplen
-          fluxes%tauy(i,J) = max(meridramp, zonalramp)
+          forces%tauy(i,J) = max(meridramp, zonalramp)
       end if
    end if
   enddo ; enddo
 
 end subroutine BFB_wind_forcing_tapered
 
-subroutine BFB_wind_forcing_const(state, fluxes, day, G, CS)
+subroutine BFB_wind_forcing_const(state, forces, day, G, CS)
   type(surface),                 intent(inout) :: state
-  type(forcing),                 intent(inout) :: fluxes
+  type(mech_forcing),                 intent(inout) :: forces
   type(time_type),               intent(in)    :: day
   type(ocean_grid_type),         intent(inout) :: G    !< The ocean's grid structure
   type(BFB_surface_forcing_CS),  pointer       :: CS
 
-!   This subroutine sets the surface wind stresses, fluxes%taux and fluxes%tauy.
+!   This subroutine sets the surface wind stresses, forces%taux and forces%tauy.
 ! These are the stresses in the direction of the model grid (i.e. the same
 ! direction as the u- and v- velocities.)  They are both in Pa.
 !   In addition, this subroutine can be used to set the surface friction
-! velocity, fluxes%ustar, in m s-1. This is needed with a bulk mixed layer.
+! velocity, forces%ustar, in m s-1. This is needed with a bulk mixed layer.
 !
 ! Arguments: state - A structure containing fields that describe the
 !                    surface state of the ocean.
-!  (out)     fluxes - A structure containing pointers to any possible
+!  (out)     forces - A structure containing pointers to any possible
 !                     forcing fields.  Unused fields have NULL ptrs.
-!  (in)      day - Time of the fluxes.
+!  (in)      day - Time of the forces.
 !  (in)      G - The ocean's grid structure.
 !  (in)      CS - A pointer to the control structure returned by a previous
 !                 call to user_surface_forcing_init
@@ -250,7 +251,7 @@ subroutine BFB_wind_forcing_const(state, fluxes, day, G, CS)
   IsdB = G%IsdB ; IedB = G%IedB ; JsdB = G%JsdB ; JedB = G%JedB
 
   ! Allocate the forcing arrays, if necessary.
-  ! call allocate_forcing_type(G, fluxes, stress=.true., ustar=.true.)
+  ! call allocate_forcing_type(G, forces, stress=.true., ustar=.true.)
 
   !  Set the surface wind stresses, in units of Pa.  A positive taux
   !  accelerates the ocean to the (pseudo-)east.
@@ -258,10 +259,10 @@ subroutine BFB_wind_forcing_const(state, fluxes, day, G, CS)
   !  The i-loop extends to is-1 so that taux can be used later in the
   ! calculation of ustar - otherwise the lower bound would be Isq.
   do j=js,je ; do I=isq,Ieq
-    fluxes%taux(I,j) = G%mask2dCu(I,j) * 0.0  ! Change this to the desired expression.
+    forces%taux(I,j) = G%mask2dCu(I,j) * 0.0  ! Change this to the desired expression.
   enddo ; enddo
   do J=jsq,Jeq ; do i=is,ie
-    fluxes%tauy(i,J) = G%mask2dCv(i,J) * CS%tauy0
+    forces%tauy(i,J) = G%mask2dCv(i,J) * CS%tauy0
   enddo ; enddo
 
 end subroutine BFB_wind_forcing_const
