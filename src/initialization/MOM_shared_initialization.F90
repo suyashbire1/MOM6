@@ -1158,8 +1158,6 @@ subroutine write_ocean_geometry_file(G, param_file, directory, geom_file)
   vars(22) = var_desc("Dblock_v","m","Blocked depth at v points",'v','1','1')
   vars(23) = var_desc("Dopen_v","m","Open depth at v points",'v','1','1')
 
->>>>>>> dev/master
-
   nFlds_used = 22 ; if (G%bathymetry_at_vel) nFlds_used = 26
 
   if (present(geom_file)) then
