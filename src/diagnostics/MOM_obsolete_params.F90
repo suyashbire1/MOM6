@@ -66,6 +66,8 @@ subroutine find_obsolete_params(param_file)
        hint="Instead use OBC_SEGMENT_XXX_DATA.")
   call obsolete_char(param_file, "READ_OBC_TS", &
        hint="Instead use OBC_SEGMENT_XXX_DATA.")
+  call obsolete_char(param_file, "EXTEND_OBC_SEGMENTS", &
+       hint="This option is no longer needed, nor supported.")
 
   test_logic3 = .true. ; call read_param(param_file,"ENABLE_THERMODYNAMICS",test_logic3)
   test_logic = .true. ; call read_param(param_file,"TEMPERATURE",test_logic)
@@ -112,6 +114,8 @@ subroutine find_obsolete_params(param_file)
 
   call obsolete_real(param_file, "BT_COR_SLOW_RATE", 0.0)
   call obsolete_real(param_file, "BT_COR_FRAC", 1.0)
+
+  call obsolete_logical(param_file, "MASK_MASSLESS_TRACERS", .false.)
 
   call obsolete_logical(param_file, "BT_INCLUDE_UDHDT", .false.)
 
@@ -177,13 +181,12 @@ subroutine find_obsolete_params(param_file)
     "find_obsolete_params: #define DYNAMIC_SURFACE_PRESSURE is not yet "//&
     "implemented without #define SPLIT.")
 
-  call read_param(param_file,"USE_LEGACY_SPLIT",test_logic)
-  if (.not.(split .and. test_logic)) then
-    call obsolete_logical(param_file, "FLUX_BT_COUPLING", .false.)
-    call obsolete_logical(param_file, "READJUST_BT_TRANS", .false.)
-    call obsolete_logical(param_file, "RESCALE_BE_FACE_AREAS", .false.)
-    call obsolete_logical(param_file, "APPLY_BT_DRAG", .true.)
-  endif
+  call obsolete_logical(param_file, "USE_LEGACY_SPLIT", .false.)
+
+  call obsolete_logical(param_file, "FLUX_BT_COUPLING", .false.)
+  call obsolete_logical(param_file, "READJUST_BT_TRANS", .false.)
+  call obsolete_logical(param_file, "RESCALE_BT_FACE_AREAS", .false.)
+  call obsolete_logical(param_file, "APPLY_BT_DRAG", .true.)
 
   call obsolete_int(param_file, "SEAMOUNT_LENGTH_SCALE", hint="Use SEAMOUNT_X_LENGTH_SCALE instead.")
 

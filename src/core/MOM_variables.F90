@@ -6,7 +6,6 @@ use MOM_domains, only : MOM_domain_type, get_domain_extent, group_pass_type
 use MOM_debugging, only : hchksum
 use MOM_error_handler, only : MOM_error, FATAL
 use MOM_grid, only : ocean_grid_type
-use MOM_io, only : vardesc
 use MOM_EOS, only : EOS_type
 
 use coupler_types_mod, only : coupler_2d_bc_type
@@ -16,7 +15,7 @@ implicit none ; private
 #include <MOM_memory.h>
 
 public MOM_thermovar_chksum
-public ocean_grid_type, vardesc, alloc_BT_cont_type, dealloc_BT_cont_type
+public ocean_grid_type, alloc_BT_cont_type, dealloc_BT_cont_type
 
 type, public :: p3d
   real, dimension(:,:,:), pointer :: p => NULL()
@@ -43,6 +42,10 @@ type, public :: surface
     ocean_salt, &  !< The total salt content of the ocean in kgSalt m-2.
     salt_deficit   !< The salt needed to maintain the ocean column at a minimum
                    !! salinity of 0.01 PSU over the call to step_MOM, in kgSalt m-2.
+  logical :: T_is_conT = .false. !< If true, the temperature variable SST is
+                         !! actually the conservative temperature, in degC.
+  logical :: S_is_absS = .false. !< If true, the salinity variable SSS is
+                         !! actually the absolute salinity, in g/kg.
   real, pointer, dimension(:,:) :: &
     taux_shelf => NULL(), &  !< The zonal and meridional stresses on the ocean
     tauy_shelf => NULL(), &  !< under shelves, in Pa.
@@ -82,6 +85,10 @@ type, public :: thermo_var_ptrs
   real :: C_p            !<   The heat capacity of seawater, in J K-1 kg-1.
                          !! When conservative temperature is used, this is
                          !! constant and exactly 3991.86795711963 J K kg-1.
+  logical :: T_is_conT = .false. !< If true, the temperature variable tv%T is
+                         !! actually the conservative temperature, in degC.
+  logical :: S_is_absS = .false. !< If true, the salinity variable tv%S is
+                         !! actually the absolute salinity, in g/kg.
   real, pointer, dimension(:,:) :: &
 !  These arrays are accumulated fluxes for communication with other components.
     frazil => NULL(), &  !<   The energy needed to heat the ocean column to the
