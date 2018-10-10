@@ -1,37 +1,15 @@
+!> Initialization of the boundary-forced-basing configuration
 module BFB_initialization
 
 ! This file is part of MOM6. See LICENSE.md for the license.
-
-!********+*********+*********+*********+*********+*********+*********+**
-!*                                                                     *
-!*  By Robert Hallberg, April 1994 - June 2002                         *
-!*                                                                     *
-!*    This subroutine initializes the fields for the simulations.      *
-!*  The one argument passed to initialize, Time, is set to the         *
-!*  current time of the simulation.  The fields which are initialized  *
-!*  here are:                                                          *
-!*    G%g_prime - The reduced gravity at each interface, in m s-2.     *
-!*    G%Rlay - Layer potential density (coordinate variable) in kg m-3.*
-!*  If SPONGE is defined:                                              *
-!*    A series of subroutine calls are made to set up the damping      *
-!*    rates and reference profiles for all variables that are damped   *
-!*    in the sponge.                                                   *
-!*                                                                     *
-!*    These variables are all set in the set of subroutines (in this   *
-!*  file) BFB_initialize_sponges_southonly and BFB_set_coord.          *
-!*                                                                     *
-!********+*********+*********+*********+*********+*********+*********+**
 
 use MOM_error_handler, only : MOM_mesg, MOM_error, FATAL, is_root_pe
 use MOM_file_parser, only : get_param, log_version, param_file_type
 use MOM_get_input, only : directories
 use MOM_grid, only : ocean_grid_type
 use MOM_dyn_horgrid, only : dyn_horgrid_type
-use MOM_io, only : close_file, create_file, fieldtype, file_exists
-use MOM_io, only : open_file, read_data, read_axis_data, SINGLE_FILE
-use MOM_io, only : write_field, slasher
 use MOM_sponge, only : set_up_sponge_field, initialize_sponge, sponge_CS
-use MOM_tracer_registry, only : tracer_registry_type, add_tracer_OBC_values
+use MOM_tracer_registry, only : tracer_registry_type
 use MOM_variables, only : thermo_var_ptrs
 use MOM_EOS, only : calculate_density, calculate_density_derivs, EOS_type
 use MOM_verticalGrid, only : verticalGrid_type
@@ -44,6 +22,8 @@ public BFB_initialize_thickness, BFB_initialize_thickness_varlayth
 public BFB_initialize_sponges_southonly, BFB_initialize_sponges_southonly_varlayth
 public BFB_initialize_topography
 
+!> Unsafe model variable
+!! \todo Remove this module variable
 logical :: first_call = .true.
 
 contains
@@ -91,16 +71,20 @@ subroutine BFB_initialize_topography(D, G, param_file, max_depth)
 
 end subroutine BFB_initialize_topography
 
+!> This subroutine specifies the vertical coordinate in terms of temperature at the surface and at the bottom.
+!! This case is set up in such a way that the temperature of the topmost layer is equal to the SST at the
+!! southern edge of the domain. The temperatures are then converted to densities of the top and bottom layers
+!! and linearly interpolated for the intermediate layers.
 subroutine BFB_set_coord(Rlay, g_prime, GV, param_file, eqn_of_state)
-! This subroutine specifies the vertical coordinate in terms of temperature at the surface and at the bottom. This case is set up in
-! such a way that the temperature of the topmost layer is equal to the SST at the southern edge of the domain. The temperatures are
-! then converted to densities of the top and bottom layers and linearly interpolated for the intermediate layers.
-  real, dimension(NKMEM_), intent(out) :: Rlay, g_prime
+  real, dimension(NKMEM_), intent(out) :: Rlay !< Layer potential density.
+  real, dimension(NKMEM_), intent(out) :: g_prime !< The reduced gravity at
+                                                  !! each interface, in m s-2.
   type(verticalGrid_type), intent(in)  :: GV   !< The ocean's vertical grid structure
   type(param_file_type),   intent(in)  :: param_file !< A structure to parse for run-time parameters
-  type(EOS_type),          pointer     :: eqn_of_state
-  real                                 :: drho_dt, SST_s, T_bot
-  real                                 :: rho_top, rho_bot
+  type(EOS_type),          pointer     :: eqn_of_state !< Integer that selects the
+                                                     !! equation of state.
+  ! Local variables
+  real                                 :: drho_dt, SST_s, T_bot, rho_top, rho_bot
   integer                              :: k, nz
   character(len=40)  :: mdl = "BFB_set_coord" ! This subroutine's name.
 
@@ -116,34 +100,32 @@ subroutine BFB_set_coord(Rlay, g_prime, GV, param_file, eqn_of_state)
   rho_bot = GV%rho0 + drho_dt*(T_bot-T_bot)
   nz = GV%ke
 
-  !call MOM_error(FATAL, &
-  ! "BFB_initialization.F90, BFB_set_coord: " // &
-  ! "Unmodified user routine called - you must edit the routine to use it")
   do k = 1,nz
     Rlay(k) = (rho_bot - rho_top)/(nz-1)*real(k-1) + rho_top
     if (k >1) then
       g_prime(k) = (Rlay(k) - Rlay(k-1))*GV%g_earth/GV%rho0
     else
       g_prime(k) = GV%g_earth
-    end if
+    endif
     !Rlay(:) = 0.0
     !g_prime(:) = 0.0
-  end do
+  enddo
 
   if (first_call) call write_BFB_log(param_file)
 
 end subroutine BFB_set_coord
 
-
+!> This subroutine sets up the sponges for the southern bouundary of the domain. Maximum damping occurs
+!! within 2 degrees lat of the boundary. The damping linearly decreases northward over the next 2 degrees.
 subroutine BFB_initialize_sponges_southonly(G, use_temperature, tv, param_file, CSp, h)
-! This subroutine sets up the sponges for the southern bouundary of the domain. Maximum damping occurs within 2 degrees lat of the
-! boundary. The damping linearly decreases northward over the next 2 degrees.
-  type(ocean_grid_type), intent(in)                   :: G    !< The ocean's grid structure
-  logical,               intent(in)                   :: use_temperature
-  type(thermo_var_ptrs), intent(in)                   :: tv   !< A structure pointing to various thermodynamic variables
-  type(param_file_type), intent(in)                   :: param_file !< A structure to parse for run-time parameters
-  type(sponge_CS),       pointer                      :: CSp
-  real, dimension(NIMEM_, NJMEM_, NKMEM_), intent(in) :: h    !< Layer thicknesses, in H (usually m or kg m-2)
+  type(ocean_grid_type), intent(in) :: G    !< The ocean's grid structure
+  logical,               intent(in) :: use_temperature !< If true, temperature and salinity are used as
+                                            !! state variables.
+  type(thermo_var_ptrs), intent(in) :: tv   !< A structure pointing to various thermodynamic variables
+  type(param_file_type), intent(in) :: param_file !< A structure to parse for run-time parameters
+  type(sponge_CS),       pointer    :: CSp  !< A pointer to the sponge control structure
+  real, dimension(NIMEM_, NJMEM_, NKMEM_), &
+                         intent(in) :: h    !< Layer thicknesses, in H (usually m or kg m-2)
   !call MOM_error(FATAL, &
   ! "BFB_initialization.F90, BFB_initialize_sponges: " // &
   ! "Unmodified user routine called - you must edit the routine to use it")
@@ -185,6 +167,9 @@ subroutine BFB_initialize_sponges_southonly(G, use_temperature, tv, param_file, 
 !  do k=1,nz ; H0(k) = -G%max_depth * real(k-1) / real(nz) ; enddo
 !  do k=1,nz ; H0(k) = -G%max_depth * real(k-1) / real(nz-1) ; enddo ! Use for meridional thickness profile initialization
   do k=1,nz ; H0(k) = -D_aby * real(k-1) / real(nz-1) ; enddo
+
+  ! Use for meridional thickness profile initialization
+!  do k=1,nz ; H0(k) = -G%max_depth * real(k-1) / real(nz-1) ; enddo
   do i=is,ie; do j=js,je
     if (G%geoLatT(i,j) < slat+2.0) then ; damp = 1.0
     elseif (G%geoLatT(i,j) < slat+4.0) then

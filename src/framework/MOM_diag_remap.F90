@@ -1,15 +1,17 @@
-!> This module is used for runtime remapping of diagnostics to z star, sigma and
-!! rho vertical coordinates. It defines the diag_remap_ctrl type which
-!! represents a remapping of diagnostics to a particular vertical coordinate.
-!! The module is used by the diag mediator module in the following way:
-!! 1) _init() is called to initialise a diag_remap_ctrl instance.
-!! 2) _configure_axes() is called to read the configuration file and set up the
+!> provides runtime remapping of diagnostics to z star, sigma and
+!! rho vertical coordinates.
+!!
+!! The diag_remap_ctrl type represents a remapping of diagnostics to a particular
+!! vertical coordinate. The module is used by the diag mediator module in the
+!! following way:
+!! 1. diag_remap_init() is called to initialize a diag_remap_ctrl instance.
+!! 2. diag_remap_configure_axes() is called to read the configuration file and set up the
 !!    vertical coordinate / axes definitions.
-!! 3) _get_axes_info() returns information needed for the diag mediator to
+!! 3. diag_remap_get_axes_info() returns information needed for the diag mediator to
 !!    define new axes for the remapped diagnostics.
-!! 4) _update() is called periodically (whenever h, T or S change) to either
+!! 4. diag_remap_update() is called periodically (whenever h, T or S change) to either
 !!    create or update the target remapping grids.
-!! 5) _do_remap() is called from within a diag post() to do the remapping before
+!! 5. diag_remap_do_remap() is called from within a diag post() to do the remapping before
 !!    the diagnostic is written out.
 
 module MOM_diag_remap
@@ -17,7 +19,7 @@ module MOM_diag_remap
 ! This file is part of MOM6. See LICENSE.md for the license.
 
 use MOM_coms,             only : sum_across_PEs
-use MOM_error_handler,    only : MOM_error, FATAL, assert
+use MOM_error_handler,    only : MOM_error, FATAL, assert, WARNING
 use MOM_diag_vkernels,    only : interpolate_column, reintegrate_column
 use MOM_file_parser,      only : get_param, log_param, param_file_type
 use MOM_io,               only : slasher, mom_read_data
@@ -40,6 +42,7 @@ use coord_rho,            only : build_rho_column
 use diag_axis_mod,     only : get_diag_axis_name
 use diag_manager_mod,  only : diag_axis_init
 
+use MOM_debugging,     only : check_column_integrals
 implicit none ; private
 
 public diag_remap_ctrl
@@ -52,8 +55,8 @@ public vertically_reintegrate_diag_field
 public vertically_interpolate_diag_field
 public horizontally_average_diag_field
 
-!> This type represents remapping of diagnostics to a particular vertical
-!! coordinate.
+!> Represents remapping of diagnostics to a particular vertical coordinate.
+!!
 !! There is one of these types for each vertical coordinate. The vertical axes
 !! of a diagnostic will reference an instance of this type indicating how (or
 !! if) the diagnostic should be vertically remapped when being posted.
@@ -208,7 +211,7 @@ end subroutine diag_remap_get_axes_info
 !! Configuration is complete when diag_remap_configure_axes() has been
 !! successfully called.
 function diag_remap_axes_configured(remap_cs)
-  type(diag_remap_ctrl), intent(in) :: remap_cs
+  type(diag_remap_ctrl), intent(in) :: remap_cs !< Diagnostic coordinate control structure
   logical :: diag_remap_axes_configured
 
   diag_remap_axes_configured = remap_cs%configured
@@ -222,10 +225,12 @@ end function
 !! target grid whenever T/S change.
 subroutine diag_remap_update(remap_cs, G, GV, h, T, S, eqn_of_state)
   type(diag_remap_ctrl), intent(inout) :: remap_cs !< Diagnostic coordinate control structure
-  type(ocean_grid_type),    pointer    :: G !< The ocean's grid type
+  type(ocean_grid_type),    pointer    :: G  !< The ocean's grid type
   type(verticalGrid_type),  intent(in) :: GV !< ocean vertical grid structure
-  real, dimension(:, :, :), intent(in) :: h, T, S !< New thickness, T and S
-  type(EOS_type),  pointer, intent(in) :: eqn_of_state !< A pointer to the equation of state
+  real, dimension(:, :, :), intent(in) :: h  !< New thickness
+  real, dimension(:, :, :), intent(in) :: T  !< New T
+  real, dimension(:, :, :), intent(in) :: S  !< New S
+  type(EOS_type),           pointer    :: eqn_of_state !< A pointer to the equation of state
 
   ! Local variables
   real, dimension(remap_cs%nz + 1) :: zInterfaces
@@ -263,11 +268,11 @@ subroutine diag_remap_update(remap_cs, G, GV, h, T, S, eqn_of_state)
     endif
 
     if (remap_cs%vertical_coord == coordinateMode('ZSTAR')) then
-      call build_zstar_column(get_zlike_CS(remap_cs%regrid_cs), nz, &
+      call build_zstar_column(get_zlike_CS(remap_cs%regrid_cs), &
                               G%bathyT(i,j)*GV%m_to_H, sum(h(i,j,:)), &
                               zInterfaces, zScale=GV%m_to_H)
     elseif (remap_cs%vertical_coord == coordinateMode('SIGMA')) then
-      call build_sigma_column(get_sigma_CS(remap_cs%regrid_cs), nz, &
+      call build_sigma_column(get_sigma_CS(remap_cs%regrid_cs), &
                               GV%m_to_H*G%bathyT(i,j), sum(h(i,j,:)), zInterfaces)
     elseif (remap_cs%vertical_coord == coordinateMode('RHO')) then
       call build_rho_column(get_rho_CS(remap_cs%regrid_cs), G%ke, &
