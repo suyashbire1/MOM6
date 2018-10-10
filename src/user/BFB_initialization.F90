@@ -26,6 +26,7 @@ use MOM_error_handler, only : MOM_mesg, MOM_error, FATAL, is_root_pe
 use MOM_file_parser, only : get_param, log_version, param_file_type
 use MOM_get_input, only : directories
 use MOM_grid, only : ocean_grid_type
+use MOM_dyn_horgrid, only : dyn_horgrid_type
 use MOM_io, only : close_file, create_file, fieldtype, file_exists
 use MOM_io, only : open_file, read_data, read_axis_data, SINGLE_FILE
 use MOM_io, only : write_field, slasher
@@ -38,13 +39,57 @@ implicit none ; private
 
 #include <MOM_memory.h>
 
-public BFB_set_coord 
+public BFB_set_coord
 public BFB_initialize_thickness, BFB_initialize_thickness_varlayth
 public BFB_initialize_sponges_southonly, BFB_initialize_sponges_southonly_varlayth
+public BFB_initialize_topography
 
 logical :: first_call = .true.
 
 contains
+
+!> Initialize topography.
+subroutine BFB_initialize_topography(D, G, param_file, max_depth)
+  type(dyn_horgrid_type),             intent(in)  :: G !< The dynamic horizontal grid type
+  real, dimension(G%isd:G%ied,G%jsd:G%jed), &
+                                      intent(out) :: D !< Ocean bottom depth in m
+  type(param_file_type),              intent(in)  :: param_file !< Parameter file structure
+  real,                               intent(in)  :: max_depth  !< Maximum depth of model in m
+  real                                            :: slope, cswidth
+  real                                            :: westlon,eastlon, lenlon
+  character(len=40)  :: mdl = "BFB_initialize_topography" ! This subroutine's name.
+  integer :: i, j, is, ie, js, je, isd, ied, jsd, jed
+  is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec
+  isd = G%isd ; ied = G%ied ; jsd = G%jsd ; jed = G%jed
+
+!!$  call MOM_error(FATAL, &
+!!$   "USER_initialization.F90, USER_initialize_topography: " // &
+!!$   "Unmodified user routine called - you must edit the routine to use it")
+
+  ! Slope at the eastern boundary, default is 2m/km
+  call get_param(param_file, mdl, "TOPO_SLOPE_CS", slope, &
+          "Zonal slope of the topography at the eastern boundary on th&
+          &e continental shelf", default=0.002)
+  call get_param(param_file, mdl, "WIDTH_CS", cswidth, &
+       "Width of the continental slope on the eastern boundary", &
+       units="degrees", default=2.0)
+  call get_param(param_file, mdl, "LENLON", lenlon, &
+                 "The longitudinal length of the domain.", units="degrees")
+  call get_param(param_file, mdl, "WESTLON", westlon, &
+                 "The western longitude of the domain.", units="degrees", default=0.0)
+
+  eastlon = westlon + lenlon
+  do j=js,je ; do i=is,ie
+    if (G%geoLonT(i,j) > eastlon - cswidth) then
+      D(i,j)= slope*(G%geoLonT(i,j) - eastlon)
+    else
+      D(i,j) = max_depth
+    endif
+  enddo ; enddo
+
+  if (first_call) call write_BFB_log(param_file)
+
+end subroutine BFB_initialize_topography
 
 subroutine BFB_set_coord(Rlay, g_prime, GV, param_file, eqn_of_state)
 ! This subroutine specifies the vertical coordinate in terms of temperature at the surface and at the bottom. This case is set up in
@@ -288,7 +333,7 @@ subroutine BFB_initialize_thickness(h, G, param_file)
     eta(i,j,nz+1) = -G%max_depth
     do k = 1,nz; h(i,j,k) = eta(i,j,k) - eta(i,j,k+1); enddo
   enddo; enddo
-  
+
  if (first_call) call write_BFB_log(param_file)
 
 end subroutine BFB_initialize_thickness
@@ -317,7 +362,7 @@ subroutine BFB_initialize_thickness_varlayth(h, G, param_file)
     eta(i,j,nz+1) = -G%max_depth
     do k = 1,nz; h(i,j,k) = eta(i,j,k) - eta(i,j,k+1); enddo
   enddo; enddo
-  
+
  if (first_call) call write_BFB_log(param_file)
 
 end subroutine BFB_initialize_thickness_varlayth

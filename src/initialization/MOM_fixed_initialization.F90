@@ -40,6 +40,7 @@ use shelfwave_initialization, only : shelfwave_initialize_topography
 use supercritical_initialization, only : supercritical_initialize_topography
 use Phillips_initialization, only : Phillips_initialize_topography
 use dense_water_initialization, only : dense_water_initialize_topography
+use BFB_initialization, only : BFB_initialize_topography
 
 use netcdf
 
@@ -207,6 +208,7 @@ subroutine MOM_initialize_topography(D, max_depth, G, PF)
                  " \t supercritical - flat but with 8.95 degree land mask.\n"//&
                  " \t Phillips - ACC-like idealized topography used in the Phillips config.\n"//&
                  " \t dense - Denmark Strait-like dense water formation and overflow.\n"//&
+                 " \t BFB - Topography on the eastern boundary.\n"//&
                  " \t USER - call a user modified routine.", &
                  fail_if_missing=.true.)
   max_depth = -1.e9; call read_param(PF, "MAXIMUM_DEPTH", max_depth)
@@ -229,6 +231,7 @@ subroutine MOM_initialize_topography(D, max_depth, G, PF)
     case ("supercritical");  call supercritical_initialize_topography(D, G, PF, max_depth)
     case ("Phillips");  call Phillips_initialize_topography(D, G, PF, max_depth)
     case ("dense");     call dense_water_initialize_topography(D, G, PF, max_depth)
+    case ("BFB");     call BFB_initialize_topography(D, G, PF, max_depth)
     case ("USER");      call user_initialize_topography(D, G, PF, max_depth)
     case default ;      call MOM_error(FATAL,"MOM_initialize_topography: "// &
       "Unrecognized topography setup '"//trim(config)//"'")
