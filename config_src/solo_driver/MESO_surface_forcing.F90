@@ -1,50 +1,10 @@
+!> Sets forcing for the MESO configuration
 module MESO_surface_forcing
 
 ! This file is part of MOM6. See LICENSE.md for the license.
 
-!********+*********+*********+*********+*********+*********+*********+**
-!*                                                                     *
-!*  Rewritten by Robert Hallberg, June 2009                            *
-!*                                                                     *
-!*    This file contains the subroutines that a user should modify to  *
-!*  to set the surface wind stresses and fluxes of buoyancy or         *
-!*  temperature and fresh water.  They are called when the run-time    *
-!*  parameters WIND_CONFIG or BUOY_CONFIG are set to "USER".  The      *
-!*  standard version has simple examples, along with run-time error    *
-!*  messages that will cause the model to abort if this code has not   *
-!*  been modified.  This code is intended for use with relatively      *
-!*  simple specifications of the forcing.  For more complicated forms, *
-!*  it is probably a good idea to read the forcing from input files    *
-!*  using "file" for WIND_CONFIG and BUOY_CONFIG.                      *
-!*                                                                     *
-!*    MESO_wind_forcing should set the surface wind stresses (taux and *
-!*  tauy) perhaps along with the surface friction velocity (ustar).    *
-!*                                                                     *
-!*    MESO_buoyancy forcing is used to set the surface buoyancy        *
-!*  forcing, which may include a number of fresh water flux fields     *
-!*  (evap, liq_precip, froz_precip, liq_runoff, froz_runoff, and       *
-!*  vprec) and the surface heat fluxes (sw, lw, latent and sens)       *
-!*  if temperature and salinity are state variables, or it may simply  *
-!*  be the buoyancy flux if it is not.  This routine also has coded a  *
-!*  restoring to surface values of temperature and salinity.           *
-!*                                                                     *
-!*  Macros written all in capital letters are defined in MOM_memory.h. *
-!*                                                                     *
-!*     A small fragment of the grid is shown below:                    *
-!*                                                                     *
-!*    j+1  x ^ x ^ x   At x:  q                                        *
-!*    j+1  > o > o >   At ^:  v, tauy                                  *
-!*    j    x ^ x ^ x   At >:  u, taux                                  *
-!*    j    > o > o >   At o:  h, fluxes.                               *
-!*    j-1  x ^ x ^ x                                                   *
-!*        i-1  i  i+1  At x & ^:                                       *
-!*           i  i+1    At > & o:                                       *
-!*                                                                     *
-!*  The boundaries always run through q grid points (x).               *
-!*                                                                     *
-!********+*********+*********+*********+*********+*********+*********+**
 use MOM_diag_mediator, only : post_data, query_averaging_enabled
-use MOM_diag_mediator, only : register_diag_field, diag_ctrl
+use MOM_diag_mediator, only : register_diag_field, diag_ctrl, safe_alloc_ptr
 use MOM_domains, only : pass_var, pass_vector, AGRID
 use MOM_error_handler, only : MOM_error, FATAL, WARNING, is_root_pe
 use MOM_file_parser, only : get_param, log_version, param_file_type
@@ -61,47 +21,44 @@ implicit none ; private
 
 public MESO_wind_forcing, MESO_buoyancy_forcing, MESO_surface_forcing_init
 
+!> This control structure is used to store parameters associated with the MESO forcing.
 type, public :: MESO_surface_forcing_CS ; private
-  !   This control structure should be used to store any run-time variables
-  ! associated with the user-specified forcing.  It can be readily modified
-  ! for a specific case, and because it is private there will be no changes
-  ! needed in other code (although they will have to be recompiled).
-  !   The variables in the cannonical example are used for some common
-  ! cases, but do not need to be used.
 
-  logical :: use_temperature ! If true, temperature and salinity are used as
-                             ! state variables.
-  logical :: restorebuoy     ! If true, use restoring surface buoyancy forcing.
-  real :: Rho0               !   The density used in the Boussinesq
-                             ! approximation, in kg m-3.
-  real :: G_Earth            !   The gravitational acceleration in m s-2.
-  real :: Flux_const         !   The restoring rate at the surface, in m s-1.
-  real :: gust_const         !   A constant unresolved background gustiness
-                             ! that contributes to ustar, in Pa.
+  logical :: use_temperature !< If true, temperature and salinity are used as state variables.
+  logical :: restorebuoy     !< If true, use restoring surface buoyancy forcing.
+  real :: Rho0               !< The density used in the Boussinesq approximation, in kg m-3.
+  real :: G_Earth            !< The gravitational acceleration in m s-2.
+  real :: Flux_const         !< The restoring rate at the surface, in m s-1.
+  real :: gust_const         !< A constant unresolved background gustiness
+                             !! that contributes to ustar, in Pa.
   real, dimension(:,:), pointer :: &
-    T_Restore(:,:) => NULL(), & ! The temperature to restore the SST to, in C.
-    S_Restore(:,:) => NULL(), & ! The salinity to restore the sea surface salnity
-                                ! toward, in PSU.
-    PmE(:,:) => NULL(), &       ! The prescribed precip minus evap, in  m s-1.
-    Solar(:,:) => NULL(), &     ! The shortwave forcing into the ocean, in W m-2 m s-1.
-    Heat(:,:) => NULL()         ! The prescribed longwave, latent and sensible
-                                ! heat flux into the ocean, in W m-2.
-  character(len=200) :: inputdir ! The directory where NetCDF input files are.
-  character(len=200) :: salinityrestore_file, SSTrestore_file
-  character(len=200) :: Solar_file, heating_file, PmE_file
-  type(diag_ctrl), pointer :: diag ! A structure that is used to regulate the
-                             ! timing of diagnostic output.
+    T_Restore(:,:) => NULL(), & !< The temperature to restore the SST toward, in C.
+    S_Restore(:,:) => NULL(), & !< The salinity to restore the sea surface salnity toward, in PSU.
+    PmE(:,:) => NULL(), &       !< The prescribed precip minus evap, in  m s-1.
+    Solar(:,:) => NULL()        !< The shortwave forcing into the ocean, in W m-2 m s-1.
+  real, dimension(:,:), pointer :: Heat(:,:) => NULL() !< The prescribed longwave, latent and sensible
+                                !! heat flux into the ocean, in W m-2.
+  character(len=200) :: inputdir !< The directory where NetCDF input files are.
+  character(len=200) :: salinityrestore_file !< The file with the target sea surface salinity
+  character(len=200) :: SSTrestore_file !< The file with the target sea surface temperature
+  character(len=200) :: Solar_file !< The file with the shortwave forcing
+  character(len=200) :: heating_file !< The file with the longwave, latent, and sensible heating
+  character(len=200) :: PmE_file !< The file with precipitation minus evaporation
+  type(diag_ctrl), pointer :: diag !< A structure that is used to regulate the
+                             !! timing of diagnostic output.
 end type MESO_surface_forcing_CS
 
-logical :: first_call = .true.
+logical :: first_call = .true. !< True until after the first call to the MESO forcing routines
 
 contains
 
+!###   This subroutine sets zero surface wind stresses, but it is not even
+!### used by the MESO experimeents.  This subroutine can be deleted. -RWH
 subroutine MESO_wind_forcing(sfc_state, forces, day, G, CS)
   type(surface),                 intent(inout) :: sfc_state !< A structure containing fields that
                                                     !! describe the surface state of the ocean.
   type(mech_forcing),            intent(inout) :: forces !< A structure with the driving mechanical forces
-  type(time_type),               intent(in)    :: day
+  type(time_type),               intent(in)    :: day  !< The time of the fluxes
   type(ocean_grid_type),         intent(inout) :: G    !< The ocean's grid structure
   type(MESO_surface_forcing_CS), pointer       :: CS   !< A pointer to the control structure returned by a previous
                                                        !! call to MESO_surface_forcing_init
@@ -160,15 +117,18 @@ subroutine MESO_wind_forcing(sfc_state, forces, day, G, CS)
 
 end subroutine MESO_wind_forcing
 
+!> This subroutine sets up the MESO buoyancy forcing, which uses control-theory style
+!! specification restorative buoyancy fluxes at large scales.
 subroutine MESO_buoyancy_forcing(sfc_state, fluxes, day, dt, G, CS)
   type(surface),                 intent(inout) :: sfc_state !< A structure containing fields that
                                                     !! describe the surface state of the ocean.
-  type(forcing),                 intent(inout) :: fluxes
-  type(time_type),               intent(in)    :: day
+  type(forcing),                 intent(inout) :: fluxes !< A structure containing thermodynamic forcing fields
+  type(time_type),               intent(in)    :: day  !< The time of the fluxes
   real,                          intent(in)    :: dt   !< The amount of time over which
                                                        !! the fluxes apply, in s
   type(ocean_grid_type),         intent(in)    :: G    !< The ocean's grid structure
-  type(MESO_surface_forcing_CS), pointer       :: CS
+  type(MESO_surface_forcing_CS), pointer       :: CS   !< A pointer to the control structure returned by
+                                                       !! a previous call to MESO_surface_forcing_init
 
 !    This subroutine specifies the current surface fluxes of buoyancy or
 !  temperature and fresh water.  It may also be modified to add
@@ -215,30 +175,30 @@ subroutine MESO_buoyancy_forcing(sfc_state, fluxes, day, dt, G, CS)
   ! Allocate and zero out the forcing arrays, as necessary.  This portion is
   ! usually not changed.
   if (CS%use_temperature) then
-    call alloc_if_needed(fluxes%evap, isd, ied, jsd, jed)
-    call alloc_if_needed(fluxes%lprec, isd, ied, jsd, jed)
-    call alloc_if_needed(fluxes%fprec, isd, ied, jsd, jed)
-    call alloc_if_needed(fluxes%lrunoff, isd, ied, jsd, jed)
-    call alloc_if_needed(fluxes%frunoff, isd, ied, jsd, jed)
-    call alloc_if_needed(fluxes%vprec, isd, ied, jsd, jed)
+    call safe_alloc_ptr(fluxes%evap, isd, ied, jsd, jed)
+    call safe_alloc_ptr(fluxes%lprec, isd, ied, jsd, jed)
+    call safe_alloc_ptr(fluxes%fprec, isd, ied, jsd, jed)
+    call safe_alloc_ptr(fluxes%lrunoff, isd, ied, jsd, jed)
+    call safe_alloc_ptr(fluxes%frunoff, isd, ied, jsd, jed)
+    call safe_alloc_ptr(fluxes%vprec, isd, ied, jsd, jed)
 
-    call alloc_if_needed(fluxes%sw, isd, ied, jsd, jed)
-    call alloc_if_needed(fluxes%lw, isd, ied, jsd, jed)
-    call alloc_if_needed(fluxes%latent, isd, ied, jsd, jed)
-    call alloc_if_needed(fluxes%sens, isd, ied, jsd, jed)
-    call alloc_if_needed(fluxes%heat_content_lprec, isd, ied, jsd, jed)
+    call safe_alloc_ptr(fluxes%sw, isd, ied, jsd, jed)
+    call safe_alloc_ptr(fluxes%lw, isd, ied, jsd, jed)
+    call safe_alloc_ptr(fluxes%latent, isd, ied, jsd, jed)
+    call safe_alloc_ptr(fluxes%sens, isd, ied, jsd, jed)
+    call safe_alloc_ptr(fluxes%heat_content_lprec, isd, ied, jsd, jed)
   else ! This is the buoyancy only mode.
-    call alloc_if_needed(fluxes%buoy, isd, ied, jsd, jed)
+    call safe_alloc_ptr(fluxes%buoy, isd, ied, jsd, jed)
   endif
 
 
   ! MODIFY THE CODE IN THE FOLLOWING LOOPS TO SET THE BUOYANCY FORCING TERMS.
   if (CS%restorebuoy .and. first_call) then !### .or. associated(CS%ctrl_forcing_CSp)) then
-    call alloc_if_needed(CS%T_Restore, isd, ied, jsd, jed)
-    call alloc_if_needed(CS%S_Restore, isd, ied, jsd, jed)
-    call alloc_if_needed(CS%Heat, isd, ied, jsd, jed)
-    call alloc_if_needed(CS%PmE, isd, ied, jsd, jed)
-    call alloc_if_needed(CS%Solar, isd, ied, jsd, jed)
+    call safe_alloc_ptr(CS%T_Restore, isd, ied, jsd, jed)
+    call safe_alloc_ptr(CS%S_Restore, isd, ied, jsd, jed)
+    call safe_alloc_ptr(CS%Heat, isd, ied, jsd, jed)
+    call safe_alloc_ptr(CS%PmE, isd, ied, jsd, jed)
+    call safe_alloc_ptr(CS%Solar, isd, ied, jsd, jed)
 
     call MOM_read_data(trim(CS%inputdir)//trim(CS%SSTrestore_file), "SST", &
              CS%T_Restore(:,:), G%Domain)
@@ -281,7 +241,7 @@ subroutine MESO_buoyancy_forcing(sfc_state, fluxes, day, dt, G, CS)
 
   if (CS%restorebuoy) then
     if (CS%use_temperature) then
-      call alloc_if_needed(fluxes%heat_added, isd, ied, jsd, jed)
+      call safe_alloc_ptr(fluxes%heat_added, isd, ied, jsd, jed)
       !   When modifying the code, comment out this error message.  It is here
       ! so that the original (unmodified) version is not accidentally used.
 !      call MOM_error(FATAL, "MESO_buoyancy_surface_forcing: " // &
@@ -323,24 +283,16 @@ subroutine MESO_buoyancy_forcing(sfc_state, fluxes, day, dt, G, CS)
 
 end subroutine MESO_buoyancy_forcing
 
-subroutine alloc_if_needed(ptr, isd, ied, jsd, jed)
-  ! If ptr is not associated, this routine allocates it with the given size
-  ! and zeros out its contents.  This is equivalent to safe_alloc_ptr in
-  ! MOM_diag_mediator, but is here so as to be completely transparent.
-  real, pointer :: ptr(:,:)
-  integer :: isd, ied, jsd, jed
-  if (.not.ASSOCIATED(ptr)) then
-    allocate(ptr(isd:ied,jsd:jed))
-    ptr(:,:) = 0.0
-  endif
-end subroutine alloc_if_needed
-
+!> Initialize the MESO surface forcing module
 subroutine MESO_surface_forcing_init(Time, G, param_file, diag, CS)
-  type(time_type),               intent(in) :: Time
-  type(ocean_grid_type),         intent(in) :: G    !< The ocean's grid structure
-  type(param_file_type),         intent(in) :: param_file !< A structure to parse for run-time parameters
-  type(diag_ctrl), target,       intent(in) :: diag
-  type(MESO_surface_forcing_CS), pointer    :: CS
+
+  type(time_type),               intent(in)    :: Time !< The current model time
+  type(ocean_grid_type),         intent(in)    :: G    !< The ocean's grid structure
+  type(param_file_type),         intent(in)    :: param_file !< A structure to parse for run-time parameters
+  type(diag_ctrl), target,       intent(inout) :: diag !< structure used to regulate diagnostic output
+  type(MESO_surface_forcing_CS), pointer       :: CS   !< A pointer that is set to point to the
+                                                       !! control structure for this module
+
 ! Arguments: Time - The current model time.
 !  (in)      G - The ocean's grid structure.
 !  (in)      param_file - A structure indicating the open file to parse for
@@ -415,5 +367,31 @@ subroutine MESO_surface_forcing_init(Time, G, param_file, diag, CS)
    endif
 
 end subroutine MESO_surface_forcing_init
+
+!> \namespace meso_surface_forcing
+!!
+!! Rewritten by Robert Hallberg, June 2009
+!!
+!!   This file contains the subroutines that a user should modify to
+!! to set the surface wind stresses and fluxes of buoyancy or
+!! temperature and fresh water.  They are called when the run-time
+!! parameters WIND_CONFIG or BUOY_CONFIG are set to "USER".  The
+!! standard version has simple examples, along with run-time error
+!! messages that will cause the model to abort if this code has not
+!! been modified.  This code is intended for use with relatively
+!! simple specifications of the forcing.  For more complicated forms,
+!! it is probably a good idea to read the forcing from input files
+!! using "file" for WIND_CONFIG and BUOY_CONFIG.
+!!
+!!   MESO_wind_forcing should set the surface wind stresses (taux and
+!! tauy) perhaps along with the surface friction velocity (ustar).
+!!
+!!   MESO_buoyancy forcing is used to set the surface buoyancy
+!! forcing, which may include a number of fresh water flux fields
+!! (evap, liq_precip, froz_precip, liq_runoff, froz_runoff, and
+!! vprec) and the surface heat fluxes (sw, lw, latent and sens)
+!! if temperature and salinity are state variables, or it may simply
+!! be the buoyancy flux if it is not.  This routine also has coded a
+!! restoring to surface values of temperature and salinity.
 
 end module MESO_surface_forcing
