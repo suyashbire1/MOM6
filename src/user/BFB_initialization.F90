@@ -35,8 +35,9 @@ subroutine BFB_initialize_topography(D, G, param_file, max_depth)
                                       intent(out) :: D !< Ocean bottom depth in m
   type(param_file_type),              intent(in)  :: param_file !< Parameter file structure
   real,                               intent(in)  :: max_depth  !< Maximum depth of model in m
-  real                                            :: slope, cswidth
+  real                                            :: slope, cswidth, rct, ebdepth
   real                                            :: westlon,eastlon, lenlon
+  real, parameter                     :: piby180 = 4.0*atan(1.0)/180.0
   character(len=40)  :: mdl = "BFB_initialize_topography" ! This subroutine's name.
   integer :: i, j, is, ie, js, je, isd, ied, jsd, jed
   is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec
@@ -48,24 +49,27 @@ subroutine BFB_initialize_topography(D, G, param_file, max_depth)
 
   ! Slope at the eastern boundary, default is 2m/km
   call get_param(param_file, mdl, "TOPO_SLOPE_CS", slope, &
-          "Zonal slope of the topography at the eastern boundary on th&
-          &e continental shelf", default=0.002)
+          "Zonal slope of the topography at the eastern boundary on the continental shelf", default=0.002)
   call get_param(param_file, mdl, "WIDTH_CS", cswidth, &
        "Width of the continental slope on the eastern boundary", &
        units="degrees", default=2.0)
+  call get_param(param_file, mdl, "DEPTH_EB", ebdepth, &
+       "Depth at the eastern boundary", &
+       units="m", default=100.0)
   call get_param(param_file, mdl, "LENLON", lenlon, &
                  "The longitudinal length of the domain.", units="degrees")
   call get_param(param_file, mdl, "WESTLON", westlon, &
                  "The western longitude of the domain.", units="degrees", default=0.0)
 
   eastlon = westlon + lenlon
-  do j=js,je ; do i=is,ie
-    if (G%geoLonT(i,j) > eastlon - cswidth) then
-      D(i,j)= slope*(G%geoLonT(i,j) - eastlon)
-    else
-      D(i,j) = max_depth
-    endif
-  enddo ; enddo
+  do j=js,je; do i=is,ie
+      if (G%geoLonT(i,j) > eastlon - cswidth) then
+        Rct = piby180*G%Rad_Earth*cos(piby180*35)
+        D(i,j)= ebdepth - slope*(G%geoLonT(i,j) - eastlon)*Rct
+      else
+        D(i,j) = max_depth
+      endif
+  enddo; enddo
 
   if (first_call) call write_BFB_log(param_file)
 
