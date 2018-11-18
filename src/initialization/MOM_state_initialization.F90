@@ -82,7 +82,7 @@ use dyed_obcs_initialization, only : dyed_obcs_set_OBC_data
 use supercritical_initialization, only : supercritical_set_OBC_data
 use soliton_initialization, only : soliton_initialize_velocity
 use soliton_initialization, only : soliton_initialize_thickness
-use BFB_initialization, only : BFB_initialize_sponges_southonly, BFB_initialize_sponges_southonly_varlayth
+use BFB_initialization, only : BFB_initialize_sponges_southonly
 use BFB_initialization, only : BFB_initialize_thickness, BFB_initialize_thickness_varlayth
 use dense_water_initialization, only : dense_water_initialize_TS
 use dense_water_initialization, only : dense_water_initialize_sponges
