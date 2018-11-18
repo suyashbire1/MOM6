@@ -35,7 +35,7 @@ subroutine BFB_initialize_topography(D, G, param_file, max_depth)
                                       intent(out) :: D !< Ocean bottom depth in m
   type(param_file_type),              intent(in)  :: param_file !< Parameter file structure
   real,                               intent(in)  :: max_depth  !< Maximum depth of model in m
-  real                                            :: slope, cswidth, rct, ebdepth
+  real                                            :: efold, rct, ebdepth
   real                                            :: westlon,eastlon, lenlon
   real, parameter                     :: piby180 = 4.0*atan(1.0)/180.0
   character(len=40)  :: mdl = "BFB_initialize_topography" ! This subroutine's name.
@@ -48,11 +48,8 @@ subroutine BFB_initialize_topography(D, G, param_file, max_depth)
 !!$   "Unmodified user routine called - you must edit the routine to use it")
 
   ! Slope at the eastern boundary, default is 2m/km
-  call get_param(param_file, mdl, "TOPO_SLOPE_CS", slope, &
-          "Zonal slope of the topography at the eastern boundary on the continental shelf", default=0.002)
-  call get_param(param_file, mdl, "WIDTH_CS", cswidth, &
-       "Width of the continental slope on the eastern boundary", &
-       units="degrees", default=2.0)
+  call get_param(param_file, mdl, "TOPO_EFOLDING_SCALE", efold, &
+          "E-folding scale of the topography at the eastern boundary on the continental shelf", units="degrees", default=2.5)
   call get_param(param_file, mdl, "DEPTH_EB", ebdepth, &
        "Depth at the eastern boundary", &
        units="m", default=100.0)
@@ -63,61 +60,12 @@ subroutine BFB_initialize_topography(D, G, param_file, max_depth)
 
   eastlon = westlon + lenlon
   do j=js,je; do i=is,ie
-      if (G%geoLonT(i,j) > eastlon - cswidth) then
-        Rct = piby180*G%Rad_Earth*cos(piby180*35)
-        D(i,j)= ebdepth - slope*(G%geoLonT(i,j) - eastlon)*Rct
-      else
-        D(i,j) = max_depth
-      endif
+      D(i,j) = min(max_depth,exp(-efold*G%geoLonT(i,j)))
   enddo; enddo
 
   if (first_call) call write_BFB_log(param_file)
 
 end subroutine BFB_initialize_topography
-
-!> This subroutine specifies the vertical coordinate in terms of temperature at the surface and at the bottom.
-!! This case is set up in such a way that the temperature of the topmost layer is equal to the SST at the
-!! southern edge of the domain. The temperatures are then converted to densities of the top and bottom layers
-!! and linearly interpolated for the intermediate layers.
-subroutine BFB_set_coord(Rlay, g_prime, GV, param_file, eqn_of_state)
-  real, dimension(NKMEM_), intent(out) :: Rlay !< Layer potential density.
-  real, dimension(NKMEM_), intent(out) :: g_prime !< The reduced gravity at
-                                                  !! each interface, in m s-2.
-  type(verticalGrid_type), intent(in)  :: GV   !< The ocean's vertical grid structure
-  type(param_file_type),   intent(in)  :: param_file !< A structure to parse for run-time parameters
-  type(EOS_type),          pointer     :: eqn_of_state !< Integer that selects the
-                                                     !! equation of state.
-  ! Local variables
-  real                                 :: drho_dt, SST_s, T_bot, rho_top, rho_bot
-  integer                              :: k, nz
-  character(len=40)  :: mdl = "BFB_set_coord" ! This subroutine's name.
-
-  call get_param(param_file, mdl, "DRHO_DT", drho_dt, &
-          "Rate of change of density with temperature.", &
-           units="kg m-3 K-1", default=-0.2)
-  call get_param(param_file, mdl, "SST_S", SST_s, &
-          "SST at the suothern edge of the domain.", units="C", default=20.0)
-  call get_param(param_file, mdl, "T_BOT", T_bot, &
-                 "Bottom Temp", units="C", default=5.0)
-
-  rho_top = GV%rho0 + drho_dt*(SST_s-T_bot)
-  rho_bot = GV%rho0 + drho_dt*(T_bot-T_bot)
-  nz = GV%ke
-
-  do k = 1,nz
-    Rlay(k) = (rho_bot - rho_top)/(nz-1)*real(k-1) + rho_top
-    if (k >1) then
-      g_prime(k) = (Rlay(k) - Rlay(k-1))*GV%g_earth/GV%rho0
-    else
-      g_prime(k) = GV%g_earth
-    endif
-    !Rlay(:) = 0.0
-    !g_prime(:) = 0.0
-  enddo
-
-  if (first_call) call write_BFB_log(param_file)
-
-end subroutine BFB_set_coord
 
 !> This subroutine sets up the sponges for the southern bouundary of the domain. Maximum damping occurs
 !! within 2 degrees lat of the boundary. The damping linearly decreases northward over the next 2 degrees.
@@ -185,7 +133,14 @@ subroutine BFB_initialize_sponges_southonly(G, use_temperature, tv, param_file, 
     ! depth space for Boussinesq or non-Boussinesq models.
 
     ! This section is used for uniform thickness initialization
-    do k = 1,nz; eta(i,j,k) = H0(k); enddo
+    ! except at the topography
+    do k = 1,nz
+       if (H0(k) < -G%bathyT(i,j)) then
+          eta(i,j,k) = -G%bathyT(i,j)
+       else
+          eta(i,j,k) = H0(k)
+       endif
+    enddo
 
     ! The below section is used for meridional temperature profile thickness initiation
     ! do k = 1,nz; eta(i,j,k) = H0(k); enddo
@@ -198,7 +153,7 @@ subroutine BFB_initialize_sponges_southonly(G, use_temperature, tv, param_file, 
     !     eta(i,j,k) = min(H0(k) + (G%geoLatT(i,j) - 20.0)*(G%max_depth - nz*G%Angstrom_z)/20.0, -(k-1)*G%angstrom_z)
     !   enddo
     ! endif
-    eta(i,j,nz+1) = -G%max_depth
+    eta(i,j,nz+1) = -G%bathyT(i,j)
 
     if (G%bathyT(i,j) > min_depth) then
       Idamp(i,j) = damp/86400.0
@@ -216,6 +171,51 @@ subroutine BFB_initialize_sponges_southonly(G, use_temperature, tv, param_file, 
   if (first_call) call write_BFB_log(param_file)
 
 end subroutine BFB_initialize_sponges_southonly
+
+!> This subroutine specifies the vertical coordinate in terms of temperature at the surface and at the bottom.
+!! This case is set up in such a way that the temperature of the topmost layer is equal to the SST at the
+!! southern edge of the domain. The temperatures are then converted to densities of the top and bottom layers
+!! and linearly interpolated for the intermediate layers.
+subroutine BFB_set_coord(Rlay, g_prime, GV, param_file, eqn_of_state)
+  real, dimension(NKMEM_), intent(out) :: Rlay !< Layer potential density.
+  real, dimension(NKMEM_), intent(out) :: g_prime !< The reduced gravity at
+                                                  !! each interface, in m s-2.
+  type(verticalGrid_type), intent(in)  :: GV   !< The ocean's vertical grid structure
+  type(param_file_type),   intent(in)  :: param_file !< A structure to parse for run-time parameters
+  type(EOS_type),          pointer     :: eqn_of_state !< Integer that selects the
+                                                     !! equation of state.
+  ! Local variables
+  real                                 :: drho_dt, SST_s, T_bot, rho_top, rho_bot
+  integer                              :: k, nz
+  character(len=40)  :: mdl = "BFB_set_coord" ! This subroutine's name.
+
+  call get_param(param_file, mdl, "DRHO_DT", drho_dt, &
+          "Rate of change of density with temperature.", &
+           units="kg m-3 K-1", default=-0.2)
+  call get_param(param_file, mdl, "SST_S", SST_s, &
+          "SST at the suothern edge of the domain.", units="C", default=20.0)
+  call get_param(param_file, mdl, "T_BOT", T_bot, &
+                 "Bottom Temp", units="C", default=5.0)
+
+  rho_top = GV%rho0 + drho_dt*(SST_s-T_bot)
+  rho_bot = GV%rho0 + drho_dt*(T_bot-T_bot)
+  nz = GV%ke
+
+  do k = 1,nz
+    Rlay(k) = (rho_bot - rho_top)/(nz-1)*real(k-1) + rho_top
+    if (k >1) then
+      g_prime(k) = (Rlay(k) - Rlay(k-1))*GV%g_earth/GV%rho0
+    else
+      g_prime(k) = GV%g_earth
+    endif
+    !Rlay(:) = 0.0
+    !g_prime(:) = 0.0
+  enddo
+
+  if (first_call) call write_BFB_log(param_file)
+
+end subroutine BFB_set_coord
+
 
 subroutine BFB_initialize_sponges_southonly_varlayth(G, use_temperature, tv, param_file, CSp, h)
 ! This subroutine sets up the sponges for the southern bouundary of the domain. Maximum damping occurs within 2 degrees lat of the
@@ -318,8 +318,14 @@ subroutine BFB_initialize_thickness(h, G, param_file)
   eta(:,:,:) = 0.0
   do k=1,nz ; H0(k) = -D_aby * real(k-1) / real(nz-1) ; enddo
   do i=is,ie; do j=js,je
-   do k = 1,nz; eta(i,j,k) = H0(k); enddo
-    eta(i,j,nz+1) = -G%max_depth
+    do k = 1,nz
+       if (H0(k) < -G%bathyT(i,j)) then
+          eta(i,j,k) = -G%bathyT(i,j)
+       else
+          eta(i,j,k) = H0(k)
+       endif
+    enddo
+    eta(i,j,nz+1) = -G%bathyT(i,j)
     do k = 1,nz; h(i,j,k) = eta(i,j,k) - eta(i,j,k+1); enddo
   enddo; enddo
 
