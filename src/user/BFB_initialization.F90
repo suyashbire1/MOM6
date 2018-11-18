@@ -216,21 +216,6 @@ subroutine BFB_set_coord(Rlay, g_prime, GV, param_file, eqn_of_state)
 
 end subroutine BFB_set_coord
 
-<<<<<<< HEAD
-
-subroutine BFB_initialize_sponges_southonly_varlayth(G, use_temperature, tv, param_file, CSp, h)
-! This subroutine sets up the sponges for the southern bouundary of the domain. Maximum damping occurs within 2 degrees lat of the
-! boundary. The damping linearly decreases northward over the next 2 degrees.
-  type(ocean_grid_type), intent(in)                   :: G
-  logical,               intent(in)                   :: use_temperature
-  type(thermo_var_ptrs), intent(in)                   :: tv
-  type(param_file_type), intent(in)                   :: param_file
-  type(sponge_CS),       pointer                      :: CSp
-  real, dimension(NIMEM_, NJMEM_, NKMEM_), intent(in) :: h
-  !call MOM_error(FATAL, &
-  ! "BFB_initialization.F90, BFB_initialize_sponges: " // &
-  ! "Unmodified user routine called - you must edit the routine to use it")
-=======
 !> This subroutine sets up the sponges for the southern bouundary of the domain. Maximum damping occurs
 !! within 2 degrees lat of the boundary. The damping linearly decreases northward over the next 2 degrees.
 subroutine BFB_initialize_sponges_southonly(G, GV, use_temperature, tv, param_file, CSp, h)
@@ -243,24 +228,13 @@ subroutine BFB_initialize_sponges_southonly(G, GV, use_temperature, tv, param_fi
   type(sponge_CS),         pointer    :: CSp  !< A pointer to the sponge control structure
   real, dimension(NIMEM_, NJMEM_, NKMEM_), &
                            intent(in) :: h    !< Layer thicknesses, in H (usually m or kg m-2)
->>>>>>> e6b57bace999d975b369eedbce1ea10f3e675604
-
   ! Local variables
   real :: eta(SZI_(G),SZJ_(G),SZK_(G)+1) ! A temporary array for eta, in depth units (Z).
   real :: Idamp(SZI_(G),SZJ_(G))    ! The inverse damping rate, in s-1.
-<<<<<<< HEAD
-
-  real :: H0(SZK_(G))
-  real :: min_depth, D_aby, hmin, hmax
-  real :: damp, e_dense, slat, wlon, lenlat, lenlon, nlat
-  real, parameter :: pi = 4.0*atan(1.0)
-  character(len=40)  :: mod = "BFB_initialize_sponges_southonly_varlayth" ! This subroutine's name.
-=======
   real :: H0(SZK_(G))               ! Resting layer thickesses in depth units (Z).
   real :: min_depth                 ! The minimum ocean depth in depth units (Z).
   real :: damp, e_dense, damp_new, slat, wlon, lenlat, lenlon, nlat
   character(len=40)  :: mdl = "BFB_initialize_sponges_southonly" ! This subroutine's name.
->>>>>>> e6b57bace999d975b369eedbce1ea10f3e675604
   integer :: i, j, k, is, ie, js, je, isd, ied, jsd, jed, nz
 
   is = G%isc ; ie = G%iec ; js = G%jsc ; je = G%jec ; nz = G%ke
@@ -274,14 +248,8 @@ subroutine BFB_initialize_sponges_southonly(G, GV, use_temperature, tv, param_fi
 !  and mask2dT is 1.                                                   !
 
 !   Set up sponges for DOME configuration
-<<<<<<< HEAD
-  call get_param(param_file, mod, "MINIMUM_DEPTH", min_depth, &
-                 "The minimum depth of the ocean.", units="m", default=0.0)
-=======
   call get_param(param_file, mdl, "MINIMUM_DEPTH", min_depth, &
                  "The minimum depth of the ocean.", units="m", default=0.0, scale=GV%m_to_Z)
->>>>>>> e6b57bace999d975b369eedbce1ea10f3e675604
-
   call get_param(param_file, mod, "SOUTHLAT", slat, &
                  "The southern latitude of the domain.", units="degrees")
   call get_param(param_file, mod, "LENLAT", lenlat, &
@@ -307,10 +275,7 @@ subroutine BFB_initialize_sponges_southonly(G, GV, use_temperature, tv, param_fi
     ! depth space for Boussinesq or non-Boussinesq models.
 
     ! This section is used for uniform thickness initialization
-<<<<<<< HEAD
     do k = 1,nz; eta(i,j,k) = -H0(k); enddo
-=======
-    do k = 1,nz; eta(i,j,k) = H0(k); enddo
 
     ! The below section is used for meridional temperature profile thickness initiation
     ! do k = 1,nz; eta(i,j,k) = H0(k); enddo
@@ -324,7 +289,6 @@ subroutine BFB_initialize_sponges_southonly(G, GV, use_temperature, tv, param_fi
     !                      -(k-1)*G%Angstrom_Z)
     !   enddo
     ! endif
->>>>>>> e6b57bace999d975b369eedbce1ea10f3e675604
     eta(i,j,nz+1) = -G%max_depth
 
     if (G%bathyT(i,j) > min_depth) then

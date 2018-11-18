@@ -536,19 +536,6 @@ subroutine MOM_initialize_state(u, v, h, tv, Time, G, GV, PF, dirs, &
       case ("DOME2D"); call DOME2d_initialize_sponges(G, GV, tv, PF, useALE, &
                                                       sponge_CSp, ALE_sponge_CSp)
       case ("ISOMIP"); call ISOMIP_initialize_sponges(G, GV, tv, PF, useALE, &
-<<<<<<< HEAD
-                                                     sponge_CSp, ALE_sponge_CSp)
-      case ("USER"); call user_initialize_sponges(G, use_temperature, tv, &
-                                               PF, sponge_CSp, h)
-      case ("BFB"); call BFB_initialize_sponges_southonly(G, use_temperature, tv, &
-                                               PF, sponge_CSp, h)
-      case ("BFB_vth"); call BFB_initialize_sponges_southonly_varlayth(G, use_temperature, tv, &
-                                               PF, sponge_CSp, h)
-      case ("DUMBBELL"); call dumbbell_initialize_sponges(G, GV, tv, &
-                                               PF, useALE, sponge_CSp, ALE_sponge_CSp)
-      case ("phillips"); call Phillips_initialize_sponges(G, use_temperature, tv, &
-                                               PF, sponge_CSp, h)
-=======
                                                       sponge_CSp, ALE_sponge_CSp)
       case ("USER"); call user_initialize_sponges(G, GV, use_temperature, tv, PF, sponge_CSp, h)
       case ("BFB"); call BFB_initialize_sponges_southonly(G, GV, use_temperature, tv, PF, &
@@ -556,7 +543,6 @@ subroutine MOM_initialize_state(u, v, h, tv, Time, G, GV, PF, dirs, &
       case ("DUMBBELL"); call dumbbell_initialize_sponges(G, GV, tv, PF, useALE, &
                                                           sponge_CSp, ALE_sponge_CSp)
       case ("phillips"); call Phillips_initialize_sponges(G, GV, tv, PF, sponge_CSp, h)
->>>>>>> e6b57bace999d975b369eedbce1ea10f3e675604
       case ("dense"); call dense_water_initialize_sponges(G, GV, tv, PF, useALE, &
                                                           sponge_CSp, ALE_sponge_CSp)
       case ("file"); call initialize_sponges_file(G, GV, use_temperature, tv, PF, &
