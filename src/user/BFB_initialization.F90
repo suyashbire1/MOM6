@@ -84,8 +84,8 @@ subroutine BFB_initialize_sponges_southonly(G, GV, use_temperature, tv, param_fi
   real :: eta(SZI_(G),SZJ_(G),SZK_(G)+1) ! A temporary array for eta, in depth units (Z).
   real :: Idamp(SZI_(G),SZJ_(G))    ! The inverse damping rate, in s-1.
   real :: H0(SZK_(G))               ! Resting layer thickesses in depth units (Z).
-  real :: min_depth                 ! The minimum ocean depth in depth units (Z).
-  real :: damp, e_dense, damp_new, slat, wlon, lenlat, lenlon, nlat
+  real :: min_depth, D_aby                 ! The minimum ocean depth in depth units (Z).
+  real :: damp, e_dense, slat, wlon, lenlat, lenlon, nlat
   character(len=40)  :: mdl = "BFB_initialize_sponges_southonly" ! This subroutine's name.
   integer :: i, j, k, is, ie, js, je, isd, ied, jsd, jed, nz
 
@@ -112,23 +112,31 @@ subroutine BFB_initialize_sponges_southonly(G, GV, use_temperature, tv, param_fi
   call get_param(param_file, mdl, "LENLON", lenlon, &
                  "The longitudinal length of the domain.", units="degrees")
   nlat = slat + lenlat
-  do k=1,nz ; H0(k) = -G%max_depth * real(k-1) / real(nz) ; enddo
-
+  call get_param(param_file, mdl, "D_ABYSS", D_aby, &
+                 "Depth at which abyssal layer starts", units="m", default=1500.0)
+!  do k=1,nz ; H0(k) = -G%max_depth * real(k-1) / real(nz) ; enddo
+!  do k=1,nz ; H0(k) = -G%max_depth * real(k-1) / real(nz-1) ; enddo ! Use for meridional thickness profile initialization
+  do k=1,nz ; H0(k) = -D_aby * real(k-1) / real(nz-1) ; enddo
   ! Use for meridional thickness profile initialization
 !  do k=1,nz ; H0(k) = -G%max_depth * real(k-1) / real(nz-1) ; enddo
 
   do i=is,ie; do j=js,je
     if (G%geoLatT(i,j) < slat+2.0) then ; damp = 1.0
     elseif (G%geoLatT(i,j) < slat+4.0) then
-       damp_new = 1.0*(slat+4.0-G%geoLatT(i,j))/2.0
+       damp = 1.0*(slat+4.0-G%geoLatT(i,j))/2.0
     else ; damp = 0.0
     endif
 
     ! These will be streched inside of apply_sponge, so they can be in
     ! depth space for Boussinesq or non-Boussinesq models.
 
-    ! This section is used for uniform thickness initialization
-    do k = 1,nz; eta(i,j,k) = H0(k); enddo
+    do k = 1,nz
+       if (H0(k) < -G%bathyT(i,j)) then
+          eta(i,j,k) = -G%bathyT(i,j)
+       else
+          eta(i,j,k) = H0(k)
+       endif
+    enddo   ! This section is used for uniform thickness initialization
 
     ! The below section is used for meridional temperature profile thickness initiation
     ! do k = 1,nz; eta(i,j,k) = H0(k); enddo
@@ -142,7 +150,7 @@ subroutine BFB_initialize_sponges_southonly(G, GV, use_temperature, tv, param_fi
     !                      -(k-1)*G%Angstrom_Z)
     !   enddo
     ! endif
-    eta(i,j,nz+1) = -G%max_depth
+    eta(i,j,nz+1) = -G%bathyT(i,j)
 
     if (G%bathyT(i,j) > min_depth) then
       Idamp(i,j) = damp/86400.0
