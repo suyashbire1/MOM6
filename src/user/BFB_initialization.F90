@@ -36,7 +36,7 @@ subroutine BFB_initialize_topography(D, G, param_file, max_depth)
   type(param_file_type),              intent(in)  :: param_file !< Parameter file structure
   real,                               intent(in)  :: max_depth  !< Maximum depth of model in m
   real                                            :: efold, rct, ebdepth
-  real                                            :: westlon,eastlon, lenlon
+  real                                            :: westlon, northlat, southlat, lenlat
   real, parameter                     :: piby180 = 4.0*atan(1.0)/180.0
   character(len=40)  :: mdl = "BFB_initialize_topography" ! This subroutine's name.
   integer :: i, j, is, ie, js, je, isd, ied, jsd, jed
@@ -53,14 +53,17 @@ subroutine BFB_initialize_topography(D, G, param_file, max_depth)
   call get_param(param_file, mdl, "DEPTH_EB", ebdepth, &
        "Depth at the eastern boundary", &
        units="m", default=100.0)
-  call get_param(param_file, mdl, "LENLON", lenlon, &
-                 "The longitudinal length of the domain.", units="degrees")
+  call get_param(param_file, mdl, "SOUTHLAT", southlat, &
+                 "Southern latitude of the domain", units="degrees")
+  call get_param(param_file, mdl, "LENLAT", lenlat, &
+                 "Latitudinal length of the domain", units="degrees")
   call get_param(param_file, mdl, "WESTLON", westlon, &
                  "The western longitude of the domain.", units="degrees", default=0.0)
 
-  eastlon = westlon + lenlon
+  northlat = southlat + lenlat
   do j=js,je; do i=is,ie
-      D(i,j) = min(max_depth,exp(-efold*G%geoLonT(i,j)))
+      D(i,j) = min(max_depth,exp(-efold*G%geoLonT(i,j)),exp(efold*(G&
+           &%geoLonT(i,j)-westlon)),exp(-efold*(G%geoLatT(i,j)-northlat)))
   enddo; enddo
 
   if (first_call) call write_BFB_log(param_file)
