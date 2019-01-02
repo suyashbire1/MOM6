@@ -62,8 +62,10 @@ subroutine BFB_initialize_topography(D, G, param_file, max_depth)
 
   northlat = southlat + lenlat
   do j=js,je; do i=is,ie
-      D(i,j) = min(max_depth,exp(-efold*G%geoLonT(i,j)),exp(efold*(G&
-           &%geoLonT(i,j)-westlon)),exp(-efold*(G%geoLatT(i,j)-northlat)))
+      D(i,j) = min(max_depth,ebdepth+exp(-efold*G%geoLonT(i,j))&
+           &,ebdepth+exp(efold*(G&
+           &%geoLonT(i,j)-westlon)),ebdepth+exp(-efold*(G%geoLatT(i&
+           &,j)-northlat)))
   enddo; enddo
 
   if (first_call) call write_BFB_log(param_file)
