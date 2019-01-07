@@ -1471,7 +1471,7 @@ subroutine calculate_twa_diagnostics(u, v, h, uh, vh, ADp, CDp, G, GV, CS)
     do k=1,nz
       do j=js,je ; do i=is,ie
         CS%esq(i,j,k) = 0.5*(CS%e(i,j,k)*CS%e(i,j,k)+&
-          CS%e(i,j,k+1)*CS%e(i,j,k+1))*ishqlarge(I,J,k)
+          CS%e(i,j,k+1)*CS%e(i,j,k+1))
       enddo ; enddo
     enddo
     if (CS%id_esq > 0) call post_data(CS%id_esq, CS%esq, CS%diag)
